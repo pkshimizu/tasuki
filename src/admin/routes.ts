@@ -4,6 +4,7 @@
 import { buildApp, buildDashboard } from "./dashboard.js";
 import { buildRequirement, buildRequirements } from "./requirements.js";
 import { type AdminRoutes, NOT_FOUND } from "./server.js";
+import { buildSettings } from "./settings.js";
 import {
   buildActivity,
   buildProduct,
@@ -31,6 +32,8 @@ export function adminRoutes(sources: ViewSources): AdminRoutes {
         return buildQuestions(sources);
       case "/api/product":
         return buildProduct(sources);
+      case "/api/settings":
+        return buildSettings(sources.settings);
       case "/api/system":
         return buildSystem(sources);
     }

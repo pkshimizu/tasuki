@@ -1,7 +1,19 @@
 import { describe, expect, it } from "vitest";
 import type { Directive } from "../../src/admin/types.js";
 import { directiveLabel, outcomeLabel } from "./components/Chips.js";
-import { operate } from "./api.js";
+import type { SettingsValues } from "../../src/admin/types.js";
+import { operate, postJson } from "./api.js";
+import {
+  changedPaths,
+  fieldPaths,
+  getAt,
+  otherProblems,
+  problemsFor,
+  resetPaths,
+  SECTIONS,
+  sectionOf,
+  setAt,
+} from "./settings.js";
 import { operationError } from "./components/Dialog.js";
 import { lineCount } from "./components/Markdown.js";
 import { splitEventText } from "./components/Timeline.js";
@@ -252,5 +264,123 @@ describe("操作", () => {
     expect(
       operationError(en, { ok: false, reason: "not_running", detail: "" }),
     ).toBe(en.ops.errors.not_running);
+  });
+});
+
+describe("設定のフォーム", () => {
+  const base: SettingsValues = {
+    poll_interval: 60,
+    limits: { agents: 2 },
+    language: "日本語",
+    merge: {
+      spec: "human",
+      design: "human",
+      implementation: "human",
+      require_ci: true,
+    },
+    discord: {
+      channels: { requirements: "1", questions: "2", notices: "3" },
+      allowed_users: ["9"],
+    },
+    paths: { specs: "docs/specs", design: "docs/design", design_system: "ds" },
+    knowledge: { context: ["docs/CONTEXT.md"] },
+    workspace: { setup: [], setup_on_change: [] },
+    agents: {
+      dispatcher: "",
+      "spec-master": "",
+      planner: "",
+      designer: "",
+      programmer: "",
+      reviewer: "",
+    },
+  };
+
+  it("項目の道と、まとまり", () => {
+    const paths = fieldPaths(base);
+    expect(paths).toContain("poll_interval");
+    expect(paths).toContain("limits.agents");
+    expect(paths).toContain("discord.channels.notices");
+    expect(paths).toContain("discord.allowed_users");
+    expect(paths).toContain("agents.spec-master");
+    expect(paths).not.toContain("discord");
+    expect(sectionOf("language")).toBe("basic");
+    expect(sectionOf("limits.agents")).toBe("basic");
+    expect(sectionOf("merge.spec")).toBe("merge");
+    expect(sectionOf("paths.specs")).toBe("docs");
+    expect(sectionOf("knowledge.context")).toBe("docs");
+    expect(sectionOf("workspace.setup")).toBe("workspace");
+    expect(sectionOf("agents.reviewer")).toBe("models");
+    // どのまとまりも、文言がある
+    for (const id of SECTIONS) expect(ja.settings.sections[id]).toBeTruthy();
+  });
+
+  it("項目を変えても、もとの値は変えない", () => {
+    const next = setAt(base, "limits.agents", 3);
+    expect(getAt(next, "limits.agents")).toBe(3);
+    expect(base.limits.agents).toBe(2);
+    expect(next.merge).toBe(base.merge);
+    expect(
+      getAt(setAt(base, "agents.spec-master", "m"), "agents.spec-master"),
+    ).toBe("m");
+  });
+
+  it("もとと違う項目を見つける。空の行と前後の空白は変更に数えない", () => {
+    expect(changedPaths(base, base)).toEqual([]);
+    let draft = setAt(base, "poll_interval", 30);
+    draft = setAt(draft, "merge.spec", "auto");
+    draft = setAt(draft, "workspace.setup", ["", "  "]);
+    draft = setAt(draft, "language", " 日本語 ");
+    draft = setAt(draft, "discord.allowed_users", ["9", "8"]);
+    expect(changedPaths(base, draft)).toEqual([
+      "poll_interval",
+      "merge.spec",
+      "discord.allowed_users",
+    ]);
+    expect(changedPaths(base, setAt(base, "poll_interval", null))).toEqual([
+      "poll_interval",
+    ]);
+  });
+
+  it("指定の項目だけを、もとの値に戻す", () => {
+    let draft = setAt(base, "poll_interval", 30);
+    draft = setAt(draft, "merge.spec", "auto");
+    const reset = resetPaths(base, draft, ["poll_interval"]);
+    expect(changedPaths(base, reset)).toEqual(["merge.spec"]);
+  });
+
+  it("項目についての誤りを選ぶ", () => {
+    const problems = [
+      { path: "discord.allowed_users.1", message: "ID を書きます" },
+      { path: "discord.channels", message: "別々にします" },
+      { path: "poll_interval", message: "10 以上" },
+      { path: "", message: "全体の誤り" },
+    ];
+    expect(problemsFor(problems, "discord.allowed_users")).toEqual([
+      "ID を書きます",
+    ]);
+    expect(problemsFor(problems, "poll_interval")).toEqual(["10 以上"]);
+    // 名前の前半が同じだけの項目には出さない
+    expect(problemsFor(problems, "poll")).toEqual([]);
+    expect(
+      otherProblems(problems, ["discord.allowed_users", "poll_interval"]),
+    ).toEqual([problems[1], problems[3]]);
+  });
+
+  it("本文つきで POST する", async () => {
+    const calls: RequestInit[] = [];
+    const send = ((_: unknown, init?: RequestInit) => {
+      calls.push(init ?? {});
+      return Promise.resolve(new Response('{"problems":[]}'));
+    }) as typeof fetch;
+    expect(await postJson("/api/settings/preview", { sha: "s" }, send)).toEqual(
+      {
+        problems: [],
+      },
+    );
+    expect(calls[0]).toMatchObject({
+      method: "POST",
+      body: '{"sha":"s"}',
+      headers: { "X-Tasuki-Admin": "1", "Content-Type": "application/json" },
+    });
   });
 });

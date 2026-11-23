@@ -22,12 +22,14 @@ import {
 } from "../integrations/discord.js";
 import type { GuardContext } from "../agents/guard.js";
 import {
+  type FileProposal,
   type GitHub,
   type Issue,
   type MergeResult,
   mergeProblem,
   type PrComment,
   type PullRequest,
+  type RepoFile,
 } from "../integrations/github.js";
 import type { WorkerOutput } from "../agents/roles.js";
 import { type Target, targetKey } from "../domain/types.js";
@@ -234,6 +236,32 @@ export class FakeGitHub implements GitHub {
     });
     this.commentMap.set(pr, list);
     this.updatePr(pr, {});
+  }
+
+  /** 既定のブランチにあるファイル */
+  files = new Map<string, RepoFile>();
+  proposals: FileProposal[] = [];
+
+  setFile(path: string, text: string): RepoFile {
+    const file = { text, sha: `f${String(this.tick++)}` };
+    this.files.set(path, file);
+    return file;
+  }
+
+  fileOnDefault(path: string): Promise<RepoFile | undefined> {
+    return Promise.resolve(this.files.get(path));
+  }
+
+  proposeFile(proposal: FileProposal) {
+    if (this.files.get(proposal.path)?.sha !== proposal.sha) {
+      return Promise.reject(new Error("409: ファイルが変わっています"));
+    }
+    this.proposals.push(proposal);
+    const pr = this.addPr(proposal.title, [proposal.path], {
+      branch: proposal.branch,
+      body: proposal.body,
+    });
+    return Promise.resolve({ number: pr.number, url: pr.url });
   }
 
   defaultBranch(): Promise<string> {

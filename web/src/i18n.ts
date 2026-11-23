@@ -386,6 +386,119 @@ const ja = {
       failed: "操作できませんでした。Tasuki が動いているか確かめてください",
     },
   },
+  settings: {
+    subtitle:
+      ".tasuki/config.yaml をフォームで編集します。保存すると変更をコミットして PR を作ります",
+    loading: "既定のブランチの設定を読み込んでいます",
+    loadFailed:
+      "設定を読み込めませんでした。Tasuki が動いているか確かめてください",
+    reload: "読み込み直す",
+    notFound: (file: string, branch: string) =>
+      `既定のブランチ（${branch}）に ${file} がありません`,
+    cannotRead: (file: string, branch: string) =>
+      `既定のブランチ（${branch}）の ${file} を読めません。ファイルを直してから、読み込み直してください`,
+    differs: (branch: string) =>
+      `既定のブランチ（${branch}）の設定が、いま動いている設定と違います。対象リポジトリのフォルダで git pull してから再起動すると、反映されます。`,
+    saved: (n: number) => `PR #${String(n)} を作りました`,
+    savedHelp:
+      "マージしたあと、対象リポジトリのフォルダで git pull してから再起動すると反映されます。",
+    openPr: (n: number) => `PR #${String(n)} を開く`,
+    changes: (n: number, sections: string) =>
+      `変更 ${String(n)} 件（${sections}）`,
+    noChanges: "変更はありません",
+    problems: (n: number) =>
+      `入力の誤りが ${String(n)} 件あるため保存できません`,
+    resetAll: "すべての変更を取り消す",
+    review: "差分を確認して保存",
+    changed: "変更あり",
+    resetSection: "変更を取り消す",
+    before: (value: string) => `変更前: ${value}`,
+    defaultIs: (value: string) => `既定は ${value}`,
+    isDefault: "既定値のまま",
+    on: "オン",
+    off: "オフ",
+    remove: "消す",
+    seconds: "秒",
+    upTo: "つまで",
+    sections: {
+      basic: "基本",
+      merge: "マージ",
+      discord: "Discord",
+      docs: "文書の置き場",
+      workspace: "作業フォルダ",
+      models: "エージェントごとのモデル",
+    },
+    repo: "リポジトリ",
+    repoHelp:
+      "見るだけ。別のリポジトリを担当させるときは、そのリポジトリで tasuki start を実行します",
+    fields: {
+      poll_interval: "確認の間隔",
+      agents: "同時に動かす作業エージェントの数",
+      language: "エージェントが書く文章の言語",
+      require_ci: "CI の合格を必須にする",
+      allowed_users: "受け付ける人のユーザー ID",
+      setup: "準備コマンド",
+      setup_on_change: "変わったら準備をやり直すファイル",
+    },
+    help: {
+      poll_interval: (d: number) => `10〜3600 秒。既定は ${String(d)} 秒`,
+      agents: (d: number) => `1〜10。既定は ${String(d)}`,
+      language: "仕様・Issue・PR・レビュー・質問の文章に使います",
+      require_ci: "approve に加えて、CI の合格をマージの条件にします",
+      allowed_users: "この人たちの投稿と返信だけを受け付けます。1 人以上",
+      setup: "作業フォルダを作ったときに、上から順に実行します",
+      setup_on_change:
+        "このファイルが変わると、次に使うときに準備コマンドをもう一度実行します",
+      channels: {
+        requirements: "人が要件を投稿するチャンネル",
+        questions: "エージェントからの質問がスレッドとして立つチャンネル",
+        notices: "3 つはそれぞれ別のチャンネルにします",
+      },
+    },
+    mergeOf: (stage: string) => `${stage}のマージ`,
+    mergeAuto: "Tasuki（auto）",
+    mergeHuman: "人（human）",
+    mergeAutoHelp: "approve と CI の合格のあと、Tasuki がマージします",
+    mergeHumanHelp:
+      "approve と CI の合格のあと、あなたが GitHub でマージします",
+    ciOffWarning:
+      "オフにするのは CI の無いリポジトリだけにしてください。オフのあいだは、CI の結果を見ずにマージされます。",
+    channels: {
+      requirements: "要件のチャンネル ID",
+      questions: "質問のチャンネル ID",
+      notices: "お知らせのチャンネル ID",
+    },
+    addUser: "ユーザー ID を足す",
+    token: "ボットのトークン",
+    tokenHelp: "トークンは設定ファイルに書かず、環境変数で渡します",
+    tokenSet: "設定済み",
+    tokenUnset: "未設定",
+    tokenHidden: "値は表示しません",
+    paths: {
+      specs: "仕様の置き場",
+      design: "デザインの置き場",
+      design_system: "デザインシステムの置き場",
+    },
+    knowledge: "プロダクトの情報の置き場",
+    knowledgeHelp:
+      "ファイルでもフォルダでも指定できます。フォルダの中の .md はすべて読み込みます",
+    addPath: "パスを足す",
+    addCommand: "コマンドを足す",
+    addFile: "ファイルを足す",
+    modelHelp: "空欄のエージェントは既定のモデルを使います",
+    modelDefault: "既定のモデル",
+    confirmTitle: (file: string) => `変更の確認 — ${file}`,
+    confirmBody: (n: number) =>
+      `次の ${String(n)} 項目を変えます。保存すると、新しいブランチ（tasuki/config-…）にコミットして PR を作ります。`,
+    confirmSave: "保存して PR を作る",
+    diffGap: "  ⋮",
+    saveErrors: {
+      invalid: "入力に誤りがあるので、保存しませんでした",
+      conflict: "保存しませんでした",
+      unchanged: "変更がありません",
+      failed: "PR を作れませんでした",
+    },
+  },
   placeholder: "この画面は準備中です。",
 };
 
@@ -761,6 +874,119 @@ const en: Messages = {
       invalid_config:
         "The settings (.tasuki/config.yaml) have errors, so Tasuki did not restart",
       failed: "The operation failed. Check that Tasuki is running",
+    },
+  },
+  settings: {
+    subtitle:
+      "Edit .tasuki/config.yaml with a form. Saving commits the change and opens a pull request",
+    loading: "Loading the settings on the default branch",
+    loadFailed: "Could not load the settings. Check that Tasuki is running",
+    reload: "Reload",
+    notFound: (file, branch) =>
+      `${file} does not exist on the default branch (${branch})`,
+    cannotRead: (file, branch) =>
+      `Could not read ${file} on the default branch (${branch}). Fix the file, then reload`,
+    differs: (branch) =>
+      `The settings on the default branch (${branch}) differ from the running settings. Run git pull in the target repository folder, then restart to apply them.`,
+    saved: (n) => `Created pull request #${String(n)}`,
+    savedHelp:
+      "After merging, run git pull in the target repository folder, then restart to apply it.",
+    openPr: (n) => `Open pull request #${String(n)}`,
+    changes: (n, sections) =>
+      `${String(n)} ${n === 1 ? "change" : "changes"} (${sections})`,
+    noChanges: "No changes",
+    problems: (n) =>
+      `Cannot save: ${String(n)} input ${n === 1 ? "error" : "errors"}`,
+    resetAll: "Discard all changes",
+    review: "Review and save",
+    changed: "Changed",
+    resetSection: "Discard",
+    before: (value) => `Before: ${value}`,
+    defaultIs: (value) => `Default: ${value}`,
+    isDefault: "Default",
+    on: "On",
+    off: "Off",
+    remove: "Remove",
+    seconds: "seconds",
+    upTo: "at most",
+    sections: {
+      basic: "Basics",
+      merge: "Merge",
+      discord: "Discord",
+      docs: "Document locations",
+      workspace: "Work folders",
+      models: "Model per agent",
+    },
+    repo: "Repository",
+    repoHelp:
+      "Read only. To work on another repository, run tasuki start in that repository",
+    fields: {
+      poll_interval: "Check interval",
+      agents: "Worker agents running at once",
+      language: "Language agents write in",
+      require_ci: "Require CI to pass",
+      allowed_users: "Accepted user IDs",
+      setup: "Setup commands",
+      setup_on_change: "Files that trigger setup again",
+    },
+    help: {
+      poll_interval: (d) => `10–3600 seconds. Default: ${String(d)}`,
+      agents: (d) => `1–10. Default: ${String(d)}`,
+      language: "Used for specs, issues, pull requests, reviews and questions",
+      require_ci:
+        "Requires CI to pass, in addition to approval, before merging",
+      allowed_users:
+        "Only posts and replies from these people are accepted. At least one",
+      setup: "Run in order when a work folder is created",
+      setup_on_change:
+        "When one of these files changes, the setup commands run again on next use",
+      channels: {
+        requirements: "Where people post requirements",
+        questions: "Where questions from agents appear as threads",
+        notices: "Use three different channels",
+      },
+    },
+    mergeOf: (stage) => `Merging: ${stage}`,
+    mergeAuto: "Tasuki (auto)",
+    mergeHuman: "Human (human)",
+    mergeAutoHelp: "After approval and passing CI, Tasuki merges",
+    mergeHumanHelp: "After approval and passing CI, you merge on GitHub",
+    ciOffWarning:
+      "Turn this off only for repositories without CI. While off, pull requests are merged without looking at CI.",
+    channels: {
+      requirements: "Requirements channel ID",
+      questions: "Questions channel ID",
+      notices: "Notices channel ID",
+    },
+    addUser: "Add a user ID",
+    token: "Bot token",
+    tokenHelp:
+      "The token is not written to the settings file. Pass it in the environment variable",
+    tokenSet: "Set",
+    tokenUnset: "Not set",
+    tokenHidden: "The value is never shown",
+    paths: {
+      specs: "Specs location",
+      design: "Design location",
+      design_system: "Design system location",
+    },
+    knowledge: "Product knowledge locations",
+    knowledgeHelp: "A file or a folder. Every .md file in a folder is loaded",
+    addPath: "Add a path",
+    addCommand: "Add a command",
+    addFile: "Add a file",
+    modelHelp: "Agents left blank use the default model",
+    modelDefault: "Default model",
+    confirmTitle: (file) => `Review changes — ${file}`,
+    confirmBody: (n) =>
+      `This changes ${String(n)} ${n === 1 ? "setting" : "settings"}. Saving commits to a new branch (tasuki/config-…) and opens a pull request.`,
+    confirmSave: "Save and open a pull request",
+    diffGap: "  ⋮",
+    saveErrors: {
+      invalid: "Not saved: the input has errors",
+      conflict: "Not saved",
+      unchanged: "Nothing changed",
+      failed: "Could not create the pull request",
     },
   },
   placeholder: "This screen is not ready yet.",

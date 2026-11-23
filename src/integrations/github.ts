@@ -3,7 +3,7 @@
  * マージは CI が合格しているときだけ行う（プログラムで必ず守る）。
  */
 import { type Config, isUnder, type Stage } from "../config/config.js";
-import { commandExec, type Exec, run } from "./exec.js";
+import { commandExec, type Exec, run, CommandError } from "./exec.js";
 
 export type CiStatus = "pass" | "fail" | "pending" | "none";
 
@@ -48,6 +48,27 @@ export interface PrComment {
 
 export type MergeResult = { merged: true } | { merged: false; reason: string };
 
+/** 既定のブランチにあるファイル */
+export interface RepoFile {
+  text: string;
+  /** 中身の印。書き換えるときに、読んだあとに変わっていないことを確かめるのに使う */
+  sha: string;
+}
+
+/** ファイルを 1 つ書き換える変更の提案 */
+export interface FileProposal {
+  path: string;
+  text: string;
+  /** 書き換える前の中身の印 */
+  sha: string;
+  /** 新しく作るブランチ */
+  branch: string;
+  /** コミットのメッセージ */
+  message: string;
+  title: string;
+  body: string;
+}
+
 export interface GitHub {
   defaultBranch(): Promise<string>;
   /** ブランチの先頭のコミット */
@@ -61,6 +82,13 @@ export interface GitHub {
   issue(number: number): Promise<Issue>;
   /** CI が合格していればマージする。していなければ理由を返す */
   mergePullRequest(number: number, requireCi: boolean): Promise<MergeResult>;
+  /** 既定のブランチにあるファイルを読む。無ければ undefined */
+  fileOnDefault(path: string): Promise<RepoFile | undefined>;
+  /**
+   * 既定のブランチから新しいブランチを作り、ファイルを書き換えるコミットを載せて、PR を作る
+   * （人が管理画面で設定を変えたときに使う。エージェントは使わない）。
+   */
+  proposeFile(proposal: FileProposal): Promise<{ number: number; url: string }>;
 }
 
 const PR_FIELDS =
@@ -329,6 +357,94 @@ export class GhGitHub implements GitHub {
       ISSUE_FIELDS,
     ]);
     return toIssue(JSON.parse(out) as RawIssue);
+  }
+
+  async fileOnDefault(path: string): Promise<RepoFile | undefined> {
+    const args = [
+      "api",
+      `repos/${this.repo}/contents/${path}`,
+      "--jq",
+      "{content, sha}",
+    ];
+    const result = await this.exec(args);
+    if (result.code !== 0) {
+      if (/404|Not Found/.test(result.stderr + result.stdout)) return undefined;
+      throw new CommandError(`gh ${args.slice(0, 2).join(" ")}`, result);
+    }
+    const raw = JSON.parse(result.stdout) as { content: string; sha: string };
+    return {
+      text: Buffer.from(raw.content, "base64").toString("utf8"),
+      sha: raw.sha,
+    };
+  }
+
+  async proposeFile(
+    proposal: FileProposal,
+  ): Promise<{ number: number; url: string }> {
+    const base = await this.defaultBranch();
+    const head = await this.headCommit(base);
+    const ref = `repos/${this.repo}/git/refs`;
+    await this.gh([
+      "api",
+      ref,
+      "-X",
+      "POST",
+      "-f",
+      `ref=refs/heads/${proposal.branch}`,
+      "-f",
+      `sha=${head}`,
+    ]);
+    try {
+      await run(
+        this.exec,
+        "gh",
+        [
+          "api",
+          `repos/${this.repo}/contents/${proposal.path}`,
+          "-X",
+          "PUT",
+          "--input",
+          "-",
+        ],
+        {
+          input: JSON.stringify({
+            message: proposal.message,
+            content: Buffer.from(proposal.text, "utf8").toString("base64"),
+            sha: proposal.sha,
+            branch: proposal.branch,
+          }),
+        },
+      );
+    } catch (e) {
+      // コミットを載せられなかったら、いま作った空のブランチは残さない
+      await this.exec([
+        "api",
+        `${ref}/heads/${proposal.branch}`,
+        "-X",
+        "DELETE",
+      ]).catch(() => undefined);
+      throw e;
+    }
+    const out = await this.gh([
+      "pr",
+      "create",
+      "--repo",
+      this.repo,
+      "--head",
+      proposal.branch,
+      "--base",
+      base,
+      "--title",
+      proposal.title,
+      "--body",
+      proposal.body,
+    ]);
+    const url = out.trim().split("\n").at(-1) ?? "";
+    const number = Number(/\/pull\/(\d+)/.exec(url)?.[1]);
+    if (!Number.isInteger(number)) {
+      throw new Error(`PR の番号が読めません: ${out.trim()}`);
+    }
+    return { number, url };
   }
 
   async mergePullRequest(

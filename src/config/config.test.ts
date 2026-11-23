@@ -194,3 +194,31 @@ describe("ひな形", () => {
     expect(c.poll_interval).toBe(60);
   });
 });
+
+describe("誤りの文", () => {
+  it("数と、マージの設定の誤りを、決まりの文で伝える", () => {
+    const problems = (extra: string): string[] => {
+      try {
+        parseConfig(MINIMAL_CONFIG + extra);
+      } catch (e) {
+        return (e as ConfigError).problems;
+      }
+      return [];
+    };
+    expect(problems("poll_interval: 5\n")).toEqual([
+      "poll_interval: 10〜3600 の整数を書きます",
+    ]);
+    expect(problems("poll_interval: 1.5\n")).toEqual([
+      "poll_interval: 10〜3600 の整数を書きます",
+    ]);
+    expect(problems('poll_interval: "60"\n')).toEqual([
+      "poll_interval: 10〜3600 の整数を書きます",
+    ]);
+    expect(problems("limits:\n  agents: 11\n")).toEqual([
+      "limits.agents: 1〜10 の整数を書きます",
+    ]);
+    expect(problems("merge:\n  spec: maybe\n")).toEqual([
+      "merge.spec: auto か human を書きます",
+    ]);
+  });
+});

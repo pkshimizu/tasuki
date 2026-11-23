@@ -924,3 +924,228 @@ a.list-item {
   justify-content: flex-end;
   gap: 8px;
 }
+
+/* ---------- 設定 ---------- */
+.set-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px 18px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.set-banner.ok {
+  border-color: color-mix(in srgb, var(--ok) 40%, var(--line));
+}
+.set-banner.err {
+  border-color: color-mix(in srgb, var(--err) 40%, var(--line));
+}
+.set-banner .pre {
+  flex: 1 1 100%;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 12px;
+}
+.set-bar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 12px 18px;
+  box-shadow: 0 6px 20px rgb(0 0 0 / 0.12);
+}
+.set-bar-text {
+  flex: 1 1 240px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13px;
+}
+.set-bar-text strong {
+  font-weight: 650;
+}
+.set-section {
+  overflow: hidden;
+}
+.set-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--line2);
+}
+.set-head h2 {
+  font-size: 15px;
+  font-weight: 650;
+  margin-right: auto;
+}
+.set-row {
+  display: grid;
+  grid-template-columns: minmax(220px, 2fr) minmax(0, 3fr);
+  gap: 20px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--line2);
+}
+.set-section > :last-child {
+  border-bottom: none;
+}
+.set-row.invalid {
+  background: color-mix(in srgb, var(--errSoft) 45%, transparent);
+}
+.set-label {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  font-size: 12.5px;
+}
+.set-label label,
+.set-name {
+  font-size: 13.5px;
+  font-weight: 600;
+}
+.set-label code {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--faint);
+}
+.set-label p {
+  color: var(--muted);
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.set-input {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  min-width: 0;
+  font-size: 13px;
+}
+.set-error {
+  color: var(--err);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+.set-error.block {
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--line2);
+}
+.set-sub {
+  padding: 14px 20px 10px;
+  border-bottom: 1px solid var(--line2);
+  background: var(--sub);
+  font-size: 12.5px;
+  color: var(--muted);
+}
+.set-sub h3 {
+  font-size: 13.5px;
+  font-weight: 650;
+  color: var(--text);
+}
+.set-note {
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--line2);
+  font-size: 12.5px;
+  color: var(--muted);
+}
+.set-list {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  width: 100%;
+}
+.set-list .inline {
+  width: 100%;
+}
+.input {
+  height: 32px;
+  width: 100%;
+  max-width: 420px;
+  padding: 0 10px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+}
+.input.mono {
+  font-family: var(--mono);
+  font-size: 12.5px;
+}
+.input.num {
+  width: 110px;
+}
+.set-row.invalid .input {
+  border-color: var(--err);
+}
+.button.icon {
+  width: 28px;
+  padding: 0;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+.seg {
+  display: inline-flex;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.seg button {
+  height: 30px;
+  padding: 0 12px;
+  border: none;
+  background: var(--panel);
+  color: var(--muted);
+  font: inherit;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+.seg button + button {
+  border-left: 1px solid var(--line);
+}
+.seg button[aria-pressed="true"] {
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+}
+.dialog.wide {
+  width: min(760px, calc(100vw - 32px));
+}
+.diff {
+  margin: 0;
+  max-height: 46vh;
+  overflow: auto;
+  padding: 10px 0;
+  border: 1px solid var(--line2);
+  border-radius: 8px;
+  background: var(--bg);
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.7;
+}
+.diff span {
+  display: block;
+  padding: 0 12px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.diff .add {
+  background: var(--okSoft);
+  color: var(--ok);
+}
+.diff .remove {
+  background: var(--errSoft);
+  color: var(--err);
+}
+.diff .gap {
+  color: var(--faint);
+}

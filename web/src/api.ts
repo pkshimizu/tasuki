@@ -100,13 +100,31 @@ export async function operate(
   path: string,
   send: typeof fetch = fetch,
 ): Promise<OperationResult | undefined> {
+  const body = await postJson<Partial<OperationResult>>(path, undefined, send);
+  return typeof body?.ok === "boolean" ? (body as OperationResult) : undefined;
+}
+
+/**
+ * 管理画面の印を付けて POST し、返事（JSON）を返す。
+ * できなかったという返事（409）も返す。それ以外の失敗は undefined。
+ */
+export async function postJson<T>(
+  path: string,
+  body?: unknown,
+  send: typeof fetch = fetch,
+): Promise<T | undefined> {
   try {
     const res = await send(path, {
       method: "POST",
-      headers: { Accept: "application/json", "X-Tasuki-Admin": "1" },
+      headers: {
+        Accept: "application/json",
+        "X-Tasuki-Admin": "1",
+        ...(body === undefined ? {} : { "Content-Type": "application/json" }),
+      },
+      ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     });
-    const body = (await res.json()) as Partial<OperationResult>;
-    return typeof body.ok === "boolean" ? (body as OperationResult) : undefined;
+    if (!res.ok && res.status !== 409) return undefined;
+    return (await res.json()) as T;
   } catch {
     return undefined;
   }

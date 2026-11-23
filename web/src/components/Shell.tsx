@@ -7,7 +7,7 @@ import { useLive, useNow } from "../api.js";
 import { clock, clockWithSeconds, elapsed, secondsUntil } from "../format.js";
 import { type Lang, type Messages, targetLabel } from "../i18n.js";
 import { type Page, PAGES, pathOf } from "../routes.js";
-import { ConfirmDialog } from "./Dialog.js";
+import { ConfirmDialog, operation } from "./Dialog.js";
 import { Icon, ICONS, Logo, MENU_ICONS } from "./Icon.js";
 
 export type Navigate = (page: Page, id?: string | null) => void;
@@ -101,7 +101,7 @@ function StopDialog({ t, onClose }: { t: Messages; onClose: () => void }) {
       title={t.ops.stopTitle}
       confirm={t.ops.stopConfirm}
       danger
-      path="/api/ops/stop"
+      run={operation(t, "/api/ops/stop")}
       onClose={onClose}
     >
       <p>
@@ -231,7 +231,7 @@ export function Header({
           t={t}
           title={t.ops.restartTitle}
           confirm={t.ops.restartConfirm}
-          path="/api/ops/restart"
+          run={operation(t, "/api/ops/restart")}
           onClose={close}
         >
           <p>{t.ops.restartBody}</p>

@@ -2,7 +2,11 @@
  * 管理画面からの操作（止める・起動し直す・エージェントを中断する）。
  */
 import { NOT_FOUND } from "./server.js";
-import type { OperationResult } from "./types.js";
+import type {
+  OperationResult,
+  SettingsPreview,
+  SettingsSaveResult,
+} from "./types.js";
 
 export interface Operations {
   /** 動いているエージェントの終了を待って、止める */
@@ -13,13 +17,27 @@ export interface Operations {
   abortRun(runId: number): OperationResult;
 }
 
-/** 操作の道（POST）から、操作を選んで実行する。無ければ NOT_FOUND */
-export type AdminOperations = (
-  path: string,
-) => OperationResult | typeof NOT_FOUND;
+/** 設定の点検と保存 */
+export interface SettingsOperations {
+  preview(body: unknown): Promise<SettingsPreview>;
+  save(body: unknown): Promise<SettingsSaveResult>;
+}
 
-export function adminOperations(ops: Operations): AdminOperations {
-  return (path) => {
+/**
+ * 操作の道（POST）から、操作を選んで実行する。無ければ NOT_FOUND。
+ * 返す値が { ok: false } なら、できなかったものとして扱う。
+ */
+export type AdminOperations = (path: string, body: unknown) => unknown;
+
+export function adminOperations(
+  ops: Operations,
+  settings?: SettingsOperations,
+): AdminOperations {
+  return (path, body) => {
+    if (settings && path === "/api/settings/preview") {
+      return settings.preview(body);
+    }
+    if (settings && path === "/api/settings/save") return settings.save(body);
     if (path === "/api/ops/stop") return ops.stop();
     if (path === "/api/ops/restart") return ops.restart();
     const abort = /^\/api\/ops\/runs\/(\d{1,12})\/abort$/.exec(path);

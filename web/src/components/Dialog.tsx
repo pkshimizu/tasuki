@@ -1,5 +1,5 @@
 /**
- * 確認ダイアログ。操作（止める・起動し直す・中断する）の前に出す。
+ * 確認ダイアログ。操作（止める・起動し直す・中断する・設定の保存）の前に出す。
  */
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import type { OperationResult } from "../../../src/admin/types.js";
@@ -16,12 +16,25 @@ export function operationError(
   return result.detail ? `${text}\n${result.detail}` : text;
 }
 
+/** 操作の道に送る。できなかったときは、理由の文を返す */
+export function operation(
+  t: Messages,
+  path: string,
+): () => Promise<string | null> {
+  return async () => {
+    const result = await operate(path);
+    return result?.ok ? null : operationError(t, result);
+  };
+}
+
 export function ConfirmDialog({
   t,
   title,
   confirm,
   danger = false,
-  path,
+  wide = false,
+  disabled = false,
+  run,
   onClose,
   children,
 }: {
@@ -30,8 +43,11 @@ export function ConfirmDialog({
   /** 実行するボタンの文言 */
   confirm: string;
   danger?: boolean;
-  /** 実行する操作の道 */
-  path: string;
+  wide?: boolean;
+  /** 実行できないとき（中身を読み込んでいる間など） */
+  disabled?: boolean;
+  /** 実行する。できなかったときは、理由の文を返す */
+  run: () => Promise<string | null>;
   onClose: () => void;
   children: ReactNode;
 }) {
@@ -44,22 +60,22 @@ export function ConfirmDialog({
     if (dialog && !dialog.open) dialog.showModal();
   }, []);
 
-  const run = async () => {
+  const submit = async () => {
     setBusy(true);
     setError(null);
-    const result = await operate(path);
-    if (result?.ok) {
+    const problem = await run();
+    if (problem === null) {
       onClose();
       return;
     }
     setBusy(false);
-    setError(operationError(t, result));
+    setError(problem);
   };
 
   return (
     <dialog
       ref={ref}
-      className="dialog"
+      className={wide ? "dialog wide" : "dialog"}
       aria-labelledby="dialog-title"
       onClose={onClose}
       onClick={(e) => {
@@ -83,8 +99,8 @@ export function ConfirmDialog({
         <button
           type="button"
           className={danger ? "button danger" : "button primary"}
-          disabled={busy}
-          onClick={() => void run()}
+          disabled={busy || disabled}
+          onClick={() => void submit()}
         >
           {confirm}
         </button>

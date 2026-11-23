@@ -347,3 +347,73 @@ export type OperationResult =
         | "invalid_config"; // 設定に誤りがあって、起動し直せない
       detail: string;
     };
+
+// ---------- 設定
+
+/** フォームで変えられる設定の値。項目の名前は .tasuki/config.yaml と同じ */
+export interface SettingsValues {
+  /** 数として読めない入力は null */
+  poll_interval: number | null;
+  limits: { agents: number | null };
+  language: string;
+  merge: {
+    spec: string;
+    design: string;
+    implementation: string;
+    require_ci: boolean;
+  };
+  discord: {
+    channels: { requirements: string; questions: string; notices: string };
+    allowed_users: string[];
+  };
+  paths: { specs: string; design: string; design_system: string };
+  /** プロダクトの情報の置き場。種類ごとのパスの一覧 */
+  knowledge: Record<string, string[]>;
+  workspace: { setup: string[]; setup_on_change: string[] };
+  /** 役ごとのモデル。空欄は既定のモデル */
+  agents: Record<Role, string>;
+}
+
+/** 入力の誤り。path は項目（例: limits.agents）。全体についてのものは空 */
+export interface SettingsProblem {
+  path: string;
+  message: string;
+}
+
+export type DiffLine =
+  { kind: "same" | "add" | "remove"; text: string } | { kind: "gap" };
+
+export interface SettingsData {
+  repo: string;
+  /** 設定ファイルの場所 */
+  file: string;
+  /** 既定のブランチ */
+  branch: string;
+  /** 既定のブランチにある設定ファイルの印。読めなければ null */
+  sha: string | null;
+  /** 既定のブランチにある設定。読めないか、誤りがあれば null */
+  values: SettingsValues | null;
+  /** 省略したときの値 */
+  defaults: SettingsValues;
+  /** 読めなかった理由。ファイルが無いときは not_found */
+  error: string | null;
+  /** Discord のトークンが環境変数に入っているか（値は返さない） */
+  tokenSet: boolean;
+  /** 既定のブランチの設定が、いま動いている設定と違うか */
+  differsFromRunning: boolean;
+}
+
+export interface SettingsPreview {
+  problems: SettingsProblem[];
+  /** 変えた項目 */
+  changed: string[];
+  diff: DiffLine[];
+}
+
+export type SettingsSaveResult =
+  | { ok: true; number: number; url: string }
+  | {
+      ok: false;
+      reason: "invalid" | "conflict" | "unchanged" | "failed";
+      detail: string;
+    };

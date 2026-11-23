@@ -17,6 +17,7 @@ import { Activity } from "./pages/Activity.js";
 import { Product, Questions, System } from "./pages/Others.js";
 import { PullRequestPage, PullRequests } from "./pages/PullRequests.js";
 import { Requirements } from "./pages/Requirements.js";
+import { Settings } from "./pages/Settings.js";
 import { type Page, pathOf, type Route, routeOf } from "./routes.js";
 
 function Screen({
@@ -50,6 +51,8 @@ function Screen({
       return <Questions t={t} />;
     case "product":
       return <Product t={t} />;
+    case "settings":
+      return <Settings t={t} />;
     case "system":
       return <System t={t} />;
     default:
