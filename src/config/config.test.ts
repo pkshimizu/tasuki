@@ -69,6 +69,25 @@ describe("parseConfig", () => {
     ).toHaveLength(1);
   });
 
+  it("管理画面は既定で配信し、ポートを変えられる", () => {
+    expect(parseConfig(MINIMAL_CONFIG).admin).toEqual({
+      enabled: true,
+      port: 4680,
+    });
+    const c = parseConfig(
+      `${MINIMAL_CONFIG}admin:
+  enabled: false
+  port: 5000
+`,
+    );
+    expect(c.admin).toEqual({ enabled: false, port: 5000 });
+    expect(
+      problems(`${MINIMAL_CONFIG}admin:
+  port: 80
+`),
+    ).toHaveLength(1);
+  });
+
   it("作業フォルダの準備コマンドを読む", () => {
     expect(parseConfig(MINIMAL_CONFIG).workspace).toEqual({
       setup: [],

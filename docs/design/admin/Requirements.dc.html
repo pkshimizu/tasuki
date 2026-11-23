@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>Tasuki — 要件</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Noto+Sans+JP:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div style="{{vars}} display: flex; flex-wrap: wrap; min-height: 100vh; background: var(--bg); color: var(--text); font-family: Inter, 'Noto Sans JP', system-ui, sans-serif; font-size: 14px; line-height: 1.5">
+  <div style="flex: 0 0 232px; background: var(--panel); border-right: 1px solid var(--line)">
+    <dc-import name="Sidebar" active="requirements" theme="{{theme}}" lang="ja" hint-size="232px,720px"></dc-import>
+  </div>
+  <div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+    <dc-import name="AppHeader" theme="{{theme}}" lang="ja" status="running" hint-size="100%,56px"></dc-import>
+    <main style="box-sizing: border-box; width: 100%; max-width: 1240px; padding: 28px 32px 64px; display: flex; flex-direction: column; gap: 24px">
+      <div style="display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap">
+        <h1 style="margin: 0; font-size: 22px; font-weight: 650; letter-spacing: -0.01em">要件</h1>
+        <span style="font-size: 13px; color: var(--faint)">Discord の要件チャンネルに投稿されたもの</span>
+      </div>
+      <div style="display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start">
+        <!-- 一覧 -->
+        <section aria-label="要件の一覧" style="flex: 1 1 300px; max-width: 360px; min-width: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow: hidden">
+          <div style="display: flex; align-items: center; gap: 8px; padding: 12px; border-bottom: 1px solid var(--line2)">
+            <div role="group" aria-label="状態で絞り込み" style="display: inline-flex; padding: 2px; border-radius: 8px; background: var(--sub); border: 1px solid var(--line)">
+              <button type="button" aria-pressed="false" style="height: 26px; padding: 0 10px; border: none; border-radius: 6px; background: transparent; color: var(--muted); font: inherit; font-size: 12.5px">すべて 3</button>
+              <button type="button" aria-pressed="true" style="height: 26px; padding: 0 10px; border: none; border-radius: 6px; background: var(--panel); color: var(--text); font: inherit; font-size: 12.5px; font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,.08)">進行中 1</button>
+              <button type="button" aria-pressed="false" style="height: 26px; padding: 0 10px; border: none; border-radius: 6px; background: transparent; color: var(--muted); font: inherit; font-size: 12.5px">完了 2</button>
+            </div>
+          </div>
+          <sc-for list="{{reqs}}" as="r" hint-placeholder-count="3">
+            <a href="Requirements.dc.html" aria-current="{{r.current}}" style="{{r.style}} display: flex; flex-direction: column; gap: 8px; padding: 14px 16px; color: var(--text); text-decoration: none; border-bottom: 1px solid var(--line2)">
+              <span style="font-size: 13.5px; line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden">{{r.text}}</span>
+              <span style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 12px; color: var(--faint)">
+                <span style="{{r.state.style}} display: inline-flex; align-items: center; gap: 6px; height: 22px; padding: 0 8px; border-radius: 11px; font-size: 12px; font-weight: 550; white-space: nowrap"><sc-if value="{{r.state.dot}}" hint-placeholder-val="{{ false }}"><span style="width: 6px; height: 6px; border-radius: 3px; background: currentColor"></span></sc-if>{{r.state.label}}</span>
+                <span>{{r.by}}</span><span aria-hidden="true">·</span><span>{{r.at}}</span>
+              </span>
+            </a>
+          </sc-for>
+        </section>
+
+        <!-- 詳細 -->
+        <div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 24px">
+          <section aria-labelledby="rqd" style="background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 20px 22px; display: flex; flex-direction: column; gap: 14px">
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap">
+              <span style="display: inline-flex; align-items: center; gap: 6px; height: 22px; padding: 0 8px; border-radius: 11px; font-size: 12px; font-weight: 550; color: var(--ok); background: var(--okSoft)"><span style="width: 6px; height: 6px; border-radius: 3px; background: currentColor"></span>進行中</span>
+              <span style="font-size: 12.5px; color: var(--muted)">kenji.shimizu · 今日 16:52（1 時間前）</span>
+              <a href="#" style="margin-left: auto; display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 11px; border-radius: 8px; border: 1px solid var(--line); color: var(--text); font-size: 12.5px; font-weight: 550; text-decoration: none">Discord の投稿を開く<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"></path></svg></a>
+            </div>
+            <h2 id="rqd" style="margin: 0; font-size: 17px; font-weight: 600; line-height: 1.65; text-wrap: pretty">カードを一枚ずつランダムに表示し、表をクリックしたら裏を表示し、裏を表示したら次のカードをランダムに表示するカードモードを追加する</h2>
+          </section>
+
+          <section aria-labelledby="rel" style="background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow: hidden">
+            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 12px 16px 0">
+              <h3 id="rel" style="margin: 0; font-size: 14px; font-weight: 650">関連するもの</h3>
+              <span style="font-size: 12.5px; color: var(--faint)">{{relSummary}}</span>
+              <label style="margin-left: auto; display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--muted); cursor: pointer"><input type="checkbox" checked="{{showDone}}" onChange="{{toggleDone}}" style="width: 15px; height: 15px; margin: 0; accent-color: var(--accent)">終わったものも表示</label>
+            </div>
+            <div role="tablist" aria-label="種類" style="display: flex; gap: 2px; padding: 0 12px; border-bottom: 1px solid var(--line2); overflow-x: auto">
+              <sc-for list="{{relTabs}}" as="tb" hint-placeholder-count="5">
+                <button type="button" role="tab" aria-selected="{{tb.sel}}" onClick="{{tb.pick}}" style="{{tb.style}} flex: 0 0 auto; display: inline-flex; align-items: center; gap: 7px; height: 40px; padding: 0 10px; border: none; background: transparent; font: inherit; font-size: 13px; cursor: pointer; margin-bottom: -1px; white-space: nowrap">{{tb.label}}<span style="font-size: 12px; color: var(--faint); font-weight: 500; font-variant-numeric: tabular-nums">{{tb.count}}</span><sc-if value="{{tb.need}}" hint-placeholder-val="{{ false }}"><span aria-label="要対応 {{tb.need}} 件" style="display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px; padding: 0 5px; box-sizing: border-box; border-radius: 9px; background: var(--accent); color: var(--onAccent); font-size: 11px; font-weight: 650">{{tb.need}}</span></sc-if></button>
+              </sc-for>
+            </div>
+            <div style="overflow-x: auto">
+              <table style="width: 100%; min-width: 640px; border-collapse: collapse; font-size: 13px">
+                <tbody>
+                  <sc-for list="{{relRows}}" as="i" hint-placeholder-count="8">
+                    <tr style="{{i.rowStyle}} border-bottom: 1px solid var(--line2)">
+                      <td style="padding: 9px 8px 9px 16px; width: 92px; white-space: nowrap"><span style="font-size: 12px; color: var(--muted); display: inline-flex; align-items: center; gap: 6px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{i.d}}"></path></svg>{{i.kind}}</span></td>
+                      <td style="font-family: 'JetBrains Mono', ui-monospace, monospace; padding: 9px 8px; width: 48px; font-size: 12.5px; color: var(--faint); white-space: nowrap">{{i.no}}</td>
+                      <td style="padding: 9px 8px; max-width: 0; width: 100%"><a href="{{i.href}}" style="display: block; color: var(--text); text-decoration: none; font-weight: 550; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{i.title}}</a></td>
+                      <td style="padding: 9px 8px; white-space: nowrap"><span style="{{i.state.style}} display: inline-flex; align-items: center; gap: 6px; height: 22px; padding: 0 8px; border-radius: 11px; font-size: 12px; font-weight: 550; white-space: nowrap"><sc-if value="{{i.state.dot}}" hint-placeholder-val="{{ false }}"><span style="width: 6px; height: 6px; border-radius: 3px; background: currentColor"></span></sc-if>{{i.state.label}}</span></td>
+                      <td style="padding: 9px 16px 9px 8px; white-space: nowrap; text-align: right; font-size: 12px; color: var(--faint)">{{i.at}}</td>
+                    </tr>
+                  </sc-for>
+                </tbody>
+              </table>
+            </div>
+            <sc-if value="{{moreCount}}" hint-placeholder-val="{{ false }}">
+              <button type="button" onClick="{{showMore}}" style="width: 100%; height: 40px; border: none; background: var(--panel); color: var(--muted); font: inherit; font-size: 13px; cursor: pointer">さらに {{moreCount}} 件を表示</button>
+            </sc-if>
+            <sc-if value="{{relEmpty}}" hint-placeholder-val="{{ false }}"><div style="padding: 20px 16px; font-size: 13px; color: var(--faint); text-align: center">この種類のものはまだありません</div></sc-if>
+          </section>
+
+          <section aria-labelledby="prg">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px; flex-wrap: wrap">
+              <h3 id="prg" style="margin: 0; font-size: 14px; font-weight: 650">この要件の経過</h3>
+              <span style="display: flex; gap: 12px; font-size: 12px; color: var(--muted)">
+                <span style="display: inline-flex; align-items: center; gap: 5px"><span style="width: 8px; height: 8px; border-radius: 4px; border: 2px solid var(--faint); box-sizing: border-box"></span>出来事</span>
+                <span style="display: inline-flex; align-items: center; gap: 5px"><span style="width: 8px; height: 8px; border-radius: 4px; background: var(--r-con)"></span>司令塔の判断</span>
+                <span style="display: inline-flex; align-items: center; gap: 5px"><span style="width: 8px; height: 8px; border-radius: 4px; background: var(--r-prog)"></span>エージェントの実行（エージェントの色）</span>
+              </span>
+              <div role="group" aria-label="並び順" style="margin-left: auto; display: inline-flex; padding: 2px; border-radius: 8px; background: var(--sub); border: 1px solid var(--line)">
+                <button type="button" aria-pressed="true" style="height: 26px; padding: 0 10px; border: none; border-radius: 6px; background: var(--panel); color: var(--text); font: inherit; font-size: 12.5px; font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,.08)">新しい順</button>
+                <button type="button" aria-pressed="false" style="height: 26px; padding: 0 10px; border: none; border-radius: 6px; background: transparent; color: var(--muted); font: inherit; font-size: 12.5px">古い順</button>
+              </div>
+            </div>
+            <div tabindex="0" aria-label="この要件の経過（スクロールできます）" style="max-height: 640px; overflow-y: auto; overscroll-behavior: contain; border: 1px solid var(--line); border-radius: 12px; background: var(--bg); padding: 6px 16px 6px 4px">
+<ol style="list-style: none; margin: 0; padding: 0">
+<sc-for list="{{timeline}}" as="e" hint-placeholder-count="5">
+<li style="display: grid; grid-template-columns: 56px 14px minmax(0, 1fr); column-gap: 12px">
+  <div style="padding-top: 15px; display: flex; flex-direction: column; align-items: flex-end; gap: 1px">
+    <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums">{{e.time}}</span>
+    <span style="font-size: 11px; color: var(--faint)">{{e.date}}</span>
+  </div>
+  <div style="position: relative; display: flex; justify-content: center">
+    <span style="{{e.rail}} position: absolute; top: 24px; bottom: -22px; left: 6px; width: 2px"></span>
+    <span style="{{e.mark}} position: relative; margin-top: 19px; width: 10px; height: 10px; border-radius: 6px; box-sizing: border-box"></span>
+  </div>
+  <div style="padding: 6px 0 10px; min-width: 0">
+    <div style="{{e.cardStyle}} border: 1px solid var(--line); border-radius: 10px; padding: 11px 14px; display: flex; flex-direction: column; gap: 7px">
+      <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; min-width: 0">
+        <span style="font-size: 11.5px; font-weight: 600; color: var(--faint); white-space: nowrap">{{e.kind}}</span>
+        <sc-if value="{{e.role}}" hint-placeholder-val="{{ false }}"><span style="{{e.role.style}} display: inline-flex; align-items: center; gap: 5px; height: 22px; padding: 0 8px 0 6px; border-radius: 6px; font-size: 12px; font-weight: 600; white-space: nowrap"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{e.role.d}}"></path></svg>{{e.role.label}}</span></sc-if>
+        <sc-if value="{{e.target}}" hint-placeholder-val="{{ false }}"><span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 12.5px; color: var(--muted); white-space: nowrap">{{e.target}}</span></sc-if>
+        <sc-if value="{{e.state}}" hint-placeholder-val="{{ false }}"><span style="{{e.state.style}} display: inline-flex; align-items: center; gap: 6px; height: 22px; padding: 0 8px; border-radius: 11px; font-size: 12px; font-weight: 550; white-space: nowrap"><sc-if value="{{e.state.dot}}" hint-placeholder-val="{{ false }}"><span style="width: 6px; height: 6px; border-radius: 3px; background: currentColor"></span></sc-if>{{e.state.label}}</span></sc-if>
+        <span style="margin-left: auto; font-size: 12px; color: var(--faint); white-space: nowrap; font-variant-numeric: tabular-nums">{{e.meta}}</span>
+      </div>
+      <div style="font-size: 13.5px; font-weight: 550; line-height: 1.6; text-wrap: pretty">{{e.title}}</div>
+      <sc-if value="{{e.body}}" hint-placeholder-val="{{ false }}"><div style="font-size: 13px; color: var(--muted); line-height: 1.65; text-wrap: pretty">{{e.body}}</div></sc-if>
+      <sc-if value="{{e.hasDirs}}" hint-placeholder-val="{{ false }}"><span style="display: flex; flex-wrap: wrap; gap: 6px">
+<sc-for list="{{e.dirs}}" as="x" hint-placeholder-count="1">
+<span style="display: inline-flex; align-items: center; height: 24px; border-radius: 6px; border: 1px solid var(--line); overflow: hidden; font-size: 12px; max-width: 100%; background: var(--panel)">
+<span style="{{x.labelStyle}} display: inline-flex; align-items: center; gap: 5px; height: 100%; padding: 0 8px; font-weight: 550; white-space: nowrap"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{x.d}}"></path></svg>{{x.label}}</span>
+<span style="{{x.resStyle}} display: inline-flex; align-items: center; height: 100%; padding: 0 8px; border-left: 1px solid var(--line); white-space: nowrap; font-weight: 550">{{x.result}}</span>
+</span>
+</sc-for>
+</span></sc-if>
+      <sc-if value="{{e.md}}" hint-placeholder-val="{{ false }}"><div style="display: flex; flex-direction: column; gap: 8px"><div style="position: relative; max-height: 132px; overflow: hidden; border-radius: 8px; background: var(--bg); border: 1px solid var(--line2); padding: 10px 14px">
+<div style="display: flex; flex-direction: column; gap: 3px; font-size: 13.5px; line-height: 1.75; color: var(--text); text-wrap: pretty">
+<sc-for list="{{e.md}}" as="b" hint-placeholder-count="3"><div style="{{b.style}}"><sc-for list="{{b.segs}}" as="g" hint-placeholder-count="1"><span style="{{g.style}}">{{g.t}}</span></sc-for></div></sc-for>
+</div>
+<div aria-hidden="true" style="position: absolute; left: 0; right: 0; bottom: 0; height: 48px; background: linear-gradient(to bottom, transparent, var(--bg))"></div>
+</div>
+<button type="button" style="align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border-radius: 7px; border: 1px solid var(--line); background: var(--panel); color: var(--muted); font: inherit; font-size: 12.5px; cursor: pointer"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>{{e.mdMore}}</button></div></sc-if>
+    </div>
+  </div>
+</li>
+</sc-for>
+</ol>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 12px; color: var(--faint)"><span>11 件 · 新しいものが上に足されます</span><span>枠の中でスクロールできます</span></div>
+          </section>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"manyRelated":{"editor":"boolean","default":true},"$preview":{"width":1440,"height":1700}}'>
+const THEMES = {
+  light: '--bg:#F7F7F5;--panel:#FFFFFF;--sub:#F3F3F0;--hover:#EDEDE9;--line:#E4E4E0;--line2:#EDEDE9;--text:#18181B;--muted:#5A5A64;--faint:#686871;--accent:#4A52C6;--accentSoft:#EEEFFC;--onAccent:#FFFFFF;--ok:#15754A;--okSoft:#E3F2E9;--warn:#935000;--warnSoft:#FBEFDC;--err:#BA3027;--errSoft:#FBE7E5;--info:#2360BC;--infoSoft:#E7EFFB;--r-con:#4F51C4;--r-spec:#0A7268;--r-plan:#8F5C00;--r-ui:#AB2E76;--r-prog:#2360C0;--r-rev:#AE3D0B;--shadow:0 1px 2px rgba(16,16,20,.04);--pop:0 16px 40px rgba(16,16,20,.16);',
+  dark: '--bg:#0D0D0F;--panel:#151518;--sub:#1C1C20;--hover:#222227;--line:#2A2A30;--line2:#222227;--text:#ECECEF;--muted:#A3A3AD;--faint:#8E8E98;--accent:#959CF5;--accentSoft:rgba(149,156,245,.13);--onAccent:#0D0D0F;--ok:#52C58E;--okSoft:rgba(82,197,142,.12);--warn:#E9A43F;--warnSoft:rgba(233,164,63,.13);--err:#F27C72;--errSoft:rgba(242,124,114,.13);--info:#72A8F6;--infoSoft:rgba(114,168,246,.13);--r-con:#9798F3;--r-spec:#40C7B6;--r-plan:#E2AD40;--r-ui:#EF80C2;--r-prog:#70A8F6;--r-rev:#F38D55;--shadow:0 0 0 transparent;--pop:0 18px 44px rgba(0,0,0,.55);'
+};
+const ROLES = {
+  con: { ja: '司令塔', en: 'Conductor', c: '--r-con', d: 'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18zM15.5 8.5l-2 5-5 2 2-5z' },
+  spec: { ja: '仕様マスター', en: 'Spec Master', c: '--r-spec', d: 'M7 3h7l4 4v14H7zM14 3v4h4M10 12h5M10 16h5' },
+  plan: { ja: 'プランナー', en: 'Planner', c: '--r-plan', d: 'M10 6h10M10 12h10M10 18h10M4 6l1.5 1.5L8 5M4 12l1.5 1.5L8 11M4 18l1.5 1.5L8 17' },
+  ui: { ja: 'UIデザイナー', en: 'UI Designer', c: '--r-ui', d: 'M5 4h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zM3 9h18M9 9v11' },
+  prog: { ja: 'プログラマー', en: 'Programmer', c: '--r-prog', d: 'M8 8l-4 4 4 4M16 8l4 4-4 4M13.5 5l-3 14' },
+  rev: { ja: 'レビュアー', en: 'Reviewer', c: '--r-rev', d: 'M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12zM12 9a3 3 0 1 0 0 6a3 3 0 1 0 0-6z' }
+};
+const role = (k, lang) => { const r = ROLES[k]; return { label: r[lang], d: r.d, style: 'background:color-mix(in srgb,var(' + r.c + ') 13%,transparent);color:var(' + r.c + ');' }; };
+const TONE = { ok: 'color:var(--ok);background:var(--okSoft);', warn: 'color:var(--warn);background:var(--warnSoft);', err: 'color:var(--err);background:var(--errSoft);', neutral: 'color:var(--muted);background:var(--sub);', plain: 'color:var(--muted);background:transparent;' };
+const ICON = {
+  wait: 'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18zM12 7v5l3 2',
+  bell: 'M6 16V11a6 6 0 0 1 12 0v5l2 2H4zM10 20h4',
+  merge: 'M6 3a2 2 0 1 0 0 4a2 2 0 1 0 0-4zM6 7v14M18 13a2 2 0 1 0 0 4a2 2 0 1 0 0-4zM18 13c0-4-3-6-12-6'
+};
+const MONO = "font-family:'JetBrains Mono',ui-monospace,monospace;";
+const chip = (k) => role(k, 'ja');
+const CODE = MONO + 'font-size:.9em;background:var(--sub);border:1px solid var(--line2);padding:0 5px;border-radius:4px;';
+const segs = (l) => l.split('`').map((t, i) => ({ t, style: i % 2 ? CODE : '' }));
+const MD = (src) => src.split('\n').filter((l) => l.trim()).map((l) => {
+  if (l.startsWith('### ')) return { segs: segs(l.slice(4)), style: 'font-weight:650;font-size:13px;margin-top:8px;' };
+  if (/^\d+\. /.test(l)) return { segs: segs(l), style: 'padding-left:2px;' };
+  if (l.startsWith('- ')) return { segs: segs('・' + l.slice(2)), style: 'padding-left:2px;' };
+  if (l.startsWith('> ')) return { segs: segs(l.slice(2)), style: 'color:var(--muted);padding-left:10px;border-left:2px solid var(--line);' };
+  return { segs: segs(l), style: '' };
+});
+const RUNST = {
+  running: { label: '実行中', style: TONE.ok, dot: true },
+  done: { label: '終えた', style: TONE.neutral },
+  asked: { label: '人への質問を返した', style: 'color:var(--accent);background:var(--accentSoft);' },
+  blocked: { label: '進められないと返した', style: TONE.warn },
+  error: { label: 'エラー', style: TONE.err },
+  limit: { label: '利用上限で終わった', style: TONE.warn },
+  aborted: { label: '中断', style: TONE.neutral }
+};
+const st = (k) => ({ ...RUNST[k], dot: !!RUNST[k].dot });
+const launchDir = (k, target, res) => ({ label: ROLES[k].ja + 'を起動（' + target + '）', d: ROLES[k].d, labelStyle: 'color:var(' + ROLES[k].c + ');', result: res || '起動した', resStyle: TONE.ok });
+const DIR = {
+  wait: { label: '待つ', d: ICON.wait, labelStyle: 'color:var(--muted);', result: '待った', resStyle: TONE.plain },
+  notify: { label: 'お知らせ', d: ICON.bell, labelStyle: 'color:var(--muted);', result: '書いた', resStyle: TONE.ok },
+  mergeSkip: (n) => ({ label: 'マージ（' + n + '）', d: ICON.merge, labelStyle: 'color:var(--muted);', result: '見送り', resStyle: TONE.warn })
+};
+const MARK = {
+  event: 'background:var(--panel);border:2px solid var(--faint);',
+  decision: 'background:var(--r-con);border:2px solid var(--r-con);',
+  run: (k) => 'background:var(' + ROLES[k].c + ');border:2px solid var(' + ROLES[k].c + ');'
+};
+const tl = (items) => items.map((x, i) => ({
+  date: '', meta: '', role: false, target: '', state: false, body: '', dirs: [], md: false, mdMore: '', last: i === items.length - 1, cardStyle: 'background:var(--panel);', ...x,
+  hasDirs: !!(x.dirs && x.dirs.length), rail: i === items.length - 1 ? 'background:transparent;' : 'background:var(--line);'
+}));
+
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { relTab: 'all', showDone: true, expanded: false }; }
+  renderVals() {
+    const theme = this.props.theme ?? 'light';
+    const reqs = [
+      { text: 'カードを一枚ずつランダムに表示し、表をクリックしたら裏を表示し、裏を表示したら次のカードをランダムに表示するカードモードを追加する', by: 'kenji.shimizu', at: '1 時間前', state: st('running'), on: true },
+      { text: '単語カードを CSV ファイルから取り込めるようにする', by: 'kenji.shimizu', at: '11/20', state: { label: '完了', style: TONE.neutral, dot: false } },
+      { text: 'クイズモード（/quiz）で間違えたカードだけをもう一度出題する', by: 'kenji.shimizu', at: '11/18', state: { label: '完了', style: TONE.neutral, dot: false } }
+    ].map((r) => ({ ...r, state: r.on ? { label: '進行中', style: TONE.ok, dot: true } : r.state, current: r.on ? 'page' : 'false', style: r.on ? 'background:var(--sub);' : '' }));
+    const S = (label, tone, dot) => ({ label, style: TONE[tone] || tone, dot: !!dot });
+    const NEED = 'color:var(--accent);background:var(--accentSoft);';
+    const K = { q: ['質問', 'M4 5h16v11H9l-5 4z'], spec: ['仕様の PR', ROLES.spec.d], ui: ['デザインの PR', ROLES.ui.d], issue: ['Issue', 'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18zM12 9a3 3 0 1 0 0 6a3 3 0 1 0 0-6z'], impl: ['実装の PR', ROLES.prog.d] };
+    const R = (k, no, title, state, at, opts) => ({ k, no, title, state, at, need: false, done: false, ...(opts || {}) });
+    const many = [
+      R('q', 'Q1', '仕様マスターからの質問（次のカードへ進むきっかけ）', S('返信待ち', NEED, true), '12 分前', { need: true, href: 'Questions.dc.html' }),
+      R('spec', '#19', 'docs: カードモードの仕様を追加する', S('マージ待ち', NEED, true), '8 分前', { need: true, href: 'PRDetail.dc.html' }),
+      R('impl', '#21', 'feat: カードモードを追加する', S('修正待ち', 'warn'), '3 分前', { href: 'PRDetail.dc.html' }),
+      R('impl', '#27', 'feat: カードモードにキーボード操作を足す', S('レビュー中', 'neutral'), '20 分前'),
+      R('issue', '#20', 'カードモードを追加する', S('開いている', 'ok'), '40 分前'),
+      R('issue', '#22', 'カードモードにキーボード操作を足す', S('開いている', 'ok'), '40 分前'),
+      R('issue', '#23', 'カードが 0 枚のときの案内を出す', S('開いている', 'ok'), '40 分前'),
+      R('issue', '#24', '裏返すときのアニメーションを付ける', S('開いている', 'ok'), '40 分前'),
+      R('issue', '#25', 'カードモードの e2e テストを足す', S('開いている', 'ok'), '40 分前'),
+      R('ui', '#26', 'design: カードモードの画面のモックを追加する', S('マージ済み', 'neutral'), '45 分前', { done: true }),
+      R('q', 'Q2', 'UIデザイナーからの質問（カードの大きさ）', S('返信あり', 'neutral'), '50 分前', { done: true }),
+      R('q', 'Q3', '司令塔からの質問（Issue の分け方）', S('返信あり', 'neutral'), '55 分前', { done: true }),
+      R('spec', '#18', 'docs: カードモードの仕様の下書き', S('閉じた', 'neutral'), '1 時間前', { done: true }),
+      R('issue', '#17', 'カードモードの調査', S('閉じた', 'neutral'), '1 時間前', { done: true })
+    ];
+    const few = many.filter((x) => ['Q1', '#19', '#20', '#21'].includes(x.no));
+    const all = (this.props.manyRelated ?? true) ? many : few;
+    const { relTab, showDone, expanded } = this.state;
+    const base = all.filter((x) => showDone || !x.done);
+    const tabDefs = [['all', 'すべて'], ['q', '質問'], ['spec', '仕様の PR'], ['ui', 'デザインの PR'], ['issue', 'Issue'], ['impl', '実装の PR']];
+    const relTabs = tabDefs.map(([id, label]) => { const xs = id === 'all' ? base : base.filter((x) => x.k === id); const need = xs.filter((x) => x.need).length; return { label, count: xs.length, need: need || false, sel: relTab === id ? 'true' : 'false', pick: () => this.setState({ relTab: id, expanded: false }), style: relTab === id ? 'color:var(--text);font-weight:650;border-bottom:2px solid var(--accent);' : 'color:var(--muted);font-weight:500;border-bottom:2px solid transparent;' }; });
+    const shown = (relTab === 'all' ? base : base.filter((x) => x.k === relTab)).slice().sort((a, b) => (b.need - a.need) || (a.done - b.done));
+    const LIMIT = 8;
+    const relRows = (expanded ? shown : shown.slice(0, LIMIT)).map((x) => ({ ...x, kind: K[x.k][0], d: K[x.k][1], href: x.href || '#', rowStyle: x.done ? 'opacity:.6;' : x.need ? 'background:color-mix(in srgb,var(--accent) 4%,var(--panel));' : '' }));
+    const moreCount = expanded ? false : (shown.length > LIMIT ? shown.length - LIMIT : false);
+    const openCount = all.filter((x) => !x.done).length;
+    const relSummary = all.length + ' 件 · 進行中 ' + openCount + ' · 要対応 ' + all.filter((x) => x.need).length;
+    const timeline = tl([
+      { time: '17:51', kind: 'エージェントの実行', mark: MARK.run('rev'), role: chip('rev'), target: 'PR #19', state: st('running'), meta: '1 分経過', title: '仕様の PR #19 を確かめている', cardStyle: 'background:color-mix(in srgb,var(--accent) 4%,var(--panel));' },
+      { time: '17:48', kind: '司令塔の判断', mark: MARK.decision, title: 'PR #19 は approve 済み。マージの設定が human なので人のマージを待つ', dirs: [DIR.mergeSkip('PR #19')], body: '見送りの理由: この工程のマージの設定は human です。人が GitHub でマージするのを待ちます' },
+      { time: '17:45', kind: '司令塔の判断', mark: MARK.decision, title: 'PR #21 は approve 済みだが CI の e2e が実行中', dirs: [DIR.wait] },
+      { time: '17:40', kind: '出来事', mark: MARK.event, target: 'PR #21', title: 'CI の結果: e2e が実行を始めた' },
+      { time: '17:38', kind: 'エージェントの実行', mark: MARK.run('prog'), role: chip('prog'), target: 'Issue #20', state: st('done'), meta: '5 分 52 秒', title: '実装して PR #21 を作った', body: '手元で format・lint・typecheck・test（72 件）・build・受け入れテスト（44 件）が合格' },
+      { time: '17:20', kind: 'エージェントの実行', mark: MARK.run('plan'), role: chip('plan'), target: 'リポジトリ全体', state: st('done'), meta: '2 分 7 秒', title: 'Issue #20 を 1 件作った' },
+      { time: '17:14', kind: '司令塔の判断', mark: MARK.decision, title: 'PR #19 は仕様マスターが修正中。終了を待ってから再レビューを判断する', dirs: [DIR.wait] },
+      { time: '17:12', kind: 'エージェントの実行', mark: MARK.run('rev'), role: chip('rev'), target: 'PR #19', state: st('done'), meta: '2 分 19 秒', title: '判定 request_changes · 指摘 major 3' },
+      { time: '17:10', kind: '司令塔の判断', mark: MARK.decision, title: '仕様マスターが仕様の PR #19 を作って終えた。レビュアーに確認を指示する', dirs: [launchDir('rev', 'PR #19'), DIR.notify],
+        md: MD('### 判断の理由\n仕様マスターは人に質問せずに `docs/specs/flashcards.md` を書き、決めた点が 6 つ ある。\n- 次のカードへ進むきっかけ\n- ランダムの決め方（直前と同じカードを出さない）\n- カードが 1 枚しかないときの表示\n人がマージを判断しやすいよう、レビュアーに 6 点の確認を指示する。\n### お知らせ\n仕様の PR #19 を作りました。レビューのあと、マージをお願いします。'), mdMore: 'すべて表示（12 行）' },
+      { time: '17:08', kind: 'エージェントの実行', mark: MARK.run('spec'), role: chip('spec'), target: '要件', state: st('done'), meta: '2 分 5 秒', title: 'カードモードの仕様を docs/specs/flashcards.md に書き、PR #19 を作成した', body: '人への質問は無し。質問せずに決めたこと: 1. 次のカードへ進むきっかけ… 2. ランダムの決め方…' },
+      { time: '16:52', kind: '出来事', mark: MARK.event, target: '要件', title: '新しい要件が投稿された（kenji.shimizu）' }
+    ]);
+    return { vars: THEMES[theme], theme, reqs, relTabs, relRows, moreCount, relSummary, relEmpty: shown.length === 0, showDone, toggleDone: () => this.setState({ showDone: !showDone, expanded: false }), showMore: () => this.setState({ expanded: true }), timeline };
+  }
+}
+
+</script>
+</body>
+</html>

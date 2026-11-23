@@ -22,7 +22,8 @@ import {
 } from "../integrations/github.js";
 import { reviewState } from "../domain/review.js";
 import type { RunStatus } from "../domain/types.js";
-import type { Store } from "../store/store.js";
+import { type Clock, type Store, systemClock } from "../store/store.js";
+import type { MonitorSnapshot } from "../admin/dashboard.js";
 
 export interface MonitorDeps {
   loaded: LoadedConfig;
@@ -34,6 +35,9 @@ export interface MonitorDeps {
   knowledge: KnowledgeProvider;
   log: (text: string) => void;
   sleep?: (ms: number, signal: AbortSignal) => Promise<void>;
+  clock?: Clock;
+  /** 管理画面に出す内容が変わったときに呼ぶ */
+  onChange?: () => void;
 }
 
 const RECENT_RUNS = 15;
@@ -90,8 +94,30 @@ export class Monitor {
   private wake = new AbortController();
   /** 確認の途中で起こされたら、次の待ちを飛ばす */
   private woken = false;
+  /** 管理画面に出す、今の様子 */
+  private readonly state: MonitorSnapshot = {
+    lastCheckAt: null,
+    nextCheckAt: null,
+    dispatching: false,
+    stopped: false,
+    dispatcherFailures: 0,
+    lastDispatchError: null,
+    github: null,
+  };
 
   constructor(private readonly deps: MonitorDeps) {}
+
+  snapshot(): MonitorSnapshot {
+    return { ...this.state };
+  }
+
+  private now(): Date {
+    return (this.deps.clock ?? systemClock).now();
+  }
+
+  private changed(): void {
+    this.deps.onChange?.();
+  }
 
   /** エージェントが終わったときなどに、次の確認を待たずに進める */
   wakeUp(): void {
@@ -163,6 +189,14 @@ export class Monitor {
     const collected = await collector.collect();
     executor.checkLimit();
     if (collected.github) await executor.cleanup(collected.github);
+    this.state.lastCheckAt = this.now().toISOString();
+    if (collected.github) {
+      this.state.github = {
+        issues: collected.github.issues,
+        pullRequests: this.situation(collected.github).pullRequests,
+      };
+    }
+    this.changed();
 
     const events = store.pendingEvents();
     if (events.length === 0) return;
@@ -175,13 +209,20 @@ export class Monitor {
     }
 
     log(`新しい出来事 ${String(events.length)} 件。司令塔に判断を頼みます`);
-    const outcome = await dispatch(this.deps.runAgent, {
-      loaded,
-      defaultBranch,
-      events,
-      situation: this.situation(collected.github),
-      knowledge: await this.deps.knowledge.load(),
-    });
+    this.state.dispatching = true;
+    this.changed();
+    let outcome;
+    try {
+      outcome = await dispatch(this.deps.runAgent, {
+        loaded,
+        defaultBranch,
+        events,
+        situation: this.situation(collected.github),
+        knowledge: await this.deps.knowledge.load(),
+      });
+    } finally {
+      this.state.dispatching = false;
+    }
 
     if (outcome.kind === "limit") {
       // 出来事は残したまま、回復を待つ
@@ -193,6 +234,8 @@ export class Monitor {
       return;
     }
     this.failures = 0;
+    this.state.dispatcherFailures = 0;
+    this.state.lastDispatchError = null;
 
     const { reasoning, actions } = outcome.output;
     log(`司令塔: ${actions.map(describeAction).join("、") || "指示なし"}`);
@@ -209,12 +252,16 @@ export class Monitor {
       reasoning,
       actions: actions.map((a, i) => compact(a, results[i] ?? "")),
     });
+    this.changed();
   }
 
   /** 司令塔の実行が失敗した。出来事は残し、間隔を空けてやり直す */
   private async dispatchFailed(message: string): Promise<void> {
     const { log, chat } = this.deps;
     this.failures++;
+    this.state.dispatcherFailures = this.failures;
+    this.state.lastDispatchError = message;
+    this.changed();
     this.skipTicks = Math.min(2 ** (this.failures - 1) - 1, MAX_BACKOFF_TICKS);
     log(
       `司令塔の実行に失敗しました（${String(this.failures)} 回目。${String(this.skipTicks)} 回の確認を空けてやり直します）: ${message}`,
@@ -253,10 +300,17 @@ export class Monitor {
         this.woken = false;
         continue;
       }
+      this.state.nextCheckAt = new Date(
+        this.now().getTime() + loaded.config.poll_interval * 1000,
+      ).toISOString();
+      this.changed();
       await sleep(loaded.config.poll_interval * 1000, this.wake.signal);
       this.woken = false;
     }
 
+    this.state.stopped = true;
+    this.state.nextCheckAt = null;
+    this.changed();
     if (executor.runningCount > 0) {
       log(
         `動いているエージェント ${String(executor.runningCount)} 件の終了を待っています（もう一度 Ctrl+C で中断します）`,

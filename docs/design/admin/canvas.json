@@ -1,0 +1,224 @@
+{
+  "v": 3,
+  "attachments": {},
+  "boards": {
+    "Activity.dc.html": {
+      "expand": "fill",
+      "h": 1600,
+      "is_interactive": true,
+      "page": "screens",
+      "title": "活動の履歴",
+      "w": 1440,
+      "x": 3040,
+      "y": 2120
+    },
+    "AppHeader.dc.html": {
+      "h": 56,
+      "page": "parts",
+      "title": "部品: 画面ヘッダー",
+      "w": 1208,
+      "x": 3352,
+      "y": 0
+    },
+    "Components.dc.html": {
+      "h": 2200,
+      "page": "parts",
+      "title": "部品と色分け",
+      "w": 1440,
+      "x": 0,
+      "y": 0
+    },
+    "DashboardDark.dc.html": {
+      "expand": "fill",
+      "h": 1700,
+      "page": "screens",
+      "title": "ダッシュボード（ダーク）",
+      "w": 1440,
+      "x": 1520,
+      "y": 0
+    },
+    "DashboardEn.dc.html": {
+      "expand": "fill",
+      "h": 1700,
+      "page": "screens",
+      "title": "Dashboard（English）",
+      "w": 1440,
+      "x": 3040,
+      "y": 0
+    },
+    "Dialogs.dc.html": {
+      "h": 1200,
+      "page": "parts",
+      "title": "ダイアログと知らせ",
+      "w": 1440,
+      "x": 1520,
+      "y": 0
+    },
+    "Main.dc.html": {
+      "expand": "fill",
+      "h": 1700,
+      "page": "screens",
+      "title": "ダッシュボード",
+      "w": 1440,
+      "x": 0,
+      "y": 0
+    },
+    "PRDetail.dc.html": {
+      "expand": "fill",
+      "h": 2000,
+      "page": "screens",
+      "title": "PR とレビュー（PR #21）",
+      "w": 1440,
+      "x": 1520,
+      "y": 4140
+    },
+    "PRs.dc.html": {
+      "expand": "fill",
+      "h": 1000,
+      "page": "screens",
+      "title": "PR とレビュー（一覧）",
+      "w": 1440,
+      "x": 0,
+      "y": 4140
+    },
+    "Product.dc.html": {
+      "expand": "fill",
+      "h": 1400,
+      "is_interactive": true,
+      "page": "screens",
+      "title": "プロダクトの情報",
+      "w": 1440,
+      "x": 0,
+      "y": 6560
+    },
+    "Questions.dc.html": {
+      "expand": "fill",
+      "h": 1100,
+      "page": "screens",
+      "title": "質問",
+      "w": 1440,
+      "x": 1520,
+      "y": 2120
+    },
+    "Requirements.dc.html": {
+      "expand": "fill",
+      "h": 1700,
+      "is_interactive": true,
+      "page": "screens",
+      "title": "要件",
+      "w": 1440,
+      "x": 0,
+      "y": 2120
+    },
+    "Settings.dc.html": {
+      "expand": "fill",
+      "h": 3534,
+      "page": "screens",
+      "title": "設定",
+      "w": 1440,
+      "x": 1520,
+      "y": 6560
+    },
+    "Sidebar.dc.html": {
+      "h": 760,
+      "page": "parts",
+      "title": "部品: 左のメニュー",
+      "w": 232,
+      "x": 3040,
+      "y": 0
+    },
+    "System.dc.html": {
+      "expand": "fill",
+      "h": 1400,
+      "page": "screens",
+      "title": "システム",
+      "w": 1440,
+      "x": 3040,
+      "y": 6560
+    }
+  },
+  "createdOnFiles": {
+    "at": "2026-11-23T12:26:24Z",
+    "v": 1
+  },
+  "designSystems": [],
+  "launch": {
+    "page": "screens",
+    "view": "canvas"
+  },
+  "notes": {
+    "t1": {
+      "kind": "title1",
+      "maxW": 4480,
+      "page": "screens",
+      "text": "ダッシュボード — ライト／ダーク／English",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    },
+    "t2": {
+      "kind": "title1",
+      "maxW": 4480,
+      "page": "screens",
+      "text": "要件・質問・活動の履歴",
+      "w": 240,
+      "x": 0,
+      "y": 1820
+    },
+    "t3": {
+      "kind": "title1",
+      "maxW": 2960,
+      "page": "screens",
+      "text": "PR とレビュー",
+      "w": 240,
+      "x": 0,
+      "y": 3840
+    },
+    "t4": {
+      "kind": "title1",
+      "maxW": 4480,
+      "page": "screens",
+      "text": "プロダクトの情報・設定・システム",
+      "w": 240,
+      "x": 0,
+      "y": 6260
+    },
+    "t5": {
+      "kind": "title1",
+      "maxW": 4560,
+      "page": "parts",
+      "text": "部品・色分け・ダイアログ",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    }
+  },
+  "order": [
+    "Sidebar.dc.html",
+    "AppHeader.dc.html",
+    "Components.dc.html",
+    "Dialogs.dc.html",
+    "Main.dc.html",
+    "DashboardDark.dc.html",
+    "DashboardEn.dc.html",
+    "Requirements.dc.html",
+    "Questions.dc.html",
+    "Activity.dc.html",
+    "PRs.dc.html",
+    "PRDetail.dc.html",
+    "Product.dc.html",
+    "Settings.dc.html",
+    "System.dc.html"
+  ],
+  "pages": [
+    {
+      "id": "screens",
+      "name": "画面"
+    },
+    {
+      "id": "parts",
+      "name": "部品と状態"
+    }
+  ],
+  "title": "Tasuki 管理画面"
+}

@@ -1,4 +1,3 @@
-import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { parseArgs } from "node:util";
 import { ConfigError, discordToken, loadConfig } from "../config/config.js";
@@ -10,6 +9,7 @@ import {
 import { init } from "./init.js";
 import { consoleOutput, type Output } from "./output.js";
 import { start } from "./start.js";
+import { version } from "./version.js";
 
 export const HELP = `使い方: tasuki <コマンド> [オプション]
 
@@ -21,13 +21,6 @@ export const HELP = `使い方: tasuki <コマンド> [オプション]
 オプション:
   -h, --help     この説明を表示する
   -v, --version  バージョンを表示する`;
-
-export function version(): string {
-  // src/cli（テスト）と dist/cli（ビルド後）のどちらから呼んでも 2 つ上が package.json
-  const url = new URL("../../package.json", import.meta.url);
-  const pkg = JSON.parse(readFileSync(url, "utf8")) as { version: string };
-  return pkg.version;
-}
 
 /** CLI の入口。終了コードを返す */
 export async function main(

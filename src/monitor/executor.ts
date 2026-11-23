@@ -7,6 +7,7 @@
 import type { RunAgent } from "../agents/agent.js";
 import { type LoadedConfig, ROLE_LABELS } from "../config/config.js";
 import type { Action } from "../dispatcher/dispatcher.js";
+import type { ExecutorSnapshot } from "../admin/dashboard.js";
 import type { KnowledgeProvider } from "../knowledge/knowledge.js";
 import type { Chat } from "../integrations/discord.js";
 import {
@@ -53,6 +54,8 @@ export interface ExecutorDeps {
   clock?: Clock;
   /** エージェントが終わったときに呼ぶ（次の確認を早めるため） */
   onFinish?: () => void;
+  /** エージェントの起動・終了など、管理画面に出す内容が変わったときに呼ぶ */
+  onChange?: () => void;
 }
 
 /** 利用上限の回復時刻が分からないときに待つ時間 */
@@ -80,6 +83,20 @@ export class Executor {
 
   constructor(private readonly deps: ExecutorDeps) {
     this.clock = deps.clock ?? systemClock;
+  }
+
+  /** 管理画面に出す、今の様子 */
+  snapshot(): ExecutorSnapshot {
+    return {
+      agents: [...this.running.values()].map((r) => ({
+        runId: r.runId,
+        role: r.role,
+        target: r.target,
+        cwd: r.cwd ?? null,
+      })),
+      limitUntil: this.limitUntil?.toISOString() ?? null,
+      dirtyWorktrees: [...this.keptDirty],
+    };
   }
 
   get runningCount(): number {
@@ -165,6 +182,7 @@ export class Executor {
           title: action.title,
           body: action.question,
           target: action.target,
+          origin: "dispatcher",
         });
         return "質問チャンネルに投稿した";
       }
@@ -244,10 +262,12 @@ export class Executor {
     entry.done = this.work(entry, instruction).finally(() => {
       this.running.delete(runId);
       this.deps.onFinish?.();
+      this.deps.onChange?.();
     });
     this.deps.log(
       `${ROLE_LABELS[role]}を起動しました（${targetLabel(target)}、実行 ${String(runId)}）`,
     );
+    this.deps.onChange?.();
     return `起動した（実行 ${String(runId)}）`;
   }
 
@@ -412,7 +432,13 @@ export class Executor {
     const body = `${questions.join("\n\n")}\n\n---\n${summary}`;
     try {
       const threadId = await chat.createQuestionThread(title, body);
-      store.addQuestion({ threadId, title, body, target: entry.target });
+      store.addQuestion({
+        threadId,
+        title,
+        body,
+        target: entry.target,
+        origin: entry.role,
+      });
     } catch (e) {
       // 投稿できなくても質問は出来事に残るので、司令塔が ask_human で出し直せる
       this.deps.log(

@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>Tasuki — プロダクトの情報</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Noto+Sans+JP:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div style="{{vars}} display: flex; flex-wrap: wrap; min-height: 100vh; background: var(--bg); color: var(--text); font-family: Inter, 'Noto Sans JP', system-ui, sans-serif; font-size: 14px; line-height: 1.5">
+  <div style="flex: 0 0 232px; background: var(--panel); border-right: 1px solid var(--line)">
+    <dc-import name="Sidebar" active="product" theme="{{theme}}" lang="ja" hint-size="232px,720px"></dc-import>
+  </div>
+  <div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+    <dc-import name="AppHeader" theme="{{theme}}" lang="ja" status="running" hint-size="100%,56px"></dc-import>
+    <main style="box-sizing: border-box; width: 100%; max-width: 1240px; padding: 28px 32px 64px; display: flex; flex-direction: column; gap: 24px">
+      <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap">
+        <h1 style="margin: 0; font-size: 22px; font-weight: 650; letter-spacing: -0.01em">プロダクトの情報</h1>
+        <span style="font-size: 13px; color: var(--faint)">エージェントに渡している文書（見るだけ。直すときはリポジトリの PR で）</span>
+        <span style="margin-left: auto; font-size: 12px; color: var(--faint)">コミット <span style="font-family: 'JetBrains Mono', ui-monospace, monospace;">a41c9e2</span> · 今日 17:52 に読み込み</span>
+      </div>
+      <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap">
+        <div role="group" aria-label="見方" style="display: inline-flex; padding: 2px; border-radius: 8px; background: var(--sub); border: 1px solid var(--line)">
+          <sc-for list="{{modes}}" as="m" hint-placeholder-count="2"><button type="button" aria-pressed="{{m.on}}" onClick="{{m.pick}}" style="{{m.style}} height: 28px; padding: 0 12px; border: none; border-radius: 6px; font: inherit; font-size: 13px; cursor: pointer">{{m.label}}</button></sc-for>
+        </div>
+        <sc-if value="{{byRole}}" hint-placeholder-val="{{ false }}">
+          <div role="group" aria-label="エージェント" style="display: flex; gap: 6px; flex-wrap: wrap">
+            <sc-for list="{{rolePick}}" as="r" hint-placeholder-count="6"><button type="button" aria-pressed="{{r.on}}" onClick="{{r.pick}}" style="{{r.btn}} display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 10px; border-radius: 8px; font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{r.d}}"></path></svg>{{r.label}}</button></sc-for>
+          </div>
+        </sc-if>
+      </div>
+
+      <div style="display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start">
+        <div style="flex: 1 1 380px; max-width: 480px; min-width: 0; display: flex; flex-direction: column; gap: 10px">
+          <sc-if value="{{byRole}}" hint-placeholder-val="{{ false }}">
+            <div style="display: flex; align-items: baseline; gap: 10px; padding: 14px 16px; border-radius: 12px; background: var(--panel); border: 1px solid var(--line)">
+              <span style="font-size: 13px; color: var(--muted)">{{roleSum.label}}に渡る文書</span>
+              <span style="margin-left: auto; font-size: 20px; font-weight: 650; font-variant-numeric: tabular-nums">{{roleSum.count}} 件</span>
+            </div>
+          </sc-if>
+          <sc-for list="{{kinds}}" as="k" hint-placeholder-count="9">
+            <div style="background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px">
+              <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap">
+                <span style="font-size: 13.5px; font-weight: 650">{{k.name}}</span>
+                <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 12px; color: var(--faint)">{{k.path}}</span>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 2px">
+                <sc-for list="{{k.files}}" as="f" hint-placeholder-count="1">
+                  <button type="button" onClick="{{f.pick}}" aria-pressed="{{f.on}}" style="{{f.style}} display: flex; align-items: center; gap: 8px; height: 32px; padding: 0 8px; border: none; border-radius: 7px; font: inherit; text-align: left; cursor: pointer">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3h7l4 4v14H7zM14 3v4h4"></path></svg>
+                    <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; flex: 1; min-width: 0; font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{f.path}}</span>
+                  </button>
+                </sc-for>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+
+        <article aria-labelledby="docv" style="flex: 999 1 480px; min-width: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow: hidden">
+          <div style="display: flex; align-items: center; gap: 10px; padding: 12px 18px; border-bottom: 1px solid var(--line2); background: var(--sub); flex-wrap: wrap">
+            <h2 id="docv" style="font-family: 'JetBrains Mono', ui-monospace, monospace; margin: 0; font-size: 13px; font-weight: 600">{{doc.path}}</h2>
+            <span style="font-size: 12px; color: var(--faint)">{{doc.kind}}</span>
+            <a href="#" style="margin-left: auto; font-size: 12.5px; color: var(--muted); text-decoration: none; display: inline-flex; align-items: center; gap: 5px">GitHub で見る<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"></path></svg></a>
+          </div>
+          <div style="padding: 18px 24px 24px"><div style="display: flex; flex-direction: column; gap: 3px; font-size: 13.5px; line-height: 1.75; color: var(--text); text-wrap: pretty">
+<sc-for list="{{doc.md}}" as="b" hint-placeholder-count="3"><div style="{{b.style}}"><sc-for list="{{b.segs}}" as="g" hint-placeholder-count="1"><span style="{{g.style}}">{{g.t}}</span></sc-for></div></sc-for>
+</div></div>
+        </article>
+      </div>
+
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1440,"height":1400}}'>
+const THEMES = {
+  light: '--bg:#F7F7F5;--panel:#FFFFFF;--sub:#F3F3F0;--hover:#EDEDE9;--line:#E4E4E0;--line2:#EDEDE9;--text:#18181B;--muted:#5A5A64;--faint:#686871;--accent:#4A52C6;--accentSoft:#EEEFFC;--onAccent:#FFFFFF;--ok:#15754A;--okSoft:#E3F2E9;--warn:#935000;--warnSoft:#FBEFDC;--err:#BA3027;--errSoft:#FBE7E5;--info:#2360BC;--infoSoft:#E7EFFB;--r-con:#4F51C4;--r-spec:#0A7268;--r-plan:#8F5C00;--r-ui:#AB2E76;--r-prog:#2360C0;--r-rev:#AE3D0B;--shadow:0 1px 2px rgba(16,16,20,.04);--pop:0 16px 40px rgba(16,16,20,.16);',
+  dark: '--bg:#0D0D0F;--panel:#151518;--sub:#1C1C20;--hover:#222227;--line:#2A2A30;--line2:#222227;--text:#ECECEF;--muted:#A3A3AD;--faint:#8E8E98;--accent:#959CF5;--accentSoft:rgba(149,156,245,.13);--onAccent:#0D0D0F;--ok:#52C58E;--okSoft:rgba(82,197,142,.12);--warn:#E9A43F;--warnSoft:rgba(233,164,63,.13);--err:#F27C72;--errSoft:rgba(242,124,114,.13);--info:#72A8F6;--infoSoft:rgba(114,168,246,.13);--r-con:#9798F3;--r-spec:#40C7B6;--r-plan:#E2AD40;--r-ui:#EF80C2;--r-prog:#70A8F6;--r-rev:#F38D55;--shadow:0 0 0 transparent;--pop:0 18px 44px rgba(0,0,0,.55);'
+};
+const ROLES = {
+  con: { ja: '司令塔', en: 'Conductor', c: '--r-con', d: 'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18zM15.5 8.5l-2 5-5 2 2-5z' },
+  spec: { ja: '仕様マスター', en: 'Spec Master', c: '--r-spec', d: 'M7 3h7l4 4v14H7zM14 3v4h4M10 12h5M10 16h5' },
+  plan: { ja: 'プランナー', en: 'Planner', c: '--r-plan', d: 'M10 6h10M10 12h10M10 18h10M4 6l1.5 1.5L8 5M4 12l1.5 1.5L8 11M4 18l1.5 1.5L8 17' },
+  ui: { ja: 'UIデザイナー', en: 'UI Designer', c: '--r-ui', d: 'M5 4h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zM3 9h18M9 9v11' },
+  prog: { ja: 'プログラマー', en: 'Programmer', c: '--r-prog', d: 'M8 8l-4 4 4 4M16 8l4 4-4 4M13.5 5l-3 14' },
+  rev: { ja: 'レビュアー', en: 'Reviewer', c: '--r-rev', d: 'M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12zM12 9a3 3 0 1 0 0 6a3 3 0 1 0 0-6z' }
+};
+const role = (k, lang) => { const r = ROLES[k]; return { label: r[lang], d: r.d, style: 'background:color-mix(in srgb,var(' + r.c + ') 13%,transparent);color:var(' + r.c + ');' }; };
+const TONE = { ok: 'color:var(--ok);background:var(--okSoft);', warn: 'color:var(--warn);background:var(--warnSoft);', err: 'color:var(--err);background:var(--errSoft);', neutral: 'color:var(--muted);background:var(--sub);', plain: 'color:var(--muted);background:transparent;' };
+const ICON = {
+  wait: 'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18zM12 7v5l3 2',
+  bell: 'M6 16V11a6 6 0 0 1 12 0v5l2 2H4zM10 20h4',
+  merge: 'M6 3a2 2 0 1 0 0 4a2 2 0 1 0 0-4zM6 7v14M18 13a2 2 0 1 0 0 4a2 2 0 1 0 0-4zM18 13c0-4-3-6-12-6'
+};
+const MONO = "font-family:'JetBrains Mono',ui-monospace,monospace;";
+const chip = (k) => role(k, 'ja');
+const CODE = MONO + 'font-size:.9em;background:var(--sub);border:1px solid var(--line2);padding:0 5px;border-radius:4px;';
+const segs = (l) => l.split('`').map((t, i) => ({ t, style: i % 2 ? CODE : '' }));
+const MD = (src) => src.split('\n').filter((l) => l.trim()).map((l) => {
+  if (l.startsWith('### ')) return { segs: segs(l.slice(4)), style: 'font-weight:650;font-size:13px;margin-top:8px;' };
+  if (/^\d+\. /.test(l)) return { segs: segs(l), style: 'padding-left:2px;' };
+  if (l.startsWith('- ')) return { segs: segs('・' + l.slice(2)), style: 'padding-left:2px;' };
+  if (l.startsWith('> ')) return { segs: segs(l.slice(2)), style: 'color:var(--muted);padding-left:10px;border-left:2px solid var(--line);' };
+  return { segs: segs(l), style: '' };
+});
+const RUNST = {
+  running: { label: '実行中', style: TONE.ok, dot: true },
+  done: { label: '終えた', style: TONE.neutral },
+  asked: { label: '人への質問を返した', style: 'color:var(--accent);background:var(--accentSoft);' },
+  blocked: { label: '進められないと返した', style: TONE.warn },
+  error: { label: 'エラー', style: TONE.err },
+  limit: { label: '利用上限で終わった', style: TONE.warn },
+  aborted: { label: '中断', style: TONE.neutral }
+};
+const st = (k) => ({ ...RUNST[k], dot: !!RUNST[k].dot });
+const launchDir = (k, target, res) => ({ label: ROLES[k].ja + 'を起動（' + target + '）', d: ROLES[k].d, labelStyle: 'color:var(' + ROLES[k].c + ');', result: res || '起動した', resStyle: TONE.ok });
+const DIR = {
+  wait: { label: '待つ', d: ICON.wait, labelStyle: 'color:var(--muted);', result: '待った', resStyle: TONE.plain },
+  notify: { label: 'お知らせ', d: ICON.bell, labelStyle: 'color:var(--muted);', result: '書いた', resStyle: TONE.ok },
+  mergeSkip: (n) => ({ label: 'マージ（' + n + '）', d: ICON.merge, labelStyle: 'color:var(--muted);', result: '見送り', resStyle: TONE.warn })
+};
+const MARK = {
+  event: 'background:var(--panel);border:2px solid var(--faint);',
+  decision: 'background:var(--r-con);border:2px solid var(--r-con);',
+  run: (k) => 'background:var(' + ROLES[k].c + ');border:2px solid var(' + ROLES[k].c + ');'
+};
+const tl = (items) => items.map((x, i) => ({
+  date: '', meta: '', role: false, target: '', state: false, body: '', dirs: [], md: false, mdMore: '', last: i === items.length - 1, cardStyle: 'background:var(--panel);', ...x,
+  hasDirs: !!(x.dirs && x.dirs.length), rail: i === items.length - 1 ? 'background:transparent;' : 'background:var(--line);'
+}));
+
+const ALL = ['con', 'spec', 'plan', 'ui', 'prog', 'rev'];
+const KINDS = [
+  { name: 'コンテキスト', path: 'docs/CONTEXT.md', roles: ALL, files: [['docs/CONTEXT.md', 1420]] },
+  { name: 'アーキテクチャ', path: 'docs/ARCHITECTURE.md', roles: ALL, files: [['docs/ARCHITECTURE.md', 1980]] },
+  { name: '仕様作成ルール', path: 'docs/rules/spec.md', roles: ['spec'], files: [['docs/rules/spec.md', 1150]] },
+  { name: '実装ルール', path: 'docs/rules/implementation/', roles: ['prog'], files: [['docs/rules/implementation/1-coding.md', 980], ['docs/rules/implementation/2-testing.md', 760]] },
+  { name: 'レビュー観点', path: 'docs/review-perspectives/', roles: ['rev'], files: [['docs/review-perspectives/1-correctness.md', 640], ['docs/review-perspectives/2-tests.md', 520], ['docs/review-perspectives/3-security.md', 470], ['docs/review-perspectives/4-readability.md', 390]] },
+  { name: 'コミットルール', path: 'docs/rules/commit.md', roles: ['spec', 'ui', 'prog'], files: [['docs/rules/commit.md', 380]] },
+  { name: 'タスク作成ルール', path: 'docs/rules/task.md', roles: ['plan'], files: [['docs/rules/task.md', 610]] },
+  { name: 'プルリクルール', path: 'docs/rules/pull-request.md', roles: ['spec', 'ui', 'prog'], files: [['docs/rules/pull-request.md', 520]] },
+  { name: 'マージルール', path: 'docs/rules/merge.md', roles: ['con'], files: [['docs/rules/merge.md', 340]] }
+];
+const DOCS = {
+  'docs/CONTEXT.md': '### wordcards とは\n単語カードで語彙を覚えるための Web アプリ。利用者は自分でカードを作り、表に単語、裏に意味を書く。\n### 主な画面\n- `/cards` カードの一覧と作成\n- `/quiz` 4 択で出題するクイズモード\n### 大事にしていること\n1. 操作は少なく、キーボードだけでも使えること\n2. カードの内容は利用者のもの。勝手に書き換えない\n> 用語: 「表」は単語の面、「裏」は意味の面を指す。'
+};
+const n = (x) => x.toLocaleString('ja-JP');
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { mode: 'kind', role: 'prog', file: 'docs/CONTEXT.md' }; }
+  renderVals() {
+    const theme = this.props.theme ?? 'light';
+    const { mode, role: rk, file } = this.state;
+    const byRole = mode === 'role';
+    const on = 'background:var(--panel);color:var(--text);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.08);';
+    const off = 'background:transparent;color:var(--muted);font-weight:500;';
+    const modes = [['kind', '種類で見る'], ['role', 'エージェントで見る']].map(([id, label]) => ({ label, on: mode === id ? 'true' : 'false', style: mode === id ? on : off, pick: () => this.setState({ mode: id }) }));
+    const rolePick = ALL.map((k) => { const c = chip(k); const sel = k === rk; return { ...c, on: sel ? 'true' : 'false', pick: () => this.setState({ role: k }), btn: sel ? c.style + 'border:1px solid currentColor;' : 'background:var(--panel);color:var(--muted);border:1px solid var(--line);' }; });
+    const visible = byRole ? KINDS.filter((k) => k.roles.includes(rk)) : KINDS;
+    const kinds = visible.map((k) => ({ ...k, files: k.files.map(([p, c]) => ({ path: p, chars: n(c), on: p === file ? 'true' : 'false', pick: () => this.setState({ file: p }), style: p === file ? 'background:var(--accentSoft);color:var(--accent);' : 'background:transparent;color:var(--text);' })) }));
+    const cnt = visible.reduce((a, k) => a + k.files.length, 0);
+    const chars = visible.reduce((a, k) => a + k.files.reduce((b, f) => b + f[1], 0), 0);
+    const owner = KINDS.find((k) => k.files.some((f) => f[0] === file));
+    const fc = owner.files.find((f) => f[0] === file)[1];
+    const doc = { path: file, kind: owner.name, chars: n(fc), md: MD(DOCS[file] || '### ' + file.split('/').pop() + '\n（この文書の中身がここに整形して表示されます）\n- 見出し・箇条書き・コード・引用を読みやすく表示する\n- 長い文書はこの枠の中でスクロールする') };
+    return { vars: THEMES[theme], theme, modes, byRole, rolePick, kinds, roleSum: { label: ROLES[rk].ja, count: cnt, chars: n(Math.round(chars / 100) * 100) }, doc };
+  }
+}
+
+</script>
+</body>
+</html>

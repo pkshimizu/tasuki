@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>Tasuki — ダイアログと知らせ</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Noto+Sans+JP:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div style="{{vars}} width: 1440px; min-height: 1200px; box-sizing: border-box; padding: 56px; background: color-mix(in srgb, var(--text) 38%, var(--bg)); color: var(--text); font-family: Inter, 'Noto Sans JP', system-ui, sans-serif; font-size: 14px; line-height: 1.5; display: flex; flex-direction: column; gap: 40px">
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px; align-items: start">
+<div style="display: flex; flex-direction: column; gap: 10px"><span style="font-size: 12px; font-weight: 600; color: var(--muted); letter-spacing: .02em">ヘッダーの「停止」</span><div role="dialog" aria-modal="true" aria-label="Tasuki を停止しますか？" style="width: 100%; box-sizing: border-box; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--pop); display: flex; flex-direction: column">
+<div style="padding: 20px 22px 6px; display: flex; flex-direction: column; gap: 10px"><h2 style="margin: 0; font-size: 16px; font-weight: 650">Tasuki を停止しますか？</h2><p style="margin: 0; font-size: 13.5px; line-height: 1.7; color: var(--muted)">動いているエージェント（2 つ）の終了を待ってから止まります。終わるまで数分かかることがあります。</p><div style="display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; border-radius: 8px; background: var(--sub); font-size: 12.5px"><span style="display: flex; gap: 8px; align-items: center"><span style="width: 6px; height: 6px; border-radius: 3px; background: var(--r-prog)"></span>プログラマー · Issue #20 · 4:12</span><span style="display: flex; gap: 8px; align-items: center"><span style="width: 6px; height: 6px; border-radius: 3px; background: var(--r-rev)"></span>レビュアー · PR #19 · 1:05</span></div><p style="margin: 0; font-size: 13.5px; line-height: 1.7; color: var(--muted)">止めたあとは、PC で <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 12.5px">tasuki start</span> を実行すると再開します。</p></div>
+<div style="display: flex; justify-content: flex-end; gap: 8px; padding: 16px 22px 18px; flex-wrap: wrap"><button type="button" style="display: inline-flex; align-items: center; height: 34px; padding: 0 14px; border-radius: 8px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; border: 1px solid var(--line); background: var(--panel); color: var(--text); font-weight: 550">やめる</button><button type="button" style="display: inline-flex; align-items: center; height: 34px; padding: 0 14px; border-radius: 8px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; border: none; background: var(--err); color: #fff">終了を待って停止する</button></div>
+</div></div>
+<div style="display: flex; flex-direction: column; gap: 10px"><span style="font-size: 12px; font-weight: 600; color: var(--muted); letter-spacing: .02em">ヘッダーの「再起動」</span><div role="dialog" aria-modal="true" aria-label="Tasuki を再起動しますか？" style="width: 100%; box-sizing: border-box; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--pop); display: flex; flex-direction: column">
+<div style="padding: 20px 22px 6px; display: flex; flex-direction: column; gap: 10px"><h2 style="margin: 0; font-size: 16px; font-weight: 650">Tasuki を再起動しますか？</h2><p style="margin: 0; font-size: 13.5px; line-height: 1.7; color: var(--muted)">動いているエージェントの終了を待ってから、設定を読み込み直して起動し直します。</p></div>
+<div style="display: flex; justify-content: flex-end; gap: 8px; padding: 16px 22px 18px; flex-wrap: wrap"><button type="button" style="display: inline-flex; align-items: center; height: 34px; padding: 0 14px; border-radius: 8px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; border: 1px solid var(--line); background: var(--panel); color: var(--text); font-weight: 550">やめる</button><button type="button" style="display: inline-flex; align-items: center; height: 34px; padding: 0 14px; border-radius: 8px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; border: none; background: var(--accent); color: var(--onAccent)">再起動する</button></div>
+</div></div>
+<div style="display: flex; flex-direction: column; gap: 10px"><span style="font-size: 12px; font-weight: 600; color: var(--muted); letter-spacing: .02em">ダッシュボードの「中断」</span><div role="dialog" aria-modal="true" aria-label="プログラマーを中断しますか？" style="width: 100%; box-sizing: border-box; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--pop); display: flex; flex-direction: column">
+<div style="padding: 20px 22px 6px; display: flex; flex-direction: column; gap: 10px"><h2 style="margin: 0; font-size: 16px; font-weight: 650">プログラマーを中断しますか？</h2><p style="margin: 0; font-size: 13.5px; line-height: 1.7; color: var(--muted)">Issue #20「カードモードを追加する」の作業を止めます。作業フォルダ issue-20 の変更はそのまま残り、次にどうするかは司令塔が判断します。</p></div>
+<div style="display: flex; justify-content: flex-end; gap: 8px; padding: 16px 22px 18px; flex-wrap: wrap"><button type="button" style="display: inline-flex; align-items: center; height: 34px; padding: 0 14px; border-radius: 8px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; border: 1px solid var(--line); background: var(--panel); color: var(--text); font-weight: 550">やめる</button><button type="button" style="display: inline-flex; align-items: center; height: 34px; padding: 0 14px; border-radius: 8px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; border: none; background: var(--err); color: #fff">中断する</button></div>
+</div></div>
+</div>
+<div style="display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 32px; align-items: start">
+<div style="display: flex; flex-direction: column; gap: 10px"><span style="font-size: 12px; font-weight: 600; color: var(--muted); letter-spacing: .02em">設定 — 保存の前の差分</span><div role="dialog" aria-modal="true" aria-label="変更の確認 — .tasuki/config.yaml" style="width: 100%; box-sizing: border-box; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--pop); display: flex; flex-direction: column">
+<div style="padding: 20px 22px 6px; display: flex; flex-direction: column; gap: 10px"><h2 style="margin: 0; font-size: 16px; font-weight: 650">変更の確認 — .tasuki/config.yaml</h2><p style="margin: 0; font-size: 13.5px; line-height: 1.7; color: var(--muted)">次の 2 か所を変えます。保存すると、ブランチ <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 12.5px">tasuki/config-update</span> にコミットして PR を作ります。</p><div style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 12.5px; line-height: 1.85; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; padding: 6px 0; background: var(--bg)"><div style="color: var(--muted); display: grid; grid-template-columns: 18px minmax(0, 1fr); padding: 0 14px; white-space: pre"><span aria-hidden="true"> </span><span>repository: pkshimizu/wordcards</span></div><div style="background: var(--errSoft); color: var(--err); display: grid; grid-template-columns: 18px minmax(0, 1fr); padding: 0 14px; white-space: pre"><span aria-hidden="true">-</span><span>poll_interval: 60</span></div><div style="background: var(--okSoft); color: var(--ok); display: grid; grid-template-columns: 18px minmax(0, 1fr); padding: 0 14px; white-space: pre"><span aria-hidden="true">+</span><span>poll_interval: 30</span></div><div style="background: var(--errSoft); color: var(--err); display: grid; grid-template-columns: 18px minmax(0, 1fr); padding: 0 14px; white-space: pre"><span aria-hidden="true">-</span><span>max_agents: 2</span></div><div style="background: var(--okSoft); color: var(--ok); display: grid; grid-template-columns: 18px minmax(0, 1fr); padding: 0 14px; white-space: pre"><span aria-hidden="true">+</span><span>max_agents: 3</span></div><div style="color: var(--muted); display: grid; grid-template-columns: 18px minmax(0, 1fr); padding: 0 14px; white-space: pre"><span aria-hidden="true"> </span><span>language: ja</span></div><div style="color: var(--muted); display: grid; grid-template-columns: 18px minmax(0, 1fr); padding: 0 14px; white-space: pre"><span aria-hidden="true"> </span><span>merge:</span></div><div style="color: var(--muted); display: grid; grid-template-columns: 18px minmax(0, 1fr); padding: 0 14px; white-space: pre"><span aria-hidden="true"> </span><span>  spec: human</span></div><div style="color: var(--muted); display: grid; grid-template-columns: 18px minmax(0, 1fr); padding: 0 14px; white-space: pre"><span aria-hidden="true"> </span><span>  design: human</span></div><div style="color: var(--muted); display: grid; grid-template-columns: 18px minmax(0, 1fr); padding: 0 14px; white-space: pre"><span aria-hidden="true"> </span><span>  implementation: human</span></div><div style="color: var(--muted); display: grid; grid-template-columns: 18px minmax(0, 1fr); padding: 0 14px; white-space: pre"><span aria-hidden="true"> </span><span>  require_ci: true</span></div></div></div>
+<div style="display: flex; justify-content: flex-end; gap: 8px; padding: 16px 22px 18px; flex-wrap: wrap"><button type="button" style="display: inline-flex; align-items: center; height: 34px; padding: 0 14px; border-radius: 8px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; border: 1px solid var(--line); background: var(--panel); color: var(--text); font-weight: 550">やめる</button><button type="button" style="display: inline-flex; align-items: center; height: 34px; padding: 0 14px; border-radius: 8px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; border: none; background: var(--accent); color: var(--onAccent)">保存して PR を作る</button></div>
+</div></div>
+<div style="display: flex; flex-direction: column; gap: 10px"><span style="font-size: 12px; font-weight: 600; color: var(--muted); letter-spacing: .02em">設定 — 保存のあと（右上に出る知らせ）</span><div role="status" style="width: 100%; box-sizing: border-box; display: flex; gap: 14px; align-items: flex-start; padding: 16px 18px; border-radius: 12px; background: var(--panel); border: 1px solid color-mix(in srgb, var(--ok) 40%, var(--line)); box-shadow: var(--pop)">
+<span style="flex: 0 0 30px; height: 30px; border-radius: 15px; background: var(--okSoft); color: var(--ok); display: flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"></path></svg></span>
+<span style="flex: 1; display: flex; flex-direction: column; gap: 4px"><span style="font-size: 14px; font-weight: 650">PR #24 を作りました</span><span style="font-size: 13px; color: var(--muted); line-height: 1.6">マージ後に再起動すると反映されます。</span>
+<span style="display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap"><a href="#" style="display: inline-flex; align-items: center; height: 34px; padding: 0 14px; border-radius: 8px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; border: 1px solid var(--line); background: var(--panel); color: var(--text); font-weight: 550; text-decoration: none; height: 32px">PR #24 を開く</a><button type="button" style="display: inline-flex; align-items: center; height: 34px; padding: 0 14px; border-radius: 8px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; border: none; background: var(--accent); color: var(--onAccent); height: 32px">再起動</button></span></span>
+</div></div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1440,"height":1200}}'>
+const THEMES = {
+  light: '--bg:#F7F7F5;--panel:#FFFFFF;--sub:#F3F3F0;--hover:#EDEDE9;--line:#E4E4E0;--line2:#EDEDE9;--text:#18181B;--muted:#5A5A64;--faint:#686871;--accent:#4A52C6;--accentSoft:#EEEFFC;--onAccent:#FFFFFF;--ok:#15754A;--okSoft:#E3F2E9;--warn:#935000;--warnSoft:#FBEFDC;--err:#BA3027;--errSoft:#FBE7E5;--info:#2360BC;--infoSoft:#E7EFFB;--r-con:#4F51C4;--r-spec:#0A7268;--r-plan:#8F5C00;--r-ui:#AB2E76;--r-prog:#2360C0;--r-rev:#AE3D0B;--shadow:0 1px 2px rgba(16,16,20,.04);--pop:0 16px 40px rgba(16,16,20,.16);',
+  dark: '--bg:#0D0D0F;--panel:#151518;--sub:#1C1C20;--hover:#222227;--line:#2A2A30;--line2:#222227;--text:#ECECEF;--muted:#A3A3AD;--faint:#8E8E98;--accent:#959CF5;--accentSoft:rgba(149,156,245,.13);--onAccent:#0D0D0F;--ok:#52C58E;--okSoft:rgba(82,197,142,.12);--warn:#E9A43F;--warnSoft:rgba(233,164,63,.13);--err:#F27C72;--errSoft:rgba(242,124,114,.13);--info:#72A8F6;--infoSoft:rgba(114,168,246,.13);--r-con:#9798F3;--r-spec:#40C7B6;--r-plan:#E2AD40;--r-ui:#EF80C2;--r-prog:#70A8F6;--r-rev:#F38D55;--shadow:0 0 0 transparent;--pop:0 18px 44px rgba(0,0,0,.55);'
+};
+const ROLES = {
+  con: { ja: '司令塔', en: 'Conductor', c: '--r-con', d: 'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18zM15.5 8.5l-2 5-5 2 2-5z' },
+  spec: { ja: '仕様マスター', en: 'Spec Master', c: '--r-spec', d: 'M7 3h7l4 4v14H7zM14 3v4h4M10 12h5M10 16h5' },
+  plan: { ja: 'プランナー', en: 'Planner', c: '--r-plan', d: 'M10 6h10M10 12h10M10 18h10M4 6l1.5 1.5L8 5M4 12l1.5 1.5L8 11M4 18l1.5 1.5L8 17' },
+  ui: { ja: 'UIデザイナー', en: 'UI Designer', c: '--r-ui', d: 'M5 4h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zM3 9h18M9 9v11' },
+  prog: { ja: 'プログラマー', en: 'Programmer', c: '--r-prog', d: 'M8 8l-4 4 4 4M16 8l4 4-4 4M13.5 5l-3 14' },
+  rev: { ja: 'レビュアー', en: 'Reviewer', c: '--r-rev', d: 'M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12zM12 9a3 3 0 1 0 0 6a3 3 0 1 0 0-6z' }
+};
+const role = (k, lang) => { const r = ROLES[k]; return { label: r[lang], d: r.d, style: 'background:color-mix(in srgb,var(' + r.c + ') 13%,transparent);color:var(' + r.c + ');' }; };
+const TONE = { ok: 'color:var(--ok);background:var(--okSoft);', warn: 'color:var(--warn);background:var(--warnSoft);', err: 'color:var(--err);background:var(--errSoft);', neutral: 'color:var(--muted);background:var(--sub);', plain: 'color:var(--muted);background:transparent;' };
+const ICON = {
+  wait: 'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18zM12 7v5l3 2',
+  bell: 'M6 16V11a6 6 0 0 1 12 0v5l2 2H4zM10 20h4',
+  merge: 'M6 3a2 2 0 1 0 0 4a2 2 0 1 0 0-4zM6 7v14M18 13a2 2 0 1 0 0 4a2 2 0 1 0 0-4zM18 13c0-4-3-6-12-6'
+};
+const MONO = "font-family:'JetBrains Mono',ui-monospace,monospace;";
+const chip = (k) => role(k, 'ja');
+const CODE = MONO + 'font-size:.9em;background:var(--sub);border:1px solid var(--line2);padding:0 5px;border-radius:4px;';
+const segs = (l) => l.split('`').map((t, i) => ({ t, style: i % 2 ? CODE : '' }));
+const MD = (src) => src.split('\n').filter((l) => l.trim()).map((l) => {
+  if (l.startsWith('### ')) return { segs: segs(l.slice(4)), style: 'font-weight:650;font-size:13px;margin-top:8px;' };
+  if (/^\d+\. /.test(l)) return { segs: segs(l), style: 'padding-left:2px;' };
+  if (l.startsWith('- ')) return { segs: segs('・' + l.slice(2)), style: 'padding-left:2px;' };
+  if (l.startsWith('> ')) return { segs: segs(l.slice(2)), style: 'color:var(--muted);padding-left:10px;border-left:2px solid var(--line);' };
+  return { segs: segs(l), style: '' };
+});
+const RUNST = {
+  running: { label: '実行中', style: TONE.ok, dot: true },
+  done: { label: '終えた', style: TONE.neutral },
+  asked: { label: '人への質問を返した', style: 'color:var(--accent);background:var(--accentSoft);' },
+  blocked: { label: '進められないと返した', style: TONE.warn },
+  error: { label: 'エラー', style: TONE.err },
+  limit: { label: '利用上限で終わった', style: TONE.warn },
+  aborted: { label: '中断', style: TONE.neutral }
+};
+const st = (k) => ({ ...RUNST[k], dot: !!RUNST[k].dot });
+const launchDir = (k, target, res) => ({ label: ROLES[k].ja + 'を起動（' + target + '）', d: ROLES[k].d, labelStyle: 'color:var(' + ROLES[k].c + ');', result: res || '起動した', resStyle: TONE.ok });
+const DIR = {
+  wait: { label: '待つ', d: ICON.wait, labelStyle: 'color:var(--muted);', result: '待った', resStyle: TONE.plain },
+  notify: { label: 'お知らせ', d: ICON.bell, labelStyle: 'color:var(--muted);', result: '書いた', resStyle: TONE.ok },
+  mergeSkip: (n) => ({ label: 'マージ（' + n + '）', d: ICON.merge, labelStyle: 'color:var(--muted);', result: '見送り', resStyle: TONE.warn })
+};
+const MARK = {
+  event: 'background:var(--panel);border:2px solid var(--faint);',
+  decision: 'background:var(--r-con);border:2px solid var(--r-con);',
+  run: (k) => 'background:var(' + ROLES[k].c + ');border:2px solid var(' + ROLES[k].c + ');'
+};
+const tl = (items) => items.map((x, i) => ({
+  date: '', meta: '', role: false, target: '', state: false, body: '', dirs: [], md: false, mdMore: '', last: i === items.length - 1, cardStyle: 'background:var(--panel);', ...x,
+  hasDirs: !!(x.dirs && x.dirs.length), rail: i === items.length - 1 ? 'background:transparent;' : 'background:var(--line);'
+}));
+
+class Component extends DCLogic {
+  renderVals() { return { vars: THEMES[this.props.theme ?? 'light'] }; }
+}
+</script>
+</body>
+</html>
