@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>Tasuki — 画面ヘッダー</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Noto+Sans+JP:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<header style="{{vars}} box-sizing: border-box; width: 100%; min-height: 56px; padding: 8px 24px; display: flex; align-items: center; gap: 14px; background: var(--panel); border-bottom: 1px solid var(--line); color: var(--text); font-family: Inter, 'Noto Sans JP', system-ui, sans-serif; font-size: 13px">
+  <div style="display: flex; align-items: center; gap: 8px; min-width: 0; flex: 0 1 auto">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h14v15H6a2 2 0 0 0-2 2zM4 20a2 2 0 0 0 2 2h14v-4M9 3v8l2-1.5L13 11V3"></path></svg>
+    <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">pkshimizu/wordcards</span>
+  </div>
+  <span style="{{st.style}} flex: 0 0 auto; display: inline-flex; align-items: center; gap: 7px; height: 24px; padding: 0 10px; border-radius: 12px; font-size: 12px; font-weight: 600; white-space: nowrap"><span style="{{st.dot}} width: 7px; height: 7px; border-radius: 4px"></span>{{st.label}}</span>
+  <span style="flex: 0 1 auto; min-width: 0; color: var(--faint); font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums">{{checkText}}</span>
+  <span style="flex: 1 1 0"></span>
+  <a href="Main.dc.html" style="flex: 0 0 auto; display: inline-flex; align-items: center; gap: 7px; height: 30px; padding: 0 10px 0 9px; border-radius: 8px; background: var(--accentSoft); color: var(--accent); font-weight: 600; font-size: 12.5px; text-decoration: none; white-space: nowrap"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18zM12 7v5l3 2"></path></svg>{{t.yourTurn}}<span style="display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px; padding: 0 5px; box-sizing: border-box; border-radius: 9px; background: var(--accent); color: var(--onAccent); font-size: 11px">2</span></a>
+  <div role="group" aria-label="{{t.langLabel}}" style="flex: 0 0 auto; display: inline-flex; padding: 2px; border-radius: 8px; background: var(--sub); border: 1px solid var(--line)">
+    <button type="button" aria-pressed="{{jaOn}}" style="{{jaStyle}} height: 26px; padding: 0 10px; border: none; border-radius: 6px; font: inherit; font-size: 12px; cursor: pointer">日本語</button>
+    <button type="button" aria-pressed="{{enOn}}" style="{{enStyle}} height: 26px; padding: 0 10px; border: none; border-radius: 6px; font: inherit; font-size: 12px; cursor: pointer">English</button>
+  </div>
+  <a href="Dialogs.dc.html" style="flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 11px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--text); font-size: 12.5px; font-weight: 550; text-decoration: none; white-space: nowrap"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 5v6h-6"></path></svg>{{t.restart}}</a>
+  <a href="Dialogs.dc.html" style="flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 11px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--err); font-size: 12.5px; font-weight: 550; text-decoration: none; white-space: nowrap"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="5" y="5" width="14" height="14" rx="2"></rect></svg>{{t.stop}}</a>
+  <span style="flex: 0 0 auto; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11px; color: var(--faint)">v0.1.0</span>
+</header>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"status":{"editor":"enum","options":["running","idle","limited","stopped"],"default":"running"},"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"lang":{"editor":"enum","options":["ja","en"],"default":"ja"},"$preview":{"width":1208,"height":56}}'>
+const THEMES = {
+  light: '--panel:#FFFFFF;--sub:#F3F3F0;--line:#E4E4E0;--text:#18181B;--muted:#5A5A64;--faint:#686871;--accent:#4A52C6;--accentSoft:#EEEFFC;--onAccent:#FFFFFF;--ok:#15754A;--okSoft:#E3F2E9;--warn:#935000;--warnSoft:#FBEFDC;--err:#BA3027;--errSoft:#FBE7E5;--info:#2360BC;--infoSoft:#E7EFFB;',
+  dark: '--panel:#151518;--sub:#1C1C20;--line:#2A2A30;--text:#ECECEF;--muted:#A3A3AD;--faint:#8E8E98;--accent:#959CF5;--accentSoft:rgba(149,156,245,.13);--onAccent:#0D0D0F;--ok:#52C58E;--okSoft:rgba(82,197,142,.12);--warn:#E9A43F;--warnSoft:rgba(233,164,63,.13);--err:#F27C72;--errSoft:rgba(242,124,114,.13);--info:#72A8F6;--infoSoft:rgba(114,168,246,.13);'
+};
+const T = {
+  ja: { yourTurn: '要対応', restart: '再起動', stop: '停止', langLabel: '表示の言語',
+    running: '動作中', idle: '待機中', limited: '利用上限で待機中 · 18:30 に再開', stopped: '停止中',
+    check: (s) => '最後の確認 17:52:08 · 次の確認まで ' + s + ' 秒', stoppedCheck: '最後の確認 17:52:08' },
+  en: { yourTurn: 'Needs action', restart: 'Restart', stop: 'Stop', langLabel: 'Display language',
+    running: 'Running', idle: 'Idle', limited: 'Paused by usage limit · resumes 18:30', stopped: 'Stopped',
+    check: (s) => 'Last checked 17:52:08 · next check in ' + s + 's', stoppedCheck: 'Last checked 17:52:08' }
+};
+const ST = {
+  running: { style: 'background:var(--okSoft);color:var(--ok);', dot: 'background:var(--ok);box-shadow:0 0 0 3px color-mix(in srgb,var(--ok) 25%,transparent);' },
+  idle: { style: 'background:var(--infoSoft);color:var(--info);', dot: 'background:var(--info);' },
+  limited: { style: 'background:var(--warnSoft);color:var(--warn);', dot: 'background:var(--warn);' },
+  stopped: { style: 'background:var(--sub);color:var(--muted);', dot: 'background:var(--muted);' }
+};
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { sec: 42 }; }
+  componentDidMount() { this.timer = setInterval(() => this.setState({ sec: this.state.sec <= 1 ? 60 : this.state.sec - 1 }), 1000); }
+  componentWillUnmount() { clearInterval(this.timer); }
+  renderVals() {
+    const theme = this.props.theme ?? 'light';
+    const lang = this.props.lang ?? 'ja';
+    const status = this.props.status ?? 'running';
+    const t = T[lang];
+    const on = 'background:var(--panel);color:var(--text);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.08);';
+    const off = 'background:transparent;color:var(--muted);font-weight:500;';
+    return {
+      vars: THEMES[theme], t,
+      st: { ...ST[status], label: t[status] },
+      checkText: status === 'stopped' ? t.stoppedCheck : t.check(this.state.sec),
+      jaOn: lang === 'ja' ? 'true' : 'false', enOn: lang === 'en' ? 'true' : 'false',
+      jaStyle: lang === 'ja' ? on : off, enStyle: lang === 'en' ? on : off
+    };
+  }
+}
+</script>
+</body>
+</html>

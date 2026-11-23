@@ -7,6 +7,7 @@ import { mkdirSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
+import type { Role } from "../config/config.js";
 import type {
   Finding,
   FindingResponse,
@@ -40,6 +41,8 @@ export interface Question {
   title: string;
   body: string;
   target: Target | null;
+  /** どの役からの質問か（司令塔からなら dispatcher）。古い記録では null */
+  origin: Role | null;
   /** 最後に読んだ投稿の ID */
   lastReadId: string | null;
   /** 人の返信を 1 度でも読んだか */
@@ -223,6 +226,20 @@ export class SqliteStore implements Store {
     if (file !== ":memory:") mkdirSync(dirname(file), { recursive: true });
     this.db = new DatabaseSync(file);
     this.db.exec(SCHEMA);
+    this.migrate();
+  }
+
+  /** 前の版で作った記録に、あとから足した列を足す */
+  private migrate(): void {
+    const has = (table: string, column: string) =>
+      (
+        this.db.prepare(`PRAGMA table_info(${table})`).all() as {
+          name: string;
+        }[]
+      ).some((c) => c.name === column);
+    if (!has("questions", "origin")) {
+      this.db.exec("ALTER TABLE questions ADD COLUMN origin TEXT");
+    }
   }
 
   private now(): string {
@@ -314,13 +331,14 @@ export class SqliteStore implements Store {
   ): void {
     this.db
       .prepare(
-        "INSERT OR IGNORE INTO questions (thread_id, title, body, target, created_at) VALUES (?, ?, ?, ?, ?)",
+        "INSERT OR IGNORE INTO questions (thread_id, title, body, target, origin, created_at) VALUES (?, ?, ?, ?, ?, ?)",
       )
       .run(
         input.threadId,
         input.title,
         input.body,
         input.target ? JSON.stringify(input.target) : null,
+        input.origin,
         this.now(),
       );
   }
@@ -334,6 +352,7 @@ export class SqliteStore implements Store {
       title: r.title as string,
       body: r.body as string,
       target: r.target ? (JSON.parse(r.target as string) as Target) : null,
+      origin: (r.origin as Role | null) ?? null,
       lastReadId: (r.last_read_id as string | null) ?? null,
       answered: r.answered === 1,
       createdAt: r.created_at as string,

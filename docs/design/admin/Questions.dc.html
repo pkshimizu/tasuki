@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>Tasuki — 質問</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Noto+Sans+JP:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div style="{{vars}} display: flex; flex-wrap: wrap; min-height: 100vh; background: var(--bg); color: var(--text); font-family: Inter, 'Noto Sans JP', system-ui, sans-serif; font-size: 14px; line-height: 1.5">
+  <div style="flex: 0 0 232px; background: var(--panel); border-right: 1px solid var(--line)">
+    <dc-import name="Sidebar" active="questions" theme="{{theme}}" lang="ja" hint-size="232px,720px"></dc-import>
+  </div>
+  <div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+    <dc-import name="AppHeader" theme="{{theme}}" lang="ja" status="running" hint-size="100%,56px"></dc-import>
+    <main style="box-sizing: border-box; width: 100%; max-width: 1240px; padding: 28px 32px 64px; display: flex; flex-direction: column; gap: 24px">
+      <div style="display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap">
+        <h1 style="margin: 0; font-size: 22px; font-weight: 650; letter-spacing: -0.01em">質問</h1>
+        <span style="font-size: 13px; color: var(--faint)">エージェントと司令塔から人への質問。回答は Discord のスレッドで行います</span>
+      </div>
+      <div style="display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start">
+        <section aria-label="質問の一覧" style="flex: 1 1 300px; max-width: 380px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+          <div style="display: flex; flex-direction: column; gap: 8px">
+            <span style="font-size: 12px; font-weight: 600; color: var(--accent)">返信待ち · 1</span>
+            <a href="Questions.dc.html" aria-current="page" style="display: flex; flex-direction: column; gap: 8px; padding: 14px 16px; border-radius: 12px; background: var(--accentSoft); border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--line)); color: var(--text); text-decoration: none">
+              <span style="font-size: 13.5px; font-weight: 600; line-height: 1.55">仕様マスターからの質問（要件: カードモード）</span>
+              <span style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 12px; color: var(--muted)"><span style="{{rSpec.style}} display: inline-flex; align-items: center; gap: 5px; height: 22px; padding: 0 8px 0 6px; border-radius: 6px; font-size: 12px; font-weight: 600; white-space: nowrap"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{rSpec.d}}"></path></svg>{{rSpec.label}}</span><span>要件</span><span aria-hidden="true">·</span><span>17:40（12 分前）</span></span>
+            </a>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 8px">
+            <span style="font-size: 12px; font-weight: 600; color: var(--faint)">返信あり · 2</span>
+            <div style="background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow: hidden">
+              <sc-for list="{{answered}}" as="q" hint-placeholder-count="2">
+                <a href="Questions.dc.html" style="{{q.rowStyle}} display: flex; flex-direction: column; gap: 8px; padding: 13px 16px; color: var(--text); text-decoration: none">
+                  <span style="font-size: 13.5px; font-weight: 550; line-height: 1.55">{{q.title}}</span>
+                  <span style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 12px; color: var(--faint)"><span style="{{q.role.style}} display: inline-flex; align-items: center; gap: 5px; height: 22px; padding: 0 8px 0 6px; border-radius: 6px; font-size: 12px; font-weight: 600; white-space: nowrap"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{q.role.d}}"></path></svg>{{q.role.label}}</span><span>{{q.target}}</span><span aria-hidden="true">·</span><span>{{q.at}}</span><span style="margin-left: auto; color: var(--ok); font-weight: 550">返信あり</span></span>
+                </a>
+              </sc-for>
+            </div>
+          </div>
+        </section>
+
+        <section aria-labelledby="qd" style="flex: 999 1 560px; min-width: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow: hidden">
+          <div style="padding: 20px 24px 18px; border-bottom: 1px solid var(--line2); display: flex; flex-direction: column; gap: 12px">
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap">
+              <span style="display: inline-flex; align-items: center; gap: 6px; height: 22px; padding: 0 8px; border-radius: 11px; font-size: 12px; font-weight: 600; color: var(--accent); background: var(--accentSoft)"><span style="width: 6px; height: 6px; border-radius: 3px; background: currentColor"></span>返信待ち</span>
+              <span style="{{rSpec.style}} display: inline-flex; align-items: center; gap: 5px; height: 22px; padding: 0 8px 0 6px; border-radius: 6px; font-size: 12px; font-weight: 600; white-space: nowrap"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{rSpec.d}}"></path></svg>{{rSpec.label}}</span>
+              <span style="font-size: 12.5px; color: var(--muted)">対象: 要件「カードモード」 · 今日 17:40 に作成</span>
+            </div>
+            <h2 id="qd" style="margin: 0; font-size: 18px; font-weight: 650">仕様マスターからの質問（要件: カードモード）</h2>
+            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap">
+              <a href="#" style="display: inline-flex; align-items: center; gap: 7px; height: 36px; padding: 0 16px; border-radius: 8px; background: var(--accent); color: var(--onAccent); font-size: 13.5px; font-weight: 600; text-decoration: none">Discord で回答する<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"></path></svg></a>
+              <span style="font-size: 12.5px; color: var(--faint)">#questions のスレッドが開きます。返信すると、次の確認で司令塔に渡ります</span>
+            </div>
+          </div>
+          <div style="padding: 20px 24px 24px; display: flex; flex-direction: column; gap: 18px">
+            <div style="display: flex; flex-direction: column; gap: 3px; font-size: 13.5px; line-height: 1.75; color: var(--text); text-wrap: pretty">
+<sc-for list="{{intro}}" as="b" hint-placeholder-count="3"><div style="{{b.style}}"><sc-for list="{{b.segs}}" as="g" hint-placeholder-count="1"><span style="{{g.style}}">{{g.t}}</span></sc-for></div></sc-for>
+</div>
+            <sc-for list="{{qs}}" as="q" hint-placeholder-count="2">
+              <div style="display: flex; flex-direction: column; gap: 10px">
+                <div style="display: flex; gap: 10px; align-items: baseline">
+                  <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; font-weight: 600; color: var(--accent)">{{q.no}}</span>
+                  <span style="font-size: 14.5px; font-weight: 600; line-height: 1.6">{{q.text}}</span>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 8px; padding-left: 24px">
+                  <sc-for list="{{q.opts}}" as="o" hint-placeholder-count="2">
+                    <div style="{{o.style}} display: flex; gap: 12px; align-items: flex-start; padding: 10px 14px; border-radius: 10px">
+                      <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; flex: 0 0 22px; height: 22px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; background: var(--sub); color: var(--muted)">{{o.k}}</span>
+                      <span style="flex: 1; display: flex; flex-direction: column; gap: 2px">
+                        <span style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap"><span style="font-size: 13.5px; font-weight: 550">{{o.text}}</span><sc-if value="{{o.rec}}" hint-placeholder-val="{{ false }}"><span style="display: inline-flex; align-items: center; height: 20px; padding: 0 7px; border-radius: 5px; font-size: 11.5px; font-weight: 600; color: var(--ok); background: var(--okSoft)">おすすめ</span></sc-if></span>
+                        <span style="font-size: 12.5px; color: var(--muted); line-height: 1.6">{{o.note}}</span>
+                      </span>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-for>
+            <div style="display: flex; gap: 10px; align-items: center; padding: 12px 14px; border-radius: 10px; background: var(--sub); font-size: 12.5px; color: var(--muted)">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18zM12 11v5M12 8v.01"></path></svg>
+              <span>Discord では「1: A」のように番号と選択肢で答えられます。おすすめのままでよければ「おすすめで」でも伝わります。</span>
+            </div>
+          </div>
+        </section>
+      </div>
+
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1440,"height":1100}}'>
+const THEMES = {
+  light: '--bg:#F7F7F5;--panel:#FFFFFF;--sub:#F3F3F0;--hover:#EDEDE9;--line:#E4E4E0;--line2:#EDEDE9;--text:#18181B;--muted:#5A5A64;--faint:#686871;--accent:#4A52C6;--accentSoft:#EEEFFC;--onAccent:#FFFFFF;--ok:#15754A;--okSoft:#E3F2E9;--warn:#935000;--warnSoft:#FBEFDC;--err:#BA3027;--errSoft:#FBE7E5;--info:#2360BC;--infoSoft:#E7EFFB;--r-con:#4F51C4;--r-spec:#0A7268;--r-plan:#8F5C00;--r-ui:#AB2E76;--r-prog:#2360C0;--r-rev:#AE3D0B;--shadow:0 1px 2px rgba(16,16,20,.04);--pop:0 16px 40px rgba(16,16,20,.16);',
+  dark: '--bg:#0D0D0F;--panel:#151518;--sub:#1C1C20;--hover:#222227;--line:#2A2A30;--line2:#222227;--text:#ECECEF;--muted:#A3A3AD;--faint:#8E8E98;--accent:#959CF5;--accentSoft:rgba(149,156,245,.13);--onAccent:#0D0D0F;--ok:#52C58E;--okSoft:rgba(82,197,142,.12);--warn:#E9A43F;--warnSoft:rgba(233,164,63,.13);--err:#F27C72;--errSoft:rgba(242,124,114,.13);--info:#72A8F6;--infoSoft:rgba(114,168,246,.13);--r-con:#9798F3;--r-spec:#40C7B6;--r-plan:#E2AD40;--r-ui:#EF80C2;--r-prog:#70A8F6;--r-rev:#F38D55;--shadow:0 0 0 transparent;--pop:0 18px 44px rgba(0,0,0,.55);'
+};
+const ROLES = {
+  con: { ja: '司令塔', en: 'Conductor', c: '--r-con', d: 'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18zM15.5 8.5l-2 5-5 2 2-5z' },
+  spec: { ja: '仕様マスター', en: 'Spec Master', c: '--r-spec', d: 'M7 3h7l4 4v14H7zM14 3v4h4M10 12h5M10 16h5' },
+  plan: { ja: 'プランナー', en: 'Planner', c: '--r-plan', d: 'M10 6h10M10 12h10M10 18h10M4 6l1.5 1.5L8 5M4 12l1.5 1.5L8 11M4 18l1.5 1.5L8 17' },
+  ui: { ja: 'UIデザイナー', en: 'UI Designer', c: '--r-ui', d: 'M5 4h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zM3 9h18M9 9v11' },
+  prog: { ja: 'プログラマー', en: 'Programmer', c: '--r-prog', d: 'M8 8l-4 4 4 4M16 8l4 4-4 4M13.5 5l-3 14' },
+  rev: { ja: 'レビュアー', en: 'Reviewer', c: '--r-rev', d: 'M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12zM12 9a3 3 0 1 0 0 6a3 3 0 1 0 0-6z' }
+};
+const role = (k, lang) => { const r = ROLES[k]; return { label: r[lang], d: r.d, style: 'background:color-mix(in srgb,var(' + r.c + ') 13%,transparent);color:var(' + r.c + ');' }; };
+const TONE = { ok: 'color:var(--ok);background:var(--okSoft);', warn: 'color:var(--warn);background:var(--warnSoft);', err: 'color:var(--err);background:var(--errSoft);', neutral: 'color:var(--muted);background:var(--sub);', plain: 'color:var(--muted);background:transparent;' };
+const ICON = {
+  wait: 'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18zM12 7v5l3 2',
+  bell: 'M6 16V11a6 6 0 0 1 12 0v5l2 2H4zM10 20h4',
+  merge: 'M6 3a2 2 0 1 0 0 4a2 2 0 1 0 0-4zM6 7v14M18 13a2 2 0 1 0 0 4a2 2 0 1 0 0-4zM18 13c0-4-3-6-12-6'
+};
+const MONO = "font-family:'JetBrains Mono',ui-monospace,monospace;";
+const chip = (k) => role(k, 'ja');
+const CODE = MONO + 'font-size:.9em;background:var(--sub);border:1px solid var(--line2);padding:0 5px;border-radius:4px;';
+const segs = (l) => l.split('`').map((t, i) => ({ t, style: i % 2 ? CODE : '' }));
+const MD = (src) => src.split('\n').filter((l) => l.trim()).map((l) => {
+  if (l.startsWith('### ')) return { segs: segs(l.slice(4)), style: 'font-weight:650;font-size:13px;margin-top:8px;' };
+  if (/^\d+\. /.test(l)) return { segs: segs(l), style: 'padding-left:2px;' };
+  if (l.startsWith('- ')) return { segs: segs('・' + l.slice(2)), style: 'padding-left:2px;' };
+  if (l.startsWith('> ')) return { segs: segs(l.slice(2)), style: 'color:var(--muted);padding-left:10px;border-left:2px solid var(--line);' };
+  return { segs: segs(l), style: '' };
+});
+const RUNST = {
+  running: { label: '実行中', style: TONE.ok, dot: true },
+  done: { label: '終えた', style: TONE.neutral },
+  asked: { label: '人への質問を返した', style: 'color:var(--accent);background:var(--accentSoft);' },
+  blocked: { label: '進められないと返した', style: TONE.warn },
+  error: { label: 'エラー', style: TONE.err },
+  limit: { label: '利用上限で終わった', style: TONE.warn },
+  aborted: { label: '中断', style: TONE.neutral }
+};
+const st = (k) => ({ ...RUNST[k], dot: !!RUNST[k].dot });
+const launchDir = (k, target, res) => ({ label: ROLES[k].ja + 'を起動（' + target + '）', d: ROLES[k].d, labelStyle: 'color:var(' + ROLES[k].c + ');', result: res || '起動した', resStyle: TONE.ok });
+const DIR = {
+  wait: { label: '待つ', d: ICON.wait, labelStyle: 'color:var(--muted);', result: '待った', resStyle: TONE.plain },
+  notify: { label: 'お知らせ', d: ICON.bell, labelStyle: 'color:var(--muted);', result: '書いた', resStyle: TONE.ok },
+  mergeSkip: (n) => ({ label: 'マージ（' + n + '）', d: ICON.merge, labelStyle: 'color:var(--muted);', result: '見送り', resStyle: TONE.warn })
+};
+const MARK = {
+  event: 'background:var(--panel);border:2px solid var(--faint);',
+  decision: 'background:var(--r-con);border:2px solid var(--r-con);',
+  run: (k) => 'background:var(' + ROLES[k].c + ');border:2px solid var(' + ROLES[k].c + ');'
+};
+const tl = (items) => items.map((x, i) => ({
+  date: '', meta: '', role: false, target: '', state: false, body: '', dirs: [], md: false, mdMore: '', last: i === items.length - 1, cardStyle: 'background:var(--panel);', ...x,
+  hasDirs: !!(x.dirs && x.dirs.length), rail: i === items.length - 1 ? 'background:transparent;' : 'background:var(--line);'
+}));
+
+class Component extends DCLogic {
+  renderVals() {
+    const theme = this.props.theme ?? 'light';
+    const answered = [
+      { title: '司令塔からの質問（PR #17 のマージ）', role: chip('con'), target: 'PR #17', at: '11/20' },
+      { title: '仕様マスターからの質問（要件: CSV の取り込み）', role: chip('spec'), target: '要件', at: '11/19' }
+    ].map((q, i) => ({ ...q, rowStyle: i ? 'border-top:1px solid var(--line2);' : '' }));
+    const plain = 'background:var(--panel);border:1px solid var(--line);';
+    const rec = 'background:color-mix(in srgb,var(--ok) 6%,var(--panel));border:1px solid color-mix(in srgb,var(--ok) 35%,var(--line));';
+    const qs = [
+      { no: '1.', text: '次のカードへ進むきっかけは？', opts: [
+        { k: 'A', text: '裏をもう一度押す', note: '自分のペースで覚えられる。表 → 裏 → 次、と同じ操作をくり返すだけで済む', rec: true, style: rec },
+        { k: 'B', text: '数秒後に自動で進む', note: '手を離して眺められるが、秒数の設定が別に必要になる', rec: false, style: plain }
+      ] }
+    ];
+    const intro = MD('要件のうち、決めきれない点が 1 つあります。仕様を書く前に確認させてください。');
+    return { vars: THEMES[theme], theme, rSpec: chip('spec'), answered, qs, intro };
+  }
+}
+
+</script>
+</body>
+</html>

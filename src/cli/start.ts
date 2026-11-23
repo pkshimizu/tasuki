@@ -1,6 +1,15 @@
 /**
  * tasuki start: 本物の部品を組み立てて、監視スレッドを常駐させる。
  */
+import { fileURLToPath } from "node:url";
+import {
+  type AdminSources,
+  buildApp,
+  buildDashboard,
+} from "../admin/dashboard.js";
+import { ChangeHub } from "../admin/hub.js";
+import { type AdminServer, startAdminServer } from "../admin/server.js";
+import { version } from "./version.js";
 import { createRunAgent } from "../agents/agent.js";
 import { setupShell } from "../agents/shell.js";
 import { Collector } from "../monitor/collector.js";
@@ -13,7 +22,7 @@ import { acquireLock, lockFile } from "./lock.js";
 import type { Output } from "./output.js";
 import { GitKnowledge } from "../knowledge/knowledge.js";
 import { Monitor } from "../monitor/monitor.js";
-import { SqliteStore, stateFile } from "../store/store.js";
+import { SqliteStore, stateFile, systemClock } from "../store/store.js";
 import { GitWorkspace, worktreeRoot } from "../agents/workspace.js";
 
 /** origin の URL が設定のリポジトリを指しているか */
@@ -89,6 +98,7 @@ export async function start(
   const knowledge = new GitKnowledge(dir, defaultBranch, config.knowledge);
   const collector = new Collector({ chat, github, store, config, log });
   const monitorRef: { current?: Monitor } = {};
+  const hub = new ChangeHub();
   const executor = new Executor({
     loaded,
     defaultBranch,
@@ -109,6 +119,7 @@ export async function start(
     ),
     log,
     onFinish: () => monitorRef.current?.wakeUp(),
+    onChange: () => hub.notify(),
   });
   const monitor = new Monitor({
     loaded,
@@ -119,8 +130,39 @@ export async function start(
     runAgent,
     knowledge,
     log,
+    onChange: () => hub.notify(),
   });
   monitorRef.current = monitor;
+
+  let admin: AdminServer | undefined;
+  if (config.admin.enabled) {
+    const sources: AdminSources = {
+      repo,
+      version: version(),
+      store,
+      monitor: () => monitor.snapshot(),
+      executor: () => executor.snapshot(),
+      threadUrl: (threadId) => chat.threadUrl(threadId),
+      clock: systemClock,
+    };
+    try {
+      admin = await startAdminServer({
+        port: config.admin.port,
+        routes: {
+          "/api/app": () => buildApp(sources),
+          "/api/dashboard": () => buildDashboard(sources),
+        },
+        hub,
+        // dist/cli から見て、ビルドした画面は dist/web にある
+        staticDir: fileURLToPath(new URL("../web/", import.meta.url)),
+        log,
+      });
+      log(`管理画面: ${admin.url}`);
+    } catch (e) {
+      // 管理画面が開けなくても、開発は進める
+      log(`管理画面を開けませんでした: ${(e as Error).message}`);
+    }
+  }
 
   const stop = new AbortController();
   const onSignal = () => {
@@ -143,6 +185,7 @@ export async function start(
   } finally {
     process.off("SIGINT", onSignal);
     process.off("SIGTERM", onSignal);
+    await admin?.close();
     store.close();
     lock.release();
   }

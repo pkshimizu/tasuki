@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>Tasuki — PR とレビュー</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Noto+Sans+JP:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div style="{{vars}} display: flex; flex-wrap: wrap; min-height: 100vh; background: var(--bg); color: var(--text); font-family: Inter, 'Noto Sans JP', system-ui, sans-serif; font-size: 14px; line-height: 1.5">
+  <div style="flex: 0 0 232px; background: var(--panel); border-right: 1px solid var(--line)">
+    <dc-import name="Sidebar" active="prs" theme="{{theme}}" lang="ja" hint-size="232px,720px"></dc-import>
+  </div>
+  <div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+    <dc-import name="AppHeader" theme="{{theme}}" lang="ja" status="running" hint-size="100%,56px"></dc-import>
+    <main style="box-sizing: border-box; width: 100%; max-width: 1240px; padding: 28px 32px 64px; display: flex; flex-direction: column; gap: 24px">
+      <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap">
+        <h1 style="margin: 0; font-size: 22px; font-weight: 650; letter-spacing: -0.01em">PR とレビュー</h1>
+        <span style="font-size: 13px; color: var(--faint)">開いている PR 2 件</span>
+        <label style="margin-left: auto; display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); cursor: pointer">
+          <input type="checkbox" style="width: 16px; height: 16px; accent-color: var(--accent); margin: 0">マージ済み・閉じたものも表示
+        </label>
+      </div>
+      <div style="background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow-x: auto">
+        <table style="width: 100%; min-width: 1040px; border-collapse: collapse; font-size: 13px">
+          <thead>
+            <tr style="background: var(--sub); color: var(--faint); font-size: 12px; text-align: left">
+              <th style="padding: 9px 16px; font-weight: 600; border-bottom: 1px solid var(--line)">PR</th>
+              <th style="padding: 9px 10px; font-weight: 600; border-bottom: 1px solid var(--line)">工程</th>
+              <th style="padding: 9px 10px; font-weight: 600; border-bottom: 1px solid var(--line)">CI</th>
+              <th style="padding: 9px 10px; font-weight: 600; border-bottom: 1px solid var(--line)">衝突</th>
+              <th style="padding: 9px 10px; font-weight: 600; border-bottom: 1px solid var(--line)">マージの設定</th>
+              <th style="padding: 9px 10px; font-weight: 600; border-bottom: 1px solid var(--line)">レビュー</th>
+              <th style="padding: 9px 10px; font-weight: 600; border-bottom: 1px solid var(--line)">片付いていない指摘</th>
+              <th style="padding: 9px 16px 9px 10px; font-weight: 600; border-bottom: 1px solid var(--line); text-align: right">更新</th>
+            </tr>
+          </thead>
+          <tbody>
+            <sc-for list="{{prs}}" as="p" hint-placeholder-count="2">
+              <tr style="border-bottom: 1px solid var(--line2); vertical-align: top">
+                <td style="padding: 14px 16px; min-width: 300px">
+                  <a href="PRDetail.dc.html" style="display: flex; flex-direction: column; gap: 5px; color: var(--text); text-decoration: none">
+                    <span style="display: flex; gap: 8px; align-items: baseline"><span style="font-family: 'JetBrains Mono', ui-monospace, monospace; color: var(--faint); font-size: 12.5px">{{p.no}}</span><span style="font-weight: 600; font-size: 14px">{{p.title}}</span></span>
+                    <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 12px; color: var(--muted)">{{p.branch}}</span>
+                    <sc-if value="{{p.after}}" hint-placeholder-val="{{ false }}"><span style="align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; height: 22px; padding: 0 8px; border-radius: 6px; font-size: 12px; font-weight: 600; color: var(--warn); background: var(--warnSoft)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18zM12 8v5M12 16v.01"></path></svg>レビューのあとにコミットあり</span></sc-if>
+                  </a>
+                </td>
+                <td style="padding: 14px 10px"><span style="display: inline-flex; align-items: center; gap: 5px; height: 22px; padding: 0 8px; border-radius: 6px; border: 1px solid var(--line); color: var(--muted); font-size: 12px; font-weight: 550; white-space: nowrap"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{p.kindD}}"></path></svg>{{p.kind}}</span></td>
+                <td style="padding: 14px 10px"><span style="{{p.ci.style}} display: inline-flex; align-items: center; gap: 6px; height: 22px; padding: 0 8px; border-radius: 11px; font-size: 12px; font-weight: 550; white-space: nowrap"><sc-if value="{{p.ci.dot}}" hint-placeholder-val="{{ false }}"><span style="width: 6px; height: 6px; border-radius: 3px; background: currentColor"></span></sc-if>{{p.ci.label}}</span></td>
+                <td style="padding: 14px 10px; color: var(--muted); white-space: nowrap">{{p.conflict}}</td>
+                <td style="padding: 14px 10px; color: var(--muted); white-space: nowrap">{{p.merge}}</td>
+                <td style="padding: 14px 10px; white-space: nowrap"><span style="display: flex; flex-direction: column; gap: 4px"><span style="color: var(--muted); font-size: 12px">{{p.rounds}}</span><span style="{{p.verdict.style}} display: inline-flex; align-items: center; gap: 6px; height: 22px; padding: 0 8px; border-radius: 11px; font-size: 12px; font-weight: 550; white-space: nowrap"><sc-if value="{{p.verdict.dot}}" hint-placeholder-val="{{ false }}"><span style="width: 6px; height: 6px; border-radius: 3px; background: currentColor"></span></sc-if>{{p.verdict.label}}</span></span></td>
+                <td style="padding: 14px 10px">
+                  <span style="display: flex; gap: 4px; flex-wrap: wrap">
+                    <sc-for list="{{p.open}}" as="s" hint-placeholder-count="2"><span style="{{s.style}} display: inline-flex; align-items: center; gap: 4px; height: 22px; padding: 0 7px; border-radius: 6px; font-size: 12px; font-weight: 600; white-space: nowrap">{{s.label}}</span></sc-for>
+                    <sc-if value="{{p.none}}" hint-placeholder-val="{{ false }}"><span style="color: var(--faint); font-size: 12.5px">なし</span></sc-if>
+                  </span>
+                </td>
+                <td style="padding: 14px 16px 14px 10px; color: var(--muted); text-align: right; white-space: nowrap">{{p.updated}}</td>
+              </tr>
+            </sc-for>
+          </tbody>
+        </table>
+      </div>
+      <p style="margin: 0; display: flex; gap: 8px; align-items: center; font-size: 12.5px; color: var(--faint)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18zM12 11v5M12 8v.01"></path></svg>「レビューのあとにコミットあり」の PR は、もう一度 approve されるまでマージされません。</p>
+
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1440,"height":1000}}'>
+const THEMES = {
+  light: '--bg:#F7F7F5;--panel:#FFFFFF;--sub:#F3F3F0;--hover:#EDEDE9;--line:#E4E4E0;--line2:#EDEDE9;--text:#18181B;--muted:#5A5A64;--faint:#686871;--accent:#4A52C6;--accentSoft:#EEEFFC;--onAccent:#FFFFFF;--ok:#15754A;--okSoft:#E3F2E9;--warn:#935000;--warnSoft:#FBEFDC;--err:#BA3027;--errSoft:#FBE7E5;--info:#2360BC;--infoSoft:#E7EFFB;--r-con:#4F51C4;--r-spec:#0A7268;--r-plan:#8F5C00;--r-ui:#AB2E76;--r-prog:#2360C0;--r-rev:#AE3D0B;--shadow:0 1px 2px rgba(16,16,20,.04);--pop:0 16px 40px rgba(16,16,20,.16);',
+  dark: '--bg:#0D0D0F;--panel:#151518;--sub:#1C1C20;--hover:#222227;--line:#2A2A30;--line2:#222227;--text:#ECECEF;--muted:#A3A3AD;--faint:#8E8E98;--accent:#959CF5;--accentSoft:rgba(149,156,245,.13);--onAccent:#0D0D0F;--ok:#52C58E;--okSoft:rgba(82,197,142,.12);--warn:#E9A43F;--warnSoft:rgba(233,164,63,.13);--err:#F27C72;--errSoft:rgba(242,124,114,.13);--info:#72A8F6;--infoSoft:rgba(114,168,246,.13);--r-con:#9798F3;--r-spec:#40C7B6;--r-plan:#E2AD40;--r-ui:#EF80C2;--r-prog:#70A8F6;--r-rev:#F38D55;--shadow:0 0 0 transparent;--pop:0 18px 44px rgba(0,0,0,.55);'
+};
+const ROLES = {
+  con: { ja: '司令塔', en: 'Conductor', c: '--r-con', d: 'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18zM15.5 8.5l-2 5-5 2 2-5z' },
+  spec: { ja: '仕様マスター', en: 'Spec Master', c: '--r-spec', d: 'M7 3h7l4 4v14H7zM14 3v4h4M10 12h5M10 16h5' },
+  plan: { ja: 'プランナー', en: 'Planner', c: '--r-plan', d: 'M10 6h10M10 12h10M10 18h10M4 6l1.5 1.5L8 5M4 12l1.5 1.5L8 11M4 18l1.5 1.5L8 17' },
+  ui: { ja: 'UIデザイナー', en: 'UI Designer', c: '--r-ui', d: 'M5 4h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zM3 9h18M9 9v11' },
+  prog: { ja: 'プログラマー', en: 'Programmer', c: '--r-prog', d: 'M8 8l-4 4 4 4M16 8l4 4-4 4M13.5 5l-3 14' },
+  rev: { ja: 'レビュアー', en: 'Reviewer', c: '--r-rev', d: 'M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12zM12 9a3 3 0 1 0 0 6a3 3 0 1 0 0-6z' }
+};
+const role = (k, lang) => { const r = ROLES[k]; return { label: r[lang], d: r.d, style: 'background:color-mix(in srgb,var(' + r.c + ') 13%,transparent);color:var(' + r.c + ');' }; };
+const TONE = { ok: 'color:var(--ok);background:var(--okSoft);', warn: 'color:var(--warn);background:var(--warnSoft);', err: 'color:var(--err);background:var(--errSoft);', neutral: 'color:var(--muted);background:var(--sub);', plain: 'color:var(--muted);background:transparent;' };
+const ICON = {
+  wait: 'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18zM12 7v5l3 2',
+  bell: 'M6 16V11a6 6 0 0 1 12 0v5l2 2H4zM10 20h4',
+  merge: 'M6 3a2 2 0 1 0 0 4a2 2 0 1 0 0-4zM6 7v14M18 13a2 2 0 1 0 0 4a2 2 0 1 0 0-4zM18 13c0-4-3-6-12-6'
+};
+const MONO = "font-family:'JetBrains Mono',ui-monospace,monospace;";
+const chip = (k) => role(k, 'ja');
+const CODE = MONO + 'font-size:.9em;background:var(--sub);border:1px solid var(--line2);padding:0 5px;border-radius:4px;';
+const segs = (l) => l.split('`').map((t, i) => ({ t, style: i % 2 ? CODE : '' }));
+const MD = (src) => src.split('\n').filter((l) => l.trim()).map((l) => {
+  if (l.startsWith('### ')) return { segs: segs(l.slice(4)), style: 'font-weight:650;font-size:13px;margin-top:8px;' };
+  if (/^\d+\. /.test(l)) return { segs: segs(l), style: 'padding-left:2px;' };
+  if (l.startsWith('- ')) return { segs: segs('・' + l.slice(2)), style: 'padding-left:2px;' };
+  if (l.startsWith('> ')) return { segs: segs(l.slice(2)), style: 'color:var(--muted);padding-left:10px;border-left:2px solid var(--line);' };
+  return { segs: segs(l), style: '' };
+});
+const RUNST = {
+  running: { label: '実行中', style: TONE.ok, dot: true },
+  done: { label: '終えた', style: TONE.neutral },
+  asked: { label: '人への質問を返した', style: 'color:var(--accent);background:var(--accentSoft);' },
+  blocked: { label: '進められないと返した', style: TONE.warn },
+  error: { label: 'エラー', style: TONE.err },
+  limit: { label: '利用上限で終わった', style: TONE.warn },
+  aborted: { label: '中断', style: TONE.neutral }
+};
+const st = (k) => ({ ...RUNST[k], dot: !!RUNST[k].dot });
+const launchDir = (k, target, res) => ({ label: ROLES[k].ja + 'を起動（' + target + '）', d: ROLES[k].d, labelStyle: 'color:var(' + ROLES[k].c + ');', result: res || '起動した', resStyle: TONE.ok });
+const DIR = {
+  wait: { label: '待つ', d: ICON.wait, labelStyle: 'color:var(--muted);', result: '待った', resStyle: TONE.plain },
+  notify: { label: 'お知らせ', d: ICON.bell, labelStyle: 'color:var(--muted);', result: '書いた', resStyle: TONE.ok },
+  mergeSkip: (n) => ({ label: 'マージ（' + n + '）', d: ICON.merge, labelStyle: 'color:var(--muted);', result: '見送り', resStyle: TONE.warn })
+};
+const MARK = {
+  event: 'background:var(--panel);border:2px solid var(--faint);',
+  decision: 'background:var(--r-con);border:2px solid var(--r-con);',
+  run: (k) => 'background:var(' + ROLES[k].c + ');border:2px solid var(' + ROLES[k].c + ');'
+};
+const tl = (items) => items.map((x, i) => ({
+  date: '', meta: '', role: false, target: '', state: false, body: '', dirs: [], md: false, mdMore: '', last: i === items.length - 1, cardStyle: 'background:var(--panel);', ...x,
+  hasDirs: !!(x.dirs && x.dirs.length), rail: i === items.length - 1 ? 'background:transparent;' : 'background:var(--line);'
+}));
+
+const SEV = { blocker: 'color:#fff;background:var(--err);', major: 'color:var(--err);background:var(--errSoft);', minor: 'color:var(--muted);background:var(--sub);', nit: 'color:var(--faint);background:transparent;border:1px solid var(--line);' };
+class Component extends DCLogic {
+  renderVals() {
+    const theme = this.props.theme ?? 'light';
+    const S = (label, style, dot) => ({ label, style, dot: !!dot });
+    const prs = [
+      { no: '#21', title: 'feat: カードモードを追加する', branch: 'tasuki/issue-20-flashcards', kind: '実装', kindD: ROLES.prog.d, after: true,
+        ci: S('実行中', TONE.warn, true), conflict: 'なし', merge: '人がマージ', rounds: '1 回', verdict: S('request_changes', TONE.err),
+        open: [{ label: 'major 1', style: SEV.major }, { label: 'minor 1', style: SEV.minor }, { label: 'nit 1', style: SEV.nit }], updated: '3 分前' },
+      { no: '#19', title: 'docs: カードモードの仕様を追加する', branch: 'tasuki/spec-flashcards', kind: '仕様', kindD: ROLES.spec.d, after: false,
+        ci: S('合格', TONE.ok), conflict: 'なし', merge: '人がマージ', rounds: '2 回', verdict: S('approve', TONE.ok), open: [], updated: '8 分前' }
+    ].map((p) => ({ ...p, none: p.open.length === 0 }));
+    return { vars: THEMES[theme], theme, prs };
+  }
+}
+
+</script>
+</body>
+</html>

@@ -70,8 +70,15 @@ describe("質問スレッド", () => {
       title: "確認",
       body: "どちらにしますか",
       target: { kind: "issue", number: 4 },
+      origin: "programmer",
     });
-    s.addQuestion({ threadId: "t2", title: "全体", body: "?", target: null });
+    s.addQuestion({
+      threadId: "t2",
+      title: "全体",
+      body: "?",
+      target: null,
+      origin: "dispatcher",
+    });
     s.setQuestionRead("t1", "400", true);
     s.setQuestionRead("t1", "500", false);
     s.setQuestionRead("t2", "600", false);
@@ -79,6 +86,7 @@ describe("質問スレッド", () => {
     expect(q1).toMatchObject({
       threadId: "t1",
       target: { kind: "issue", number: 4 },
+      origin: "programmer",
       lastReadId: "500",
       answered: true,
     });

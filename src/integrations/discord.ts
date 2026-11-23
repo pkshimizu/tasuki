@@ -33,6 +33,8 @@ export interface Chat {
   postToThread(threadId: string, text: string): Promise<void>;
   /** お知らせチャンネルに書く */
   notify(text: string): Promise<void>;
+  /** スレッドをブラウザで開く URL。サーバーがまだ分からなければ undefined */
+  threadUrl(threadId: string): string | undefined;
 }
 
 export const MESSAGE_LIMIT = 2000;
@@ -279,5 +281,11 @@ export class DiscordChat implements Chat {
 
   async notify(text: string): Promise<void> {
     await this.post(this.discord.channels.notices, text);
+  }
+
+  threadUrl(threadId: string): string | undefined {
+    // サーバーの ID は、質問スレッドを初めて確かめたときに分かる
+    if (this.guildId === undefined) return undefined;
+    return `https://discord.com/channels/${this.guildId}/${threadId}`;
   }
 }

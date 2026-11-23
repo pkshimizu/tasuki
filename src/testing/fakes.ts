@@ -127,6 +127,10 @@ export class FakeChat implements Chat {
     this.notices.push(text);
     return Promise.resolve();
   }
+
+  threadUrl(threadId: string): string | undefined {
+    return `https://discord.test/channels/g1/${threadId}`;
+  }
 }
 
 export class FakeGitHub implements GitHub {

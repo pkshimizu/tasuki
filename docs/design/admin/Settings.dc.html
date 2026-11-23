@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>Tasuki — 設定</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Noto+Sans+JP:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div style="{{vars}} display: flex; flex-wrap: wrap; min-height: 100vh; background: var(--bg); color: var(--text); font-family: Inter, 'Noto Sans JP', system-ui, sans-serif; font-size: 14px; line-height: 1.5">
+  <div style="flex: 0 0 232px; background: var(--panel); border-right: 1px solid var(--line)">
+    <dc-import name="Sidebar" active="settings" theme="{{theme}}" lang="ja" hint-size="232px,720px"></dc-import>
+  </div>
+  <div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+    <dc-import name="AppHeader" theme="{{theme}}" lang="ja" status="running" hint-size="100%,56px"></dc-import>
+    <main style="box-sizing: border-box; width: 100%; max-width: 1240px; padding: 28px 32px 64px; display: flex; flex-direction: column; gap: 24px">
+      <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap">
+        <div style="display: flex; flex-direction: column; gap: 2px"><h1 style="margin: 0; font-size: 22px; font-weight: 650; letter-spacing: -0.01em">設定</h1><span style="font-size: 13px; color: var(--faint)"><span style="font-family: 'JetBrains Mono', ui-monospace, monospace;">.tasuki/config.yaml</span> をフォームで編集します。保存すると変更をコミットして PR を作ります</span></div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 12px 16px; border-radius: 12px; background: var(--panel); border: 1px solid var(--line); box-shadow: var(--shadow)">
+        <span style="display: inline-flex; align-items: center; gap: 8px; font-size: 13px"><span style="width: 8px; height: 8px; border-radius: 4px; background: var(--accent)"></span>変更 2 件（基本）</span>
+        <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 550; color: var(--err)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18zM12 8v5M12 16v.01"></path></svg>入力の誤りが 1 件あるため保存できません</span>
+        <span style="flex: 1"></span>
+        <button type="button" style="height: 34px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--muted); font: inherit; font-size: 13px; cursor: pointer">すべての変更を取り消す</button>
+        <a href="Dialogs.dc.html" style="display: inline-flex; align-items: center; height: 34px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--text); font-size: 13px; font-weight: 550; text-decoration: none">差分を確認</a>
+        <button type="button" disabled aria-disabled="true" style="height: 34px; padding: 0 14px; border-radius: 8px; border: none; background: var(--sub); color: var(--faint); font: inherit; font-size: 13px; font-weight: 600; cursor: not-allowed">保存して PR を作る</button>
+      </div>
+      <div style="display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start">
+        <nav aria-label="設定の目次" style="flex: 1 1 180px; max-width: 200px; display: flex; flex-direction: column; gap: 2px"><a href="#basic" style="display: flex; align-items: center; gap: 8px; height: 32px; padding: 0 10px; border-radius: 7px; font-size: 13px; text-decoration: none; background: var(--hover); color: var(--text); font-weight: 600"><span style="flex: 1">基本</span><span aria-label='変更あり' style='width: 7px; height: 7px; border-radius: 4px; background: var(--accent)'></span></a><a href="#merge" style="display: flex; align-items: center; gap: 8px; height: 32px; padding: 0 10px; border-radius: 7px; font-size: 13px; text-decoration: none; color: var(--muted)"><span style="flex: 1">マージ</span></a><a href="#discord" style="display: flex; align-items: center; gap: 8px; height: 32px; padding: 0 10px; border-radius: 7px; font-size: 13px; text-decoration: none; color: var(--muted)"><span style="flex: 1">Discord</span></a><a href="#docs" style="display: flex; align-items: center; gap: 8px; height: 32px; padding: 0 10px; border-radius: 7px; font-size: 13px; text-decoration: none; color: var(--muted)"><span style="flex: 1">文書の置き場</span></a><a href="#work" style="display: flex; align-items: center; gap: 8px; height: 32px; padding: 0 10px; border-radius: 7px; font-size: 13px; text-decoration: none; color: var(--muted)"><span style="flex: 1">作業フォルダ</span></a><a href="#models" style="display: flex; align-items: center; gap: 8px; height: 32px; padding: 0 10px; border-radius: 7px; font-size: 13px; text-decoration: none; color: var(--muted)"><span style="flex: 1">エージェントごとのモデル</span></a></nav>
+        <div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 20px">
+<section id="basic" aria-labelledby="basic-h" style="background: var(--panel); border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--line)); border-radius: 12px; overflow: hidden">
+<div style="display: flex; align-items: center; gap: 10px; padding: 14px 20px; border-bottom: 1px solid var(--line2); flex-wrap: wrap"><div style="display: flex; flex-direction: column"><h2 id="basic-h" style="margin: 0; font-size: 15px; font-weight: 650">基本</h2></div><span style="display: inline-flex; align-items: center; gap: 5px; height: 22px; padding: 0 8px; border-radius: 6px; font-size: 12px; font-weight: 600; color: var(--accent); background: var(--accentSoft)"><span style="width: 6px; height: 6px; border-radius: 3px; background: currentColor"></span>変更あり</span><button type="button" style="margin-left: auto; height: 30px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--muted); font: inherit; font-size: 12.5px; cursor: pointer">変更を取り消す</button></div>
+<div style="padding: 6px 20px 8px"><div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); gap: 8px 24px; padding: 14px 0; border-bottom: 1px solid var(--line2);">
+<div style="display: flex; flex-direction: column; gap: 3px"><span style="display: flex; gap: 8px; align-items: center; font-size: 13.5px; font-weight: 600">リポジトリ</span><span style="font-size: 12.5px; color: var(--faint); line-height: 1.5">見るだけ。別のリポジトリを担当させるときは、そのリポジトリで tasuki start を実行します</span></div>
+<div style="display: flex; flex-direction: column; gap: 6px; min-width: 0"><span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13.5px; padding: 7px 10px; border-radius: 8px; background: var(--sub); color: var(--muted)">pkshimizu/wordcards</span></div>
+</div><div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); gap: 8px 24px; padding: 14px 0; border-bottom: 1px solid var(--line2);">
+<div style="display: flex; flex-direction: column; gap: 3px"><span style="display: flex; gap: 8px; align-items: center; font-size: 13.5px; font-weight: 600">確認の間隔<span style="font-size: 11.5px; font-weight: 600; color: var(--accent)">変更あり</span></span><span style="font-size: 12.5px; color: var(--faint); line-height: 1.5">10〜3600 秒。既定は 60 秒。変更前: 60</span></div>
+<div style="display: flex; flex-direction: column; gap: 6px; min-width: 0"><span style="display: flex; align-items: center; gap: 8px"><input id="iv" type="number" value="30" aria-invalid="false" style="box-sizing: border-box; height: 34px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--text); font: inherit; font-size: 13.5px; width: 120px; font-variant-numeric: tabular-nums; border-color: color-mix(in srgb, var(--accent) 60%, var(--line))"><span style="font-size: 13px; color: var(--muted)">秒</span></span></div>
+</div><div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); gap: 8px 24px; padding: 14px 0; border-bottom: 1px solid var(--line2);">
+<div style="display: flex; flex-direction: column; gap: 3px"><span style="display: flex; gap: 8px; align-items: center; font-size: 13.5px; font-weight: 600">同時に動かす作業エージェントの数</span><span style="font-size: 12.5px; color: var(--faint); line-height: 1.5">1〜10。既定は 2</span></div>
+<div style="display: flex; flex-direction: column; gap: 6px; min-width: 0"><span style="display: flex; align-items: center; gap: 8px"><input id="cc" type="number" value="12" aria-invalid="true" style="box-sizing: border-box; height: 34px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--text); font: inherit; font-size: 13.5px; width: 120px; font-variant-numeric: tabular-nums; border-color: var(--err); box-shadow: 0 0 0 3px var(--errSoft)"><span style="font-size: 13px; color: var(--muted)">つまで</span></span><span role="alert" style="display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 550; color: var(--err)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18zM12 8v5M12 16v.01"></path></svg>1〜10 の整数を入れてください</span></div>
+</div><div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); gap: 8px 24px; padding: 14px 0; ">
+<div style="display: flex; flex-direction: column; gap: 3px"><span style="display: flex; gap: 8px; align-items: center; font-size: 13.5px; font-weight: 600">エージェントが書く文章の言語</span><span style="font-size: 12.5px; color: var(--faint); line-height: 1.5">仕様・Issue・PR・レビュー・質問の文章に使います</span></div>
+<div style="display: flex; flex-direction: column; gap: 6px; min-width: 0"><select style="box-sizing: border-box; height: 34px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--text); font: inherit; font-size: 13.5px; width: 220px"><option>日本語</option><option>English</option></select></div>
+</div></div>
+</section>
+<section id="merge" aria-labelledby="merge-h" style="background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow: hidden">
+<div style="display: flex; align-items: center; gap: 10px; padding: 14px 20px; border-bottom: 1px solid var(--line2); flex-wrap: wrap"><div style="display: flex; flex-direction: column"><h2 id="merge-h" style="margin: 0; font-size: 15px; font-weight: 650">マージ</h2></div></div>
+<div style="padding: 6px 20px 8px"><div style="padding: 14px 0; border-bottom: 1px solid var(--line2); display: flex; flex-direction: column; gap: 10px"><span style="font-size: 13.5px; font-weight: 600">工程ごとのマージ</span><div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); gap: 12px"><div style="display: flex; flex-direction: column; gap: 10px; padding: 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg)">
+<span style="font-size: 13.5px; font-weight: 650">仕様</span>
+<div role="radiogroup" aria-label="仕様のマージ" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 2px; border-radius: 8px; background: var(--sub); border: 1px solid var(--line)">
+<button type="button" role="radio" aria-checked="false" style="height: 30px; border: none; border-radius: 6px; background: transparent; color: var(--muted); font: inherit; font-size: 12.5px; cursor: pointer">Tasuki（auto）</button>
+<button type="button" role="radio" aria-checked="true" style="height: 30px; border: none; border-radius: 6px; background: var(--panel); color: var(--text); font: inherit; font-size: 12.5px; font-weight: 650; box-shadow: 0 1px 2px rgba(0,0,0,.08); cursor: pointer">人（human）</button>
+</div>
+<span style="font-size: 12px; color: var(--faint); line-height: 1.5">approve と CI の合格のあと、あなたが GitHub でマージします</span>
+</div><div style="display: flex; flex-direction: column; gap: 10px; padding: 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg)">
+<span style="font-size: 13.5px; font-weight: 650">デザイン</span>
+<div role="radiogroup" aria-label="デザインのマージ" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 2px; border-radius: 8px; background: var(--sub); border: 1px solid var(--line)">
+<button type="button" role="radio" aria-checked="false" style="height: 30px; border: none; border-radius: 6px; background: transparent; color: var(--muted); font: inherit; font-size: 12.5px; cursor: pointer">Tasuki（auto）</button>
+<button type="button" role="radio" aria-checked="true" style="height: 30px; border: none; border-radius: 6px; background: var(--panel); color: var(--text); font: inherit; font-size: 12.5px; font-weight: 650; box-shadow: 0 1px 2px rgba(0,0,0,.08); cursor: pointer">人（human）</button>
+</div>
+<span style="font-size: 12px; color: var(--faint); line-height: 1.5">approve と CI の合格のあと、あなたが GitHub でマージします</span>
+</div><div style="display: flex; flex-direction: column; gap: 10px; padding: 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg)">
+<span style="font-size: 13.5px; font-weight: 650">実装</span>
+<div role="radiogroup" aria-label="実装のマージ" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 2px; border-radius: 8px; background: var(--sub); border: 1px solid var(--line)">
+<button type="button" role="radio" aria-checked="false" style="height: 30px; border: none; border-radius: 6px; background: transparent; color: var(--muted); font: inherit; font-size: 12.5px; cursor: pointer">Tasuki（auto）</button>
+<button type="button" role="radio" aria-checked="true" style="height: 30px; border: none; border-radius: 6px; background: var(--panel); color: var(--text); font: inherit; font-size: 12.5px; font-weight: 650; box-shadow: 0 1px 2px rgba(0,0,0,.08); cursor: pointer">人（human）</button>
+</div>
+<span style="font-size: 12px; color: var(--faint); line-height: 1.5">approve と CI の合格のあと、あなたが GitHub でマージします</span>
+</div></div></div><div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); gap: 8px 24px; padding: 14px 0; ">
+<div style="display: flex; flex-direction: column; gap: 3px"><span style="display: flex; gap: 8px; align-items: center; font-size: 13.5px; font-weight: 600">CI の合格を必須にする</span><span style="font-size: 12.5px; color: var(--faint); line-height: 1.5">approve に加えて、CI の合格をマージの条件にします</span></div>
+<div style="display: flex; flex-direction: column; gap: 6px; min-width: 0"><label style="display: inline-flex; align-items: center; gap: 10px; cursor: pointer"><span style="position: relative; width: 38px; height: 22px; border-radius: 11px; background: var(--accent); flex: 0 0 auto"><span style="position: absolute; top: 3px; left: 19px; width: 16px; height: 16px; border-radius: 8px; background: var(--onAccent)"></span></span><input type="checkbox" checked style="position: absolute; opacity: 0; width: 1px; height: 1px"><span style="font-size: 13.5px; font-weight: 550">オン</span></label>
+<span style="display: flex; gap: 8px; padding: 9px 12px; border-radius: 8px; background: var(--warnSoft); color: var(--warn); font-size: 12.5px; line-height: 1.55"><svg style="flex: 0 0 auto; margin-top: 2px" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4l9 16H3zM12 10v4M12 17v.01"></path></svg>オフにするのは CI の無いリポジトリだけにしてください。オフのあいだは、CI の結果を見ずにマージされます。</span></div>
+</div></div>
+</section>
+<section id="discord" aria-labelledby="discord-h" style="background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow: hidden">
+<div style="display: flex; align-items: center; gap: 10px; padding: 14px 20px; border-bottom: 1px solid var(--line2); flex-wrap: wrap"><div style="display: flex; flex-direction: column"><h2 id="discord-h" style="margin: 0; font-size: 15px; font-weight: 650">Discord</h2></div></div>
+<div style="padding: 6px 20px 8px"><div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); gap: 8px 24px; padding: 14px 0; border-bottom: 1px solid var(--line2);">
+<div style="display: flex; flex-direction: column; gap: 3px"><span style="display: flex; gap: 8px; align-items: center; font-size: 13.5px; font-weight: 600">要件のチャンネル ID</span><span style="font-size: 12.5px; color: var(--faint); line-height: 1.5">人が要件を投稿するチャンネル</span></div>
+<div style="display: flex; flex-direction: column; gap: 6px; min-width: 0"><input type="text" value="1290455012345678901" style="box-sizing: border-box; height: 34px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--text); font: inherit; font-size: 13.5px; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; max-width: 320px"></div>
+</div><div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); gap: 8px 24px; padding: 14px 0; border-bottom: 1px solid var(--line2);">
+<div style="display: flex; flex-direction: column; gap: 3px"><span style="display: flex; gap: 8px; align-items: center; font-size: 13.5px; font-weight: 600">質問のチャンネル ID</span><span style="font-size: 12.5px; color: var(--faint); line-height: 1.5">エージェントからの質問がスレッドとして立つチャンネル</span></div>
+<div style="display: flex; flex-direction: column; gap: 6px; min-width: 0"><input type="text" value="1290455012345678902" style="box-sizing: border-box; height: 34px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--text); font: inherit; font-size: 13.5px; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; max-width: 320px"></div>
+</div><div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); gap: 8px 24px; padding: 14px 0; border-bottom: 1px solid var(--line2);">
+<div style="display: flex; flex-direction: column; gap: 3px"><span style="display: flex; gap: 8px; align-items: center; font-size: 13.5px; font-weight: 600">お知らせのチャンネル ID</span><span style="font-size: 12.5px; color: var(--faint); line-height: 1.5">3 つはそれぞれ別のチャンネルにします</span></div>
+<div style="display: flex; flex-direction: column; gap: 6px; min-width: 0"><input type="text" value="1290455012345678903" style="box-sizing: border-box; height: 34px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--text); font: inherit; font-size: 13.5px; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; max-width: 320px"></div>
+</div><div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); gap: 8px 24px; padding: 14px 0; border-bottom: 1px solid var(--line2);">
+<div style="display: flex; flex-direction: column; gap: 3px"><span style="display: flex; gap: 8px; align-items: center; font-size: 13.5px; font-weight: 600">受け付ける人のユーザー ID</span><span style="font-size: 12.5px; color: var(--faint); line-height: 1.5">この人たちの投稿と返信だけを受け付けます。1 人以上</span></div>
+<div style="display: flex; flex-direction: column; gap: 6px; min-width: 0"><div style="display: flex; flex-direction: column; gap: 6px; max-width: 420px"><div style="display: flex; gap: 6px; align-items: center"><input type="text" aria-label="ユーザー ID" value="482910384756102938" style="box-sizing: border-box; height: 34px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--text); font: inherit; font-size: 13.5px; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; flex: 1; min-width: 0"><button type="button" aria-label="ユーザー IDを削除" style="flex: 0 0 34px; height: 34px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--muted); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; padding: 0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button></div><div style="display: flex; gap: 6px; align-items: center"><input type="text" aria-label="ユーザー ID" value="482910384756109911" style="box-sizing: border-box; height: 34px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--text); font: inherit; font-size: 13.5px; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; flex: 1; min-width: 0"><button type="button" aria-label="ユーザー IDを削除" style="flex: 0 0 34px; height: 34px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--muted); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; padding: 0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button></div><button type="button" style="align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 10px; border-radius: 8px; border: 1px dashed var(--line); background: transparent; color: var(--muted); font: inherit; font-size: 12.5px; cursor: pointer"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>ユーザー ID を足す</button></div></div>
+</div><div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); gap: 8px 24px; padding: 14px 0; ">
+<div style="display: flex; flex-direction: column; gap: 3px"><span style="display: flex; gap: 8px; align-items: center; font-size: 13.5px; font-weight: 600">ボットのトークン</span><span style="font-size: 12.5px; color: var(--faint); line-height: 1.5">トークンは設定ファイルに書かず、環境変数 <span style="font-family: 'JetBrains Mono', ui-monospace, monospace;">TASUKI_DISCORD_TOKEN</span> で渡します</span></div>
+<div style="display: flex; flex-direction: column; gap: 6px; min-width: 0"><span style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap"><span style="display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 9px; border-radius: 12px; font-size: 12px; font-weight: 600; color: var(--ok); background: var(--okSoft)"><span style="width: 6px; height: 6px; border-radius: 3px; background: currentColor"></span>設定済み</span><span style="font-size: 12.5px; color: var(--muted)">値は表示しません</span></span></div>
+</div></div>
+</section>
+<section id="docs" aria-labelledby="docs-h" style="background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow: hidden">
+<div style="display: flex; align-items: center; gap: 10px; padding: 14px 20px; border-bottom: 1px solid var(--line2); flex-wrap: wrap"><div style="display: flex; flex-direction: column"><h2 id="docs-h" style="margin: 0; font-size: 15px; font-weight: 650">文書の置き場</h2></div></div>
+<div style="padding: 6px 20px 8px"><div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); gap: 8px 24px; padding: 14px 0; border-bottom: 1px solid var(--line2);">
+<div style="display: flex; flex-direction: column; gap: 3px"><span style="display: flex; gap: 8px; align-items: center; font-size: 13.5px; font-weight: 600">仕様の置き場</span></div>
+<div style="display: flex; flex-direction: column; gap: 6px; min-width: 0"><input type="text" value="docs/specs" style="box-sizing: border-box; height: 34px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--text); font: inherit; font-size: 13.5px; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; max-width: 360px"></div>
+</div><div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); gap: 8px 24px; padding: 14px 0; border-bottom: 1px solid var(--line2);">
+<div style="display: flex; flex-direction: column; gap: 3px"><span style="display: flex; gap: 8px; align-items: center; font-size: 13.5px; font-weight: 600">デザインの置き場</span></div>
+<div style="display: flex; flex-direction: column; gap: 6px; min-width: 0"><input type="text" value="docs/designs" style="box-sizing: border-box; height: 34px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--text); font: inherit; font-size: 13.5px; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; max-width: 360px"></div>
+</div><div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); gap: 8px 24px; padding: 14px 0; border-bottom: 1px solid var(--line2);">
+<div style="display: flex; flex-direction: column; gap: 3px"><span style="display: flex; gap: 8px; align-items: center; font-size: 13.5px; font-weight: 600">デザインシステムの置き場</span></div>
+<div style="display: flex; flex-direction: column; gap: 6px; min-width: 0"><input type="text" value="docs/design-system" style="box-sizing: border-box; height: 34px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--text); font: inherit; font-size: 13.5px; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; max-width: 360px"></div>
+</div><div style="padding: 14px 0 10px; display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; flex-direction: column; gap: 3px"><span style="font-size: 13.5px; font-weight: 600">プロダクトの情報の置き場</span><span style="font-size: 12.5px; color: var(--faint)">ファイルでもフォルダでも指定できます。フォルダの中の .md はすべて読み込みます</span></div>
+<div style="border: 1px solid var(--line); border-radius: 10px; overflow: hidden">
+<sc-for list="{{kinds}}" as="k" hint-placeholder-count="9">
+<div style="{{k.rowStyle}} display: grid; grid-template-columns: 170px minmax(0, 1fr); gap: 12px; padding: 10px 14px; align-items: start">
+<span style="display: flex; flex-direction: column; gap: 4px; padding-top: 6px"><span style="font-size: 13px; font-weight: 600">{{k.name}}</span><sc-if value="{{k.isDefault}}" hint-placeholder-val="{{ false }}"><span style="align-self: flex-start; font-size: 11px; font-weight: 600; color: var(--faint); border: 1px solid var(--line); border-radius: 4px; padding: 0 5px">既定値のまま</span></sc-if></span>
+<div style="display: flex; flex-direction: column; gap: 6px; min-width: 0">
+<sc-for list="{{k.paths}}" as="p" hint-placeholder-count="1"><div style="display: flex; gap: 6px; align-items: center"><input type="text" aria-label="{{k.name}}のパス" value="{{p}}" style="box-sizing: border-box; height: 34px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--text); font: inherit; font-size: 13.5px; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 12.5px; height: 32px; flex: 1; min-width: 0"><button type="button" aria-label="パスを削除" style="flex: 0 0 32px; height: 32px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--muted); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; padding: 0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button></div></sc-for>
+<button type="button" style="align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 10px; border-radius: 8px; border: 1px dashed var(--line); background: transparent; color: var(--muted); font: inherit; font-size: 12.5px; cursor: pointer"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>パスを足す</button>
+</div>
+</div>
+</sc-for>
+</div>
+</div></div>
+</section>
+<section id="work" aria-labelledby="work-h" style="background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow: hidden">
+<div style="display: flex; align-items: center; gap: 10px; padding: 14px 20px; border-bottom: 1px solid var(--line2); flex-wrap: wrap"><div style="display: flex; flex-direction: column"><h2 id="work-h" style="margin: 0; font-size: 15px; font-weight: 650">作業フォルダ</h2></div></div>
+<div style="padding: 6px 20px 8px"><div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); gap: 8px 24px; padding: 14px 0; border-bottom: 1px solid var(--line2);">
+<div style="display: flex; flex-direction: column; gap: 3px"><span style="display: flex; gap: 8px; align-items: center; font-size: 13.5px; font-weight: 600">準備コマンド</span><span style="font-size: 12.5px; color: var(--faint); line-height: 1.5">作業フォルダを作ったときに、上から順に実行します</span></div>
+<div style="display: flex; flex-direction: column; gap: 6px; min-width: 0"><div style="display: flex; flex-direction: column; gap: 6px; max-width: 480px"><div style="display: flex; gap: 6px; align-items: center"><span style="font-family: 'JetBrains Mono', ui-monospace, monospace; flex: 0 0 22px; font-size: 12px; color: var(--faint); text-align: right">1</span><input type="text" aria-label="準備コマンド 1" value="npm ci" style="box-sizing: border-box; height: 34px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--text); font: inherit; font-size: 13.5px; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; flex: 1; min-width: 0"><button type="button" aria-label="上へ" style="flex: 0 0 34px; height: 34px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--muted); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; padding: 0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"></path></svg></button><button type="button" aria-label="下へ" style="flex: 0 0 34px; height: 34px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--muted); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; padding: 0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6"></path></svg></button><button type="button" aria-label="削除" style="flex: 0 0 34px; height: 34px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--muted); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; padding: 0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button></div><div style="display: flex; gap: 6px; align-items: center"><span style="font-family: 'JetBrains Mono', ui-monospace, monospace; flex: 0 0 22px; font-size: 12px; color: var(--faint); text-align: right">2</span><input type="text" aria-label="準備コマンド 2" value="npx playwright install chromium" style="box-sizing: border-box; height: 34px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--text); font: inherit; font-size: 13.5px; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; flex: 1; min-width: 0"><button type="button" aria-label="上へ" style="flex: 0 0 34px; height: 34px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--muted); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; padding: 0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"></path></svg></button><button type="button" aria-label="下へ" style="flex: 0 0 34px; height: 34px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--muted); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; padding: 0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6"></path></svg></button><button type="button" aria-label="削除" style="flex: 0 0 34px; height: 34px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--muted); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; padding: 0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button></div><button type="button" style="align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 10px; border-radius: 8px; border: 1px dashed var(--line); background: transparent; color: var(--muted); font: inherit; font-size: 12.5px; cursor: pointer"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>コマンドを足す</button></div></div>
+</div><div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); gap: 8px 24px; padding: 14px 0; ">
+<div style="display: flex; flex-direction: column; gap: 3px"><span style="display: flex; gap: 8px; align-items: center; font-size: 13.5px; font-weight: 600">変わったら準備をやり直すファイル</span><span style="font-size: 12.5px; color: var(--faint); line-height: 1.5">このファイルが変わると、次に使うときに準備コマンドをもう一度実行します</span></div>
+<div style="display: flex; flex-direction: column; gap: 6px; min-width: 0"><div style="display: flex; flex-direction: column; gap: 6px; max-width: 420px"><div style="display: flex; gap: 6px; align-items: center"><input type="text" aria-label="ファイル" value="package-lock.json" style="box-sizing: border-box; height: 34px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--text); font: inherit; font-size: 13.5px; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; flex: 1; min-width: 0"><button type="button" aria-label="ファイルを削除" style="flex: 0 0 34px; height: 34px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--muted); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; padding: 0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button></div><button type="button" style="align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 10px; border-radius: 8px; border: 1px dashed var(--line); background: transparent; color: var(--muted); font: inherit; font-size: 12.5px; cursor: pointer"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>ファイルを足す</button></div></div>
+</div></div>
+</section>
+<section id="models" aria-labelledby="models-h" style="background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow: hidden">
+<div style="display: flex; align-items: center; gap: 10px; padding: 14px 20px; border-bottom: 1px solid var(--line2); flex-wrap: wrap"><div style="display: flex; flex-direction: column"><h2 id="models-h" style="margin: 0; font-size: 15px; font-weight: 650">エージェントごとのモデル</h2><p style="margin: 2px 0 0; font-size: 12.5px; color: var(--faint)">空欄のエージェントは既定のモデルを使います</p></div></div>
+<div style="padding: 6px 20px 8px"><sc-for list="{{models}}" as="m" hint-placeholder-count="6">
+<div style="{{m.rowStyle}} display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 12px; align-items: center; padding: 10px 0">
+<span><span style="{{m.style}} display: inline-flex; align-items: center; gap: 5px; height: 24px; padding: 0 9px 0 7px; border-radius: 6px; font-size: 12.5px; font-weight: 600"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{m.d}}"></path></svg>{{m.label}}</span></span>
+<input type="text" aria-label="{{m.label}}のモデル" placeholder="空欄なら既定のモデル" value="" style="box-sizing: border-box; height: 34px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--text); font: inherit; font-size: 13.5px; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; max-width: 360px">
+</div>
+</sc-for></div>
+</section>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1440,"height":2900}}'>
+const THEMES = {
+  light: '--bg:#F7F7F5;--panel:#FFFFFF;--sub:#F3F3F0;--hover:#EDEDE9;--line:#E4E4E0;--line2:#EDEDE9;--text:#18181B;--muted:#5A5A64;--faint:#686871;--accent:#4A52C6;--accentSoft:#EEEFFC;--onAccent:#FFFFFF;--ok:#15754A;--okSoft:#E3F2E9;--warn:#935000;--warnSoft:#FBEFDC;--err:#BA3027;--errSoft:#FBE7E5;--info:#2360BC;--infoSoft:#E7EFFB;--r-con:#4F51C4;--r-spec:#0A7268;--r-plan:#8F5C00;--r-ui:#AB2E76;--r-prog:#2360C0;--r-rev:#AE3D0B;--shadow:0 1px 2px rgba(16,16,20,.04);--pop:0 16px 40px rgba(16,16,20,.16);',
+  dark: '--bg:#0D0D0F;--panel:#151518;--sub:#1C1C20;--hover:#222227;--line:#2A2A30;--line2:#222227;--text:#ECECEF;--muted:#A3A3AD;--faint:#8E8E98;--accent:#959CF5;--accentSoft:rgba(149,156,245,.13);--onAccent:#0D0D0F;--ok:#52C58E;--okSoft:rgba(82,197,142,.12);--warn:#E9A43F;--warnSoft:rgba(233,164,63,.13);--err:#F27C72;--errSoft:rgba(242,124,114,.13);--info:#72A8F6;--infoSoft:rgba(114,168,246,.13);--r-con:#9798F3;--r-spec:#40C7B6;--r-plan:#E2AD40;--r-ui:#EF80C2;--r-prog:#70A8F6;--r-rev:#F38D55;--shadow:0 0 0 transparent;--pop:0 18px 44px rgba(0,0,0,.55);'
+};
+const ROLES = {
+  con: { ja: '司令塔', en: 'Conductor', c: '--r-con', d: 'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18zM15.5 8.5l-2 5-5 2 2-5z' },
+  spec: { ja: '仕様マスター', en: 'Spec Master', c: '--r-spec', d: 'M7 3h7l4 4v14H7zM14 3v4h4M10 12h5M10 16h5' },
+  plan: { ja: 'プランナー', en: 'Planner', c: '--r-plan', d: 'M10 6h10M10 12h10M10 18h10M4 6l1.5 1.5L8 5M4 12l1.5 1.5L8 11M4 18l1.5 1.5L8 17' },
+  ui: { ja: 'UIデザイナー', en: 'UI Designer', c: '--r-ui', d: 'M5 4h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zM3 9h18M9 9v11' },
+  prog: { ja: 'プログラマー', en: 'Programmer', c: '--r-prog', d: 'M8 8l-4 4 4 4M16 8l4 4-4 4M13.5 5l-3 14' },
+  rev: { ja: 'レビュアー', en: 'Reviewer', c: '--r-rev', d: 'M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12zM12 9a3 3 0 1 0 0 6a3 3 0 1 0 0-6z' }
+};
+const role = (k, lang) => { const r = ROLES[k]; return { label: r[lang], d: r.d, style: 'background:color-mix(in srgb,var(' + r.c + ') 13%,transparent);color:var(' + r.c + ');' }; };
+const TONE = { ok: 'color:var(--ok);background:var(--okSoft);', warn: 'color:var(--warn);background:var(--warnSoft);', err: 'color:var(--err);background:var(--errSoft);', neutral: 'color:var(--muted);background:var(--sub);', plain: 'color:var(--muted);background:transparent;' };
+const ICON = {
+  wait: 'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18zM12 7v5l3 2',
+  bell: 'M6 16V11a6 6 0 0 1 12 0v5l2 2H4zM10 20h4',
+  merge: 'M6 3a2 2 0 1 0 0 4a2 2 0 1 0 0-4zM6 7v14M18 13a2 2 0 1 0 0 4a2 2 0 1 0 0-4zM18 13c0-4-3-6-12-6'
+};
+const MONO = "font-family:'JetBrains Mono',ui-monospace,monospace;";
+const chip = (k) => role(k, 'ja');
+const CODE = MONO + 'font-size:.9em;background:var(--sub);border:1px solid var(--line2);padding:0 5px;border-radius:4px;';
+const segs = (l) => l.split('`').map((t, i) => ({ t, style: i % 2 ? CODE : '' }));
+const MD = (src) => src.split('\n').filter((l) => l.trim()).map((l) => {
+  if (l.startsWith('### ')) return { segs: segs(l.slice(4)), style: 'font-weight:650;font-size:13px;margin-top:8px;' };
+  if (/^\d+\. /.test(l)) return { segs: segs(l), style: 'padding-left:2px;' };
+  if (l.startsWith('- ')) return { segs: segs('・' + l.slice(2)), style: 'padding-left:2px;' };
+  if (l.startsWith('> ')) return { segs: segs(l.slice(2)), style: 'color:var(--muted);padding-left:10px;border-left:2px solid var(--line);' };
+  return { segs: segs(l), style: '' };
+});
+const RUNST = {
+  running: { label: '実行中', style: TONE.ok, dot: true },
+  done: { label: '終えた', style: TONE.neutral },
+  asked: { label: '人への質問を返した', style: 'color:var(--accent);background:var(--accentSoft);' },
+  blocked: { label: '進められないと返した', style: TONE.warn },
+  error: { label: 'エラー', style: TONE.err },
+  limit: { label: '利用上限で終わった', style: TONE.warn },
+  aborted: { label: '中断', style: TONE.neutral }
+};
+const st = (k) => ({ ...RUNST[k], dot: !!RUNST[k].dot });
+const launchDir = (k, target, res) => ({ label: ROLES[k].ja + 'を起動（' + target + '）', d: ROLES[k].d, labelStyle: 'color:var(' + ROLES[k].c + ');', result: res || '起動した', resStyle: TONE.ok });
+const DIR = {
+  wait: { label: '待つ', d: ICON.wait, labelStyle: 'color:var(--muted);', result: '待った', resStyle: TONE.plain },
+  notify: { label: 'お知らせ', d: ICON.bell, labelStyle: 'color:var(--muted);', result: '書いた', resStyle: TONE.ok },
+  mergeSkip: (n) => ({ label: 'マージ（' + n + '）', d: ICON.merge, labelStyle: 'color:var(--muted);', result: '見送り', resStyle: TONE.warn })
+};
+const MARK = {
+  event: 'background:var(--panel);border:2px solid var(--faint);',
+  decision: 'background:var(--r-con);border:2px solid var(--r-con);',
+  run: (k) => 'background:var(' + ROLES[k].c + ');border:2px solid var(' + ROLES[k].c + ');'
+};
+const tl = (items) => items.map((x, i) => ({
+  date: '', meta: '', role: false, target: '', state: false, body: '', dirs: [], md: false, mdMore: '', last: i === items.length - 1, cardStyle: 'background:var(--panel);', ...x,
+  hasDirs: !!(x.dirs && x.dirs.length), rail: i === items.length - 1 ? 'background:transparent;' : 'background:var(--line);'
+}));
+
+class Component extends DCLogic {
+  renderVals() {
+    const theme = this.props.theme ?? 'light';
+    const kinds = [
+      ['コンテキスト', ['docs/CONTEXT.md'], true], ['アーキテクチャ', ['docs/ARCHITECTURE.md'], true], ['仕様作成ルール', ['docs/rules/spec.md'], true],
+      ['実装ルール', ['docs/rules/implementation/'], false], ['レビュー観点', ['docs/review-perspectives/'], true], ['コミットルール', ['docs/rules/commit.md'], true],
+      ['タスク作成ルール', ['docs/rules/task.md'], true], ['プルリクルール', ['docs/rules/pull-request.md'], true], ['マージルール', ['docs/rules/merge.md'], true]
+    ].map(([name, paths, d], i) => ({ name, paths, isDefault: d, rowStyle: i ? 'border-top:1px solid var(--line2);' : '' }));
+    const models = ['con', 'spec', 'plan', 'ui', 'prog', 'rev'].map((k, i) => ({ ...chip(k), rowStyle: i ? 'border-top:1px solid var(--line2);' : '' }));
+    return { vars: THEMES[theme], theme, kinds, models };
+  }
+}
+
+</script>
+</body>
+</html>

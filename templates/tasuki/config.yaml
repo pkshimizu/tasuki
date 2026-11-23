@@ -58,6 +58,11 @@ paths:
 #   setup_on_change: # このファイルが変わったら、もう一度実行する
 #     - package-lock.json
 
+# 管理画面（tasuki start と一緒に配信する。この PC からだけ開ける）
+# admin:
+#   enabled: true
+#   port: 4680 # 使用中なら空いているポートに切り替える
+
 # 役ごとのモデル（省略すると Claude Code の既定のモデル）
 # agents:
 #   dispatcher:

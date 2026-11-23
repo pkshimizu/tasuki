@@ -105,6 +105,15 @@ export const configSchema = z.strictObject({
       merge_rules: pathList.default(["docs/rules/merge.md"]),
     })
     .prefault({}),
+  /** 管理画面 */
+  admin: z
+    .strictObject({
+      /** false にすると管理画面を配信しない */
+      enabled: z.boolean().default(true),
+      /** 使いたいポート。使用中なら空いているポートに切り替える */
+      port: z.number().int().min(1024).max(65535).default(4680),
+    })
+    .prefault({}),
   workspace: z
     .strictObject({
       /** 作業フォルダを用意したあとに実行するコマンド（例: npm ci） */

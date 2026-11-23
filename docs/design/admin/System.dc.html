@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>Tasuki — システム</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Noto+Sans+JP:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div style="{{vars}} display: flex; flex-wrap: wrap; min-height: 100vh; background: var(--bg); color: var(--text); font-family: Inter, 'Noto Sans JP', system-ui, sans-serif; font-size: 14px; line-height: 1.5">
+  <div style="flex: 0 0 232px; background: var(--panel); border-right: 1px solid var(--line)">
+    <dc-import name="Sidebar" active="system" theme="{{theme}}" lang="ja" hint-size="232px,720px"></dc-import>
+  </div>
+  <div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+    <dc-import name="AppHeader" theme="{{theme}}" lang="ja" status="running" hint-size="100%,56px"></dc-import>
+    <main style="box-sizing: border-box; width: 100%; max-width: 1240px; padding: 28px 32px 64px; display: flex; flex-direction: column; gap: 24px">
+      <h1 style="margin: 0; font-size: 22px; font-weight: 650; letter-spacing: -0.01em">システム</h1>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap: 16px">
+        <section aria-labelledby="s1" style="background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; display: flex; flex-direction: column; gap: 10px">
+          <h2 id="s1" style="margin: 0; font-size: 14px; font-weight: 650">プロセス</h2>
+          <dl style="margin: 0; display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 8px 16px; font-size: 13px">
+            <dt style="color: var(--muted)">バージョン</dt><dd style="font-family: 'JetBrains Mono', ui-monospace, monospace; margin: 0">0.1.0</dd>
+            <dt style="color: var(--muted)">起動した日時</dt><dd style="margin: 0">今日 09:00:12（8 時間 52 分前）</dd>
+            <dt style="color: var(--muted)">プロセスの番号</dt><dd style="font-family: 'JetBrains Mono', ui-monospace, monospace; margin: 0">48213</dd>
+          </dl>
+        </section>
+        <section aria-labelledby="s2" style="background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; display: flex; flex-direction: column; gap: 10px">
+          <h2 id="s2" style="margin: 0; font-size: 14px; font-weight: 650">利用上限</h2>
+          <span style="align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 10px; border-radius: 12px; font-size: 12.5px; font-weight: 600; color: var(--ok); background: var(--okSoft)"><span style="width: 6px; height: 6px; border-radius: 3px; background: currentColor"></span>通常</span>
+          <span style="font-size: 12.5px; color: var(--muted); line-height: 1.6">上限に達すると「待機中」になり、再開の時刻をここと画面ヘッダーに表示します。最後に上限から回復したのは今日 09:00 です。</span>
+        </section>
+        <section aria-labelledby="s3" style="background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; display: flex; flex-direction: column; gap: 10px">
+          <h2 id="s3" style="margin: 0; font-size: 14px; font-weight: 650">エージェントが使うシェル</h2>
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px">Git Bash <span style="color: var(--faint)">C:\Program Files\Git\bin\bash.exe</span></span>
+          <span style="display: flex; gap: 8px; padding: 9px 12px; border-radius: 8px; background: var(--warnSoft); color: var(--warn); font-size: 12.5px; line-height: 1.55"><svg style="flex: 0 0 auto; margin-top: 2px" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4l9 16H3zM12 10v4M12 17v.01"></path></svg>警告の例: PATH に GNU の find が見つかりません。Windows の find.exe が先に使われるため、一部のコマンドが失敗することがあります。</span>
+        </section>
+      </div>
+
+      <section aria-labelledby="s4" style="background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; display: flex; flex-direction: column; gap: 10px">
+        <h2 id="s4" style="margin: 0; font-size: 14px; font-weight: 650">置き場</h2>
+        <dl style="margin: 0; display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 8px 16px; font-size: 13px">
+          <sc-for list="{{paths}}" as="p" hint-placeholder-count="3"><dt style="color: var(--muted)">{{p.k}}</dt><dd style="font-family: 'JetBrains Mono', ui-monospace, monospace; margin: 0; font-size: 12.5px; word-break: break-all">{{p.v}}</dd></sc-for>
+        </dl>
+      </section>
+
+      <section aria-labelledby="s5">
+        <div style="display: flex; align-items: baseline; gap: 10px; margin-bottom: 10px; flex-wrap: wrap">
+          <h2 id="s5" style="margin: 0; font-size: 15px; font-weight: 650">作業フォルダ</h2>
+          <span style="font-size: 12.5px; color: var(--faint)">4 つ · 対象が終わった（Issue が閉じた、PR がマージされた）ものは自動で消えます</span>
+        </div>
+        <div style="background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow-x: auto">
+          <table style="width: 100%; min-width: 820px; border-collapse: collapse; font-size: 13px">
+            <thead><tr style="background: var(--sub); color: var(--faint); font-size: 12px; text-align: left">
+              <th style="padding: 9px 16px; font-weight: 600; border-bottom: 1px solid var(--line)">名前</th>
+              <th style="padding: 9px 10px; font-weight: 600; border-bottom: 1px solid var(--line)">対象</th>
+              <th style="padding: 9px 10px; font-weight: 600; border-bottom: 1px solid var(--line)">取り出しているブランチ</th>
+              <th style="padding: 9px 10px; font-weight: 600; border-bottom: 1px solid var(--line)">コミットしていない変更</th>
+              <th style="padding: 9px 16px 9px 10px; font-weight: 600; border-bottom: 1px solid var(--line)">準備コマンド</th>
+            </tr></thead>
+            <tbody>
+              <sc-for list="{{wts}}" as="w" hint-placeholder-count="4">
+                <tr style="border-bottom: 1px solid var(--line2)">
+                  <td style="font-family: 'JetBrains Mono', ui-monospace, monospace; padding: 11px 16px; font-weight: 500">{{w.name}}</td>
+                  <td style="padding: 11px 10px; color: var(--muted)">{{w.target}}</td>
+                  <td style="font-family: 'JetBrains Mono', ui-monospace, monospace; padding: 11px 10px; font-size: 12.5px; color: var(--muted)">{{w.branch}}</td>
+                  <td style="padding: 11px 10px"><span style="{{w.dirty.style}} display: inline-flex; align-items: center; gap: 6px; height: 22px; padding: 0 8px; border-radius: 11px; font-size: 12px; font-weight: 550; white-space: nowrap"><sc-if value="{{w.dirty.dot}}" hint-placeholder-val="{{ false }}"><span style="width: 6px; height: 6px; border-radius: 3px; background: currentColor"></span></sc-if>{{w.dirty.label}}</span></td>
+                  <td style="padding: 11px 16px 11px 10px"><span style="{{w.setup.style}} display: inline-flex; align-items: center; gap: 6px; height: 22px; padding: 0 8px; border-radius: 11px; font-size: 12px; font-weight: 550; white-space: nowrap"><sc-if value="{{w.setup.dot}}" hint-placeholder-val="{{ false }}"><span style="width: 6px; height: 6px; border-radius: 3px; background: currentColor"></span></sc-if>{{w.setup.label}}</span></td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section aria-labelledby="s6">
+        <div style="display: flex; align-items: baseline; gap: 10px; margin-bottom: 10px; flex-wrap: wrap">
+          <h2 id="s6" style="margin: 0; font-size: 15px; font-weight: 650">最近のログ</h2>
+          <span style="font-size: 12.5px; color: var(--faint)">新しいものが下に足されます</span>
+        </div>
+        <div role="log" style="font-family: 'JetBrains Mono', ui-monospace, monospace; background: var(--sub); border: 1px solid var(--line); border-radius: 12px; padding: 12px 0; font-size: 12.5px; line-height: 1.8; overflow-x: auto">
+          <sc-for list="{{logs}}" as="l" hint-placeholder-count="12">
+            <div style="{{l.style}} display: grid; grid-template-columns: 76px 52px minmax(0, 1fr); gap: 12px; padding: 0 16px; white-space: nowrap">
+              <span style="color: var(--faint)">{{l.t}}</span><span style="{{l.lvStyle}}">{{l.lv}}</span><span>{{l.msg}}</span>
+            </div>
+          </sc-for>
+        </div>
+      </section>
+
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1440,"height":1400}}'>
+const THEMES = {
+  light: '--bg:#F7F7F5;--panel:#FFFFFF;--sub:#F3F3F0;--hover:#EDEDE9;--line:#E4E4E0;--line2:#EDEDE9;--text:#18181B;--muted:#5A5A64;--faint:#686871;--accent:#4A52C6;--accentSoft:#EEEFFC;--onAccent:#FFFFFF;--ok:#15754A;--okSoft:#E3F2E9;--warn:#935000;--warnSoft:#FBEFDC;--err:#BA3027;--errSoft:#FBE7E5;--info:#2360BC;--infoSoft:#E7EFFB;--r-con:#4F51C4;--r-spec:#0A7268;--r-plan:#8F5C00;--r-ui:#AB2E76;--r-prog:#2360C0;--r-rev:#AE3D0B;--shadow:0 1px 2px rgba(16,16,20,.04);--pop:0 16px 40px rgba(16,16,20,.16);',
+  dark: '--bg:#0D0D0F;--panel:#151518;--sub:#1C1C20;--hover:#222227;--line:#2A2A30;--line2:#222227;--text:#ECECEF;--muted:#A3A3AD;--faint:#8E8E98;--accent:#959CF5;--accentSoft:rgba(149,156,245,.13);--onAccent:#0D0D0F;--ok:#52C58E;--okSoft:rgba(82,197,142,.12);--warn:#E9A43F;--warnSoft:rgba(233,164,63,.13);--err:#F27C72;--errSoft:rgba(242,124,114,.13);--info:#72A8F6;--infoSoft:rgba(114,168,246,.13);--r-con:#9798F3;--r-spec:#40C7B6;--r-plan:#E2AD40;--r-ui:#EF80C2;--r-prog:#70A8F6;--r-rev:#F38D55;--shadow:0 0 0 transparent;--pop:0 18px 44px rgba(0,0,0,.55);'
+};
+const ROLES = {
+  con: { ja: '司令塔', en: 'Conductor', c: '--r-con', d: 'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18zM15.5 8.5l-2 5-5 2 2-5z' },
+  spec: { ja: '仕様マスター', en: 'Spec Master', c: '--r-spec', d: 'M7 3h7l4 4v14H7zM14 3v4h4M10 12h5M10 16h5' },
+  plan: { ja: 'プランナー', en: 'Planner', c: '--r-plan', d: 'M10 6h10M10 12h10M10 18h10M4 6l1.5 1.5L8 5M4 12l1.5 1.5L8 11M4 18l1.5 1.5L8 17' },
+  ui: { ja: 'UIデザイナー', en: 'UI Designer', c: '--r-ui', d: 'M5 4h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zM3 9h18M9 9v11' },
+  prog: { ja: 'プログラマー', en: 'Programmer', c: '--r-prog', d: 'M8 8l-4 4 4 4M16 8l4 4-4 4M13.5 5l-3 14' },
+  rev: { ja: 'レビュアー', en: 'Reviewer', c: '--r-rev', d: 'M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12zM12 9a3 3 0 1 0 0 6a3 3 0 1 0 0-6z' }
+};
+const role = (k, lang) => { const r = ROLES[k]; return { label: r[lang], d: r.d, style: 'background:color-mix(in srgb,var(' + r.c + ') 13%,transparent);color:var(' + r.c + ');' }; };
+const TONE = { ok: 'color:var(--ok);background:var(--okSoft);', warn: 'color:var(--warn);background:var(--warnSoft);', err: 'color:var(--err);background:var(--errSoft);', neutral: 'color:var(--muted);background:var(--sub);', plain: 'color:var(--muted);background:transparent;' };
+const ICON = {
+  wait: 'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18zM12 7v5l3 2',
+  bell: 'M6 16V11a6 6 0 0 1 12 0v5l2 2H4zM10 20h4',
+  merge: 'M6 3a2 2 0 1 0 0 4a2 2 0 1 0 0-4zM6 7v14M18 13a2 2 0 1 0 0 4a2 2 0 1 0 0-4zM18 13c0-4-3-6-12-6'
+};
+const MONO = "font-family:'JetBrains Mono',ui-monospace,monospace;";
+const chip = (k) => role(k, 'ja');
+const CODE = MONO + 'font-size:.9em;background:var(--sub);border:1px solid var(--line2);padding:0 5px;border-radius:4px;';
+const segs = (l) => l.split('`').map((t, i) => ({ t, style: i % 2 ? CODE : '' }));
+const MD = (src) => src.split('\n').filter((l) => l.trim()).map((l) => {
+  if (l.startsWith('### ')) return { segs: segs(l.slice(4)), style: 'font-weight:650;font-size:13px;margin-top:8px;' };
+  if (/^\d+\. /.test(l)) return { segs: segs(l), style: 'padding-left:2px;' };
+  if (l.startsWith('- ')) return { segs: segs('・' + l.slice(2)), style: 'padding-left:2px;' };
+  if (l.startsWith('> ')) return { segs: segs(l.slice(2)), style: 'color:var(--muted);padding-left:10px;border-left:2px solid var(--line);' };
+  return { segs: segs(l), style: '' };
+});
+const RUNST = {
+  running: { label: '実行中', style: TONE.ok, dot: true },
+  done: { label: '終えた', style: TONE.neutral },
+  asked: { label: '人への質問を返した', style: 'color:var(--accent);background:var(--accentSoft);' },
+  blocked: { label: '進められないと返した', style: TONE.warn },
+  error: { label: 'エラー', style: TONE.err },
+  limit: { label: '利用上限で終わった', style: TONE.warn },
+  aborted: { label: '中断', style: TONE.neutral }
+};
+const st = (k) => ({ ...RUNST[k], dot: !!RUNST[k].dot });
+const launchDir = (k, target, res) => ({ label: ROLES[k].ja + 'を起動（' + target + '）', d: ROLES[k].d, labelStyle: 'color:var(' + ROLES[k].c + ');', result: res || '起動した', resStyle: TONE.ok });
+const DIR = {
+  wait: { label: '待つ', d: ICON.wait, labelStyle: 'color:var(--muted);', result: '待った', resStyle: TONE.plain },
+  notify: { label: 'お知らせ', d: ICON.bell, labelStyle: 'color:var(--muted);', result: '書いた', resStyle: TONE.ok },
+  mergeSkip: (n) => ({ label: 'マージ（' + n + '）', d: ICON.merge, labelStyle: 'color:var(--muted);', result: '見送り', resStyle: TONE.warn })
+};
+const MARK = {
+  event: 'background:var(--panel);border:2px solid var(--faint);',
+  decision: 'background:var(--r-con);border:2px solid var(--r-con);',
+  run: (k) => 'background:var(' + ROLES[k].c + ');border:2px solid var(' + ROLES[k].c + ');'
+};
+const tl = (items) => items.map((x, i) => ({
+  date: '', meta: '', role: false, target: '', state: false, body: '', dirs: [], md: false, mdMore: '', last: i === items.length - 1, cardStyle: 'background:var(--panel);', ...x,
+  hasDirs: !!(x.dirs && x.dirs.length), rail: i === items.length - 1 ? 'background:transparent;' : 'background:var(--line);'
+}));
+
+class Component extends DCLogic {
+  renderVals() {
+    const theme = this.props.theme ?? 'light';
+    const paths = [
+      { k: '記録ファイル', v: 'C:\\Users\\kenji\\.tasuki\\pkshimizu-wordcards\\state.db' },
+      { k: 'ログ', v: 'C:\\Users\\kenji\\.tasuki\\pkshimizu-wordcards\\logs\\tasuki.log' },
+      { k: '作業フォルダ', v: 'C:\\Users\\kenji\\.tasuki\\pkshimizu-wordcards\\worktrees\\' }
+    ];
+    const S = (label, style) => ({ label, style, dot: false });
+    const wts = [
+      { name: 'issue-20', target: 'Issue #20', branch: 'tasuki/issue-20-flashcards', dirty: S('なし', TONE.neutral), setup: S('実行済み', TONE.ok) },
+      { name: 'read-pr-19', target: 'PR #19', branch: 'tasuki/spec-flashcards', dirty: S('なし', TONE.neutral), setup: S('実行済み', TONE.ok) },
+      { name: 'read-pr-21', target: 'PR #21', branch: 'tasuki/issue-20-flashcards', dirty: S('なし', TONE.neutral), setup: S('実行済み', TONE.ok) },
+      { name: 'read-repo', target: 'リポジトリ全体', branch: 'main', dirty: S('なし', TONE.neutral), setup: S('未実行', TONE.plain) }
+    ];
+    const LV = { INFO: 'color:var(--info);', WARN: 'color:var(--warn);', ERROR: 'color:var(--err);' };
+    const logs = [
+      ['17:51:02', 'INFO', 'agent started role=reviewer target=PR#19 worktree=read-pr-19'],
+      ['17:51:00', 'INFO', 'conductor decided: launch reviewer (PR #19)'],
+      ['17:50:58', 'INFO', 'poll: 1 new event (agent finished)'],
+      ['17:49:58', 'INFO', 'poll: no new events'],
+      ['17:48:31', 'WARN', 'merge skipped PR#19: merge mode for spec is human'],
+      ['17:48:30', 'INFO', 'conductor decided: merge (PR #19)'],
+      ['17:48:12', 'INFO', 'agent started role=programmer target=Issue#20 worktree=issue-20'],
+      ['17:47:58', 'INFO', 'poll: 2 new events (agent finished, pr review)'],
+      ['17:45:10', 'INFO', 'conductor decided: wait'],
+      ['17:45:02', 'INFO', 'poll: 1 new event (ci status PR#21: pending)'],
+      ['17:44:01', 'INFO', 'agent finished role=reviewer target=PR#21 verdict=request_changes findings=3'],
+      ['17:38:20', 'INFO', 'agent finished role=programmer target=Issue#20 duration=5m52s']
+    ].reverse().map(([t, lv, msg], i, a) => ({ t, lv, msg, lvStyle: LV[lv], style: i === a.length - 1 ? 'background:color-mix(in srgb,var(--accent) 7%,transparent);' : '' }));
+    return { vars: THEMES[theme], theme, paths, wts, logs };
+  }
+}
+
+</script>
+</body>
+</html>

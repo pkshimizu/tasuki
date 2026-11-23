@@ -59,6 +59,7 @@ describe("質問への返信", () => {
       title: "検索の対象",
       body: "1. ...",
       target: { kind: "requirement", id: "10" },
+      origin: "spec-master",
     });
     await collector.collect();
     expect(take()).toEqual([]);
@@ -91,7 +92,13 @@ describe("質問への返信", () => {
   it("アーカイブされたスレッドは読まない", async () => {
     const { chat, collector, store, take } = setup();
     const threadId = await chat.createQuestionThread("t", "b");
-    store.addQuestion({ threadId, title: "t", body: "b", target: null });
+    store.addQuestion({
+      threadId,
+      title: "t",
+      body: "b",
+      target: null,
+      origin: null,
+    });
     chat.reply(threadId, "返信");
     chat.threads.get(threadId)!.archived = true;
     await collector.collect();

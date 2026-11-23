@@ -4,8 +4,9 @@
 
 ## コマンド
 
-- `npm run build`：`src/` を `dist/` にビルドする（テストは含めない）
-- `npm test`：Vitest でテストする（`src/**/*.test.ts`）
+- `npm run build`：`src/` を `dist/` に、管理画面（`web/`）を `dist/web/` にビルドする（テストは含めない）
+- `npm run dev:web`：管理画面を開発用に動かす（API は、動いている `tasuki start` に取り次ぐ）
+- `npm test`：Vitest でテストする（`src/**/*.test.ts`・`web/src/**/*.test.ts`）
 - `npm run lint` / `npm run format:check` / `npm run typecheck`
 
 CI（`check`）は lint → 整形 → 型 → テスト → ビルドの順に実行する。main へのマージには `check` の合格が必要。
@@ -24,11 +25,16 @@ src/
   agents/         エージェント（agent: Agent SDK での実行、guard: 危険な操作の拒否、roles: 役の決まり、workspace: git worktree）
   integrations/   外部とのやり取り（discord・github・exec）
   store/          記録（SQLite）
+  admin/          管理画面のサーバー側（server: 配信、dashboard: 内容の組み立て、hub: 変化の知らせ、types: API の形）
   testing/        テスト用の部品（fakes・fixtures）と通しのテスト（e2e）
+web/              管理画面の画面側（React ＋ Vite）。ビルドすると dist/web に出る
+docs/design/admin/  管理画面のデザイン
 ```
 
 - テストは対象のファイルの隣に `*.test.ts` で置く
 - `testing/` はテストからだけ import する（ビルドには含めない）
+- `web/` が `src/` から import するのは型だけ（`src/admin/types.ts` など）。サーバーのコードを画面に入れない
+- 画面の文言は `web/src/i18n.ts` に日本語と英語をそろえて書く。配色と寸法は `docs/design/admin/` に合わせる
 - `config/`・`domain/`・`knowledge/`・`integrations/`・`store/` は、`monitor/`・`dispatcher/`・`cli/` を import しない
 
 ## リリース
