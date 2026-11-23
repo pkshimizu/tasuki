@@ -14,6 +14,7 @@ import {
 import type { AddressInfo } from "node:net";
 import { extname, join, resolve, sep } from "node:path";
 import type { ChangeHub } from "./hub.js";
+import type { AdminOperations } from "./operations.js";
 
 /** 道に当たる内容が無いときに返す印 */
 export const NOT_FOUND = Symbol("not_found");
@@ -25,6 +26,8 @@ export interface AdminServerOptions {
   /** 使いたいポート。使用中なら空いているポートに切り替える */
   port: number;
   routes: AdminRoutes;
+  /** 操作（POST /api/ops/...）。無ければ操作は受け付けない */
+  operations?: AdminOperations | undefined;
   hub: ChangeHub;
   /** 画面のファイルの置き場 */
   staticDir: string;
@@ -38,6 +41,10 @@ export interface AdminServer {
 }
 
 const HOST = "127.0.0.1";
+/** 操作の要求に、管理画面が付ける印 */
+export const ADMIN_HEADER = "x-tasuki-admin";
+/** 閉じるときに、返事を送り終えるのを待つ時間 */
+const CLOSE_GRACE_MS = 300;
 const HEARTBEAT_MS = 25_000;
 
 const CONTENT_TYPES: Record<string, string> = {
@@ -57,6 +64,19 @@ export function isLocalHost(host: string | undefined): boolean {
   if (!host) return false;
   const name = host.replace(/:\d+$/, "").toLowerCase();
   return name === "127.0.0.1" || name === "localhost" || name === "[::1]";
+}
+
+/**
+ * 管理画面そのものからの操作の要求か。
+ * ほかのサイトのページからは、印のヘッダーを付けた要求も、同じ出どころの要求も送れない。
+ */
+export function isFromAdminPage(headers: IncomingMessage["headers"]): boolean {
+  if (headers[ADMIN_HEADER] !== "1") return false;
+  const host = headers.host;
+  if (!isLocalHost(host)) return false;
+  if (headers.origin !== `http://${host ?? ""}`) return false;
+  const site = headers["sec-fetch-site"];
+  return site === undefined || site === "same-origin";
 }
 
 function send(
@@ -168,6 +188,29 @@ function handle(
     return;
   }
   const path = (req.url ?? "/").split("?")[0] ?? "/";
+  if (path.startsWith("/api/ops/")) {
+    if (req.method !== "POST") {
+      send(res, 405, "text/plain; charset=utf-8", "Method Not Allowed");
+      return;
+    }
+    if (!isFromAdminPage(req.headers)) {
+      send(res, 403, "text/plain; charset=utf-8", "Forbidden");
+      return;
+    }
+    // 要求の本文は使わない（読まずに捨てる）
+    req.resume();
+    try {
+      const result = options.operations?.(path) ?? NOT_FOUND;
+      if (result === NOT_FOUND) sendJson(res, 404, { error: "not_found" });
+      else sendJson(res, result.ok ? 200 : 409, result);
+    } catch (e) {
+      options.log(
+        `管理画面の操作 ${path} に失敗しました: ${e instanceof Error ? e.message : String(e)}`,
+      );
+      sendJson(res, 500, { error: "internal" });
+    }
+    return;
+  }
   if (req.method !== "GET" && req.method !== "HEAD") {
     send(res, 405, "text/plain; charset=utf-8", "Method Not Allowed");
     return;
@@ -232,10 +275,14 @@ export async function startAdminServer(
     port,
     close: () =>
       new Promise((resolve) => {
-        server.closeAllConnections();
         server.close(() => {
           resolve();
         });
+        server.closeIdleConnections();
+        // 送っている途中の返事（止める操作への返事など）を待ってから、残りを切る
+        setTimeout(() => {
+          server.closeAllConnections();
+        }, CLOSE_GRACE_MS);
       }),
   };
 }

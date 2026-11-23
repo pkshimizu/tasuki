@@ -854,3 +854,73 @@ a.list-item {
   color: var(--faint);
   white-space: nowrap;
 }
+
+/* ---------- 操作（停止・再起動・中断）と確認ダイアログ ---------- */
+.header-ops {
+  display: inline-flex;
+  gap: 6px;
+}
+.button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.button.danger {
+  background: var(--err);
+  border-color: var(--err);
+  color: #fff;
+}
+.status.pending {
+  background: var(--warnSoft);
+  color: var(--warn);
+}
+.dialog {
+  width: min(480px, calc(100vw - 32px));
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--panel);
+  color: var(--text);
+  box-shadow: 0 20px 60px rgb(0 0 0 / 0.35);
+}
+.dialog::backdrop {
+  background: rgb(0 0 0 / 0.45);
+}
+.dialog-body {
+  padding: 22px 24px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-size: 13.5px;
+  line-height: 1.7;
+}
+.dialog-body h2 {
+  font-size: 16px;
+  font-weight: 650;
+}
+.dialog-list {
+  list-style: none;
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: var(--sub);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+}
+.dialog-error {
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--errSoft);
+  color: var(--err);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.dialog-foot {
+  padding: 14px 24px;
+  border-top: 1px solid var(--line2);
+  background: var(--sub);
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}

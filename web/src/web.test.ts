@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import type { Directive } from "../../src/admin/types.js";
 import { directiveLabel, outcomeLabel } from "./components/Chips.js";
+import { operate } from "./api.js";
+import { operationError } from "./components/Dialog.js";
 import { lineCount } from "./components/Markdown.js";
 import { splitEventText } from "./components/Timeline.js";
 import {
@@ -202,5 +204,53 @@ describe("文章の表示", () => {
       title: "PR #21 の CI が合格した",
       body: "",
     });
+  });
+});
+
+describe("操作", () => {
+  const reply = (status: number, body: string) =>
+    (() => Promise.resolve(new Response(body, { status }))) as typeof fetch;
+
+  it("管理画面の印を付けて POST し、結果を返す", async () => {
+    const calls: [unknown, RequestInit | undefined][] = [];
+    const send = ((input: unknown, init?: RequestInit) => {
+      calls.push([input, init]);
+      return Promise.resolve(new Response('{"ok":true}'));
+    }) as typeof fetch;
+    expect(await operate("/api/ops/stop", send)).toEqual({ ok: true });
+    expect(calls[0]![0]).toBe("/api/ops/stop");
+    expect(calls[0]![1]).toMatchObject({
+      method: "POST",
+      headers: { "X-Tasuki-Admin": "1" },
+    });
+  });
+
+  it("できなかった理由を返す。返事が読めなければ undefined", async () => {
+    const refused = { ok: false, reason: "not_running", detail: "" };
+    expect(await operate("/x", reply(409, JSON.stringify(refused)))).toEqual(
+      refused,
+    );
+    expect(await operate("/x", reply(403, "Forbidden"))).toBeUndefined();
+    expect(
+      await operate("/x", reply(500, '{"error":"internal"}')),
+    ).toBeUndefined();
+    expect(
+      await operate("/x", (() =>
+        Promise.reject(new Error("down"))) as typeof fetch),
+    ).toBeUndefined();
+  });
+
+  it("できなかった理由を、人が読む文にする", () => {
+    expect(operationError(ja, undefined)).toBe(ja.ops.errors.failed);
+    expect(
+      operationError(ja, {
+        ok: false,
+        reason: "invalid_config",
+        detail: "x が無い",
+      }),
+    ).toBe(`${ja.ops.errors.invalid_config}\nx が無い`);
+    expect(
+      operationError(en, { ok: false, reason: "not_running", detail: "" }),
+    ).toBe(en.ops.errors.not_running);
   });
 });

@@ -21,6 +21,8 @@ export interface AppInfo {
   limitUntil: string | null;
   lastCheckAt: string | null;
   nextCheckAt: string | null;
+  /** 止める・起動し直す操作を受けて、エージェントの終了を待っているか */
+  pending: "stop" | "restart" | null;
   /** 人の番のものの件数 */
   needsAction: { questions: number; pullRequests: number; notices: number };
 }
@@ -331,3 +333,17 @@ export interface RequirementDetail {
   related: RelatedItem[];
   timeline: TimelineItem[];
 }
+
+// ---------- 操作
+
+/** 操作の結果。できなかったときは、その理由 */
+export type OperationResult =
+  | { ok: true }
+  | {
+      ok: false;
+      reason:
+        | "not_running" // 中断するエージェントが、もう動いていない
+        | "stopping" // 止めている最中
+        | "invalid_config"; // 設定に誤りがあって、起動し直せない
+      detail: string;
+    };

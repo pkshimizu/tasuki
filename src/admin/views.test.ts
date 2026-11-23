@@ -74,6 +74,7 @@ function setup(extraYaml = "") {
       dirtyWorktrees: [],
     }),
     threadUrl: (id) => `https://discord.test/${id}`,
+    pending: () => null,
     requirementUrl: (id) => `https://discord.test/req/${id}`,
     clock: { now: () => new Date("2026-11-23T09:00:00Z") },
     config: testConfig(extraYaml),

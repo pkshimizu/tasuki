@@ -4,8 +4,10 @@ import { tmpdir } from "node:os";
 import { join, sep } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { ChangeHub } from "./hub.js";
+import { adminOperations } from "./operations.js";
 import {
   type AdminServer,
+  isFromAdminPage,
   isLocalHost,
   NOT_FOUND,
   resolveStatic,
@@ -28,7 +30,25 @@ function site(): string {
 async function start(extra: { port?: number; staticDir?: string } = {}) {
   const hub = new ChangeHub();
   const logs: string[] = [];
+  const done: string[] = [];
   const server = await startAdminServer({
+    operations: adminOperations({
+      stop: () => {
+        done.push("stop");
+        return { ok: true };
+      },
+      restart: () => {
+        done.push("restart");
+        return { ok: false, reason: "invalid_config", detail: "誤りがある" };
+      },
+      abortRun: (runId) => {
+        done.push(`abort:${String(runId)}`);
+        if (runId === 500) throw new Error("こわれた");
+        return runId === 7
+          ? { ok: true }
+          : { ok: false, reason: "not_running", detail: "" };
+      },
+    }),
     port: extra.port ?? 0,
     routes: (path) => {
       if (path === "/api/app") return { repo: "owner/name" };
@@ -42,7 +62,7 @@ async function start(extra: { port?: number; staticDir?: string } = {}) {
     log: (t) => logs.push(t),
   });
   servers.push(server);
-  return { server, hub, logs };
+  return { server, hub, logs, done };
 }
 
 /** Host などを自由に決めて要求する */
@@ -238,5 +258,102 @@ describe("ChangeHub", () => {
     hub.notify();
     expect([a, b]).toEqual([1, 2]);
     expect(hub.size).toBe(2);
+  });
+});
+
+describe("操作", () => {
+  /** 管理画面が送る要求と同じヘッダー */
+  const page = (port: number) => ({
+    Host: `127.0.0.1:${String(port)}`,
+    Origin: `http://127.0.0.1:${String(port)}`,
+    "X-Tasuki-Admin": "1",
+    "Sec-Fetch-Site": "same-origin",
+  });
+
+  it("管理画面からの要求で、操作を実行して結果を返す", async () => {
+    const { server, done } = await start();
+    const p = server.port;
+    const stop = await get(p, "/api/ops/stop", page(p), "POST");
+    expect(stop.status).toBe(200);
+    expect(JSON.parse(stop.body)).toEqual({ ok: true });
+    const abort = await get(p, "/api/ops/runs/7/abort", page(p), "POST");
+    expect(JSON.parse(abort.body)).toEqual({ ok: true });
+    expect(done).toEqual(["stop", "abort:7"]);
+  });
+
+  it("できなかった操作は、理由をつけて 409 を返す", async () => {
+    const { server } = await start();
+    const p = server.port;
+    const restart = await get(p, "/api/ops/restart", page(p), "POST");
+    expect(restart.status).toBe(409);
+    expect(JSON.parse(restart.body)).toEqual({
+      ok: false,
+      reason: "invalid_config",
+      detail: "誤りがある",
+    });
+    const abort = await get(p, "/api/ops/runs/8/abort", page(p), "POST");
+    expect(abort.status).toBe(409);
+    expect(JSON.parse(abort.body)).toMatchObject({ reason: "not_running" });
+  });
+
+  it("管理画面そのものからでない要求は断り、操作を実行しない", async () => {
+    const { server, done } = await start();
+    const p = server.port;
+    const ok = page(p);
+    const cases: Record<string, string>[] = [
+      // 印のヘッダーが無い（ほかのサイトのフォームからの送信）
+      { Host: ok.Host, Origin: ok.Origin },
+      // ほかのサイトのページから
+      { ...ok, Origin: "https://evil.example" },
+      { ...ok, "Sec-Fetch-Site": "cross-site" },
+      // 出どころが分からない
+      { Host: ok.Host, "X-Tasuki-Admin": "1" },
+      // この PC の名前でない
+      { ...ok, Host: "evil.example", Origin: "http://evil.example" },
+    ];
+    for (const headers of cases) {
+      const res = await get(p, "/api/ops/stop", headers, "POST");
+      expect(res.status).toBe(403);
+    }
+    // 読むだけの要求では操作しない
+    expect((await get(p, "/api/ops/stop", ok)).status).toBe(405);
+    expect((await get(p, "/api/ops/stop", ok, "OPTIONS")).status).toBe(405);
+    expect(done).toEqual([]);
+  });
+
+  it("知らない操作は 404、失敗は 500。読むための道には POST できない", async () => {
+    const { server, logs } = await start();
+    const p = server.port;
+    expect((await get(p, "/api/ops/unknown", page(p), "POST")).status).toBe(
+      404,
+    );
+    expect(
+      (await get(p, "/api/ops/runs/x/abort", page(p), "POST")).status,
+    ).toBe(404);
+    expect(
+      (await get(p, "/api/ops/runs/500/abort", page(p), "POST")).status,
+    ).toBe(500);
+    expect(logs.join("\n")).toContain("こわれた");
+    expect((await get(p, "/api/app", page(p), "POST")).status).toBe(405);
+  });
+
+  it("isFromAdminPage", () => {
+    const base = {
+      host: "localhost:4680",
+      origin: "http://localhost:4680",
+      "x-tasuki-admin": "1",
+    };
+    expect(isFromAdminPage(base)).toBe(true);
+    expect(isFromAdminPage({ ...base, "sec-fetch-site": "same-origin" })).toBe(
+      true,
+    );
+    expect(isFromAdminPage({ ...base, "sec-fetch-site": "same-site" })).toBe(
+      false,
+    );
+    expect(isFromAdminPage({ ...base, origin: "http://localhost:3000" })).toBe(
+      false,
+    );
+    expect(isFromAdminPage({ ...base, origin: "null" })).toBe(false);
+    expect(isFromAdminPage({ ...base, "x-tasuki-admin": "0" })).toBe(false);
   });
 });

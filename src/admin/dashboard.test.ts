@@ -54,6 +54,7 @@ function setup(
   const store = new SqliteStore(":memory:", {
     now: () => new Date((t += 60_000)),
   });
+  const pending: { value: "stop" | "restart" | null } = { value: null };
   const sources: AdminSources = {
     repo: "owner/name",
     version: "0.1.0",
@@ -74,11 +75,12 @@ function setup(
       dirtyWorktrees: [],
       ...executor,
     }),
+    pending: () => pending.value,
     requirementUrl: (id) => `https://discord.test/req/${id}`,
     threadUrl: (id) => (id === "t1" ? "https://discord.test/t1" : undefined),
     clock: { now: () => new Date(NOW) },
   };
-  return { store, sources };
+  return { store, sources, pending };
 }
 
 describe("buildApp", () => {
@@ -91,8 +93,15 @@ describe("buildApp", () => {
       limitUntil: null,
       lastCheckAt: "2026-11-23T08:59:00.000Z",
       nextCheckAt: "2026-11-23T09:00:00.000Z",
+      pending: null,
       needsAction: { questions: 0, pullRequests: 0, notices: 0 },
     });
+  });
+
+  it("止める・起動し直す操作を受けて待っていることを返す", () => {
+    const { sources, pending } = setup();
+    pending.value = "restart";
+    expect(buildApp(sources).pending).toBe("restart");
   });
 
   it("エージェントか司令塔が動いていれば動作中", () => {

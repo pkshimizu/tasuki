@@ -1,12 +1,13 @@
 /**
  * 画面の枠組み: 左のメニューと、画面ヘッダー。
  */
-import type { MouseEvent } from "react";
-import type { AppInfo } from "../../../src/admin/types.js";
-import { useNow } from "../api.js";
-import { clock, clockWithSeconds, secondsUntil } from "../format.js";
-import type { Lang, Messages } from "../i18n.js";
+import { type MouseEvent, useState } from "react";
+import type { AppInfo, DashboardData } from "../../../src/admin/types.js";
+import { useLive, useNow } from "../api.js";
+import { clock, clockWithSeconds, elapsed, secondsUntil } from "../format.js";
+import { type Lang, type Messages, targetLabel } from "../i18n.js";
 import { type Page, PAGES, pathOf } from "../routes.js";
+import { ConfirmDialog } from "./Dialog.js";
 import { Icon, ICONS, Logo, MENU_ICONS } from "./Icon.js";
 
 export type Navigate = (page: Page, id?: string | null) => void;
@@ -89,6 +90,38 @@ function checkText(t: Messages, app: AppInfo, now: number): string {
   return parts.join(" · ");
 }
 
+/** 停止の確認。動いているエージェントを並べる */
+function StopDialog({ t, onClose }: { t: Messages; onClose: () => void }) {
+  const { data } = useLive<DashboardData>("/api/dashboard");
+  const now = useNow();
+  const agents = data?.agents ?? [];
+  return (
+    <ConfirmDialog
+      t={t}
+      title={t.ops.stopTitle}
+      confirm={t.ops.stopConfirm}
+      danger
+      path="/api/ops/stop"
+      onClose={onClose}
+    >
+      <p>
+        {agents.length > 0 ? t.ops.stopBody(agents.length) : t.ops.stopBodyNone}
+      </p>
+      {agents.length > 0 && (
+        <ul className="dialog-list">
+          {agents.map((a) => (
+            <li key={a.runId}>
+              {t.roles[a.role]} · {targetLabel(t, a.target)} ·{" "}
+              <span className="mono">{elapsed(a.startedAt, now)}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+      <p className="dim">{t.ops.stopAfter}</p>
+    </ConfirmDialog>
+  );
+}
+
 export function Header({
   t,
   lang,
@@ -111,10 +144,19 @@ export function Header({
       app.needsAction.pullRequests +
       app.needsAction.notices
     : 0;
+  const [dialog, setDialog] = useState<"stop" | "restart" | null>(null);
+  const pending = offline ? null : (app?.pending ?? null);
+  const close = () => {
+    setDialog(null);
+  };
   const statusLabel =
-    status === "limited" && app?.limitUntil
-      ? `${t.status.limited} · ${t.resumesAt(clock(app.limitUntil))}`
-      : t.status[status];
+    pending === "stop"
+      ? t.ops.pendingStop
+      : pending === "restart"
+        ? t.ops.pendingRestart
+        : status === "limited" && app?.limitUntil
+          ? `${t.status.limited} · ${t.resumesAt(clock(app.limitUntil))}`
+          : t.status[status];
 
   return (
     <header className="header">
@@ -122,7 +164,7 @@ export function Header({
         <Icon d={ICONS.repo} />
         <span className="mono ellipsis">{app?.repo ?? ""}</span>
       </div>
-      <span className={`status ${status}`}>
+      <span className={`status ${pending ? "pending" : status}`}>
         <i />
         {statusLabel}
       </span>
@@ -158,7 +200,43 @@ export function Header({
           English
         </button>
       </div>
+      {app && !offline && (
+        <div className="header-ops">
+          <button
+            type="button"
+            className="button sm"
+            disabled={pending !== null}
+            onClick={() => {
+              setDialog("restart");
+            }}
+          >
+            {t.ops.restart}
+          </button>
+          <button
+            type="button"
+            className="button sm"
+            disabled={pending === "stop"}
+            onClick={() => {
+              setDialog("stop");
+            }}
+          >
+            {t.ops.stop}
+          </button>
+        </div>
+      )}
       {app && <span className="version mono">v{app.version}</span>}
+      {dialog === "stop" && <StopDialog t={t} onClose={close} />}
+      {dialog === "restart" && (
+        <ConfirmDialog
+          t={t}
+          title={t.ops.restartTitle}
+          confirm={t.ops.restartConfirm}
+          path="/api/ops/restart"
+          onClose={close}
+        >
+          <p>{t.ops.restartBody}</p>
+        </ConfirmDialog>
+      )}
     </header>
   );
 }

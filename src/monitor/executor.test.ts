@@ -768,3 +768,80 @@ describe("要件との結びつき", () => {
     ]);
   });
 });
+
+describe("エージェントの中断", () => {
+  it("1 つだけ中断し、途中で終わったことを司令塔に伝える", async () => {
+    const { executor, agents, store, logs } = setup();
+    // 止める合図が来るまで終わらないエージェント
+    agents.worker = (run) =>
+      new Promise((resolve) => {
+        run.signal?.addEventListener("abort", () => {
+          resolve({ kind: "error", message: "aborted" });
+        });
+      });
+    await executor.execute([
+      {
+        type: "run_agent",
+        role: "programmer",
+        target: { kind: "issue", number: 1 },
+        instruction: "実装する",
+      },
+      {
+        type: "run_agent",
+        role: "programmer",
+        target: { kind: "issue", number: 2 },
+        instruction: "実装する",
+      },
+    ]);
+    await new Promise((r) => setTimeout(r, 10));
+    const [first, second] = store.runningRuns().map((r) => r.id);
+
+    expect(executor.abortRun(first!)).toBe(true);
+    // 2 度目と、動いていない実行は何もしない
+    expect(executor.abortRun(first!)).toBe(false);
+    expect(executor.abortRun(999)).toBe(false);
+    await new Promise((r) => setTimeout(r, 10));
+
+    expect(store.run(first!)).toMatchObject({ status: "interrupted" });
+    expect(store.run(first!)?.summary).toContain("中断しました");
+    expect(store.run(second!)).toMatchObject({ status: "running" });
+    expect(executor.runningCount).toBe(1);
+    expect(
+      store
+        .pendingEvents()
+        .map((e) => e.payload)
+        .filter((p) => p.type === "agent_finished"),
+    ).toMatchObject([{ runId: first, status: "interrupted" }]);
+    expect(logs.join("\n")).toContain("プログラマーを中断します");
+
+    executor.stopNow();
+    await executor.idle();
+    // 全体を止めたときは、人の中断としては扱わない
+    expect(store.run(second!)).toMatchObject({ status: "error" });
+  });
+
+  it("中断の合図のあとに終えた実行は、そのまま終えたものとして扱う", async () => {
+    const { executor, agents, store } = setup();
+    let finish: (() => void) | undefined;
+    agents.worker = () =>
+      new Promise((resolve) => {
+        finish = () => {
+          resolve(ok(output({ summary: "終えた" })));
+        };
+      });
+    await executor.execute([
+      {
+        type: "run_agent",
+        role: "programmer",
+        target: { kind: "issue", number: 1 },
+        instruction: "実装する",
+      },
+    ]);
+    await new Promise((r) => setTimeout(r, 10));
+    const [id] = store.runningRuns().map((r) => r.id);
+    expect(executor.abortRun(id!)).toBe(true);
+    finish!();
+    await executor.idle();
+    expect(store.run(id!)).toMatchObject({ status: "done" });
+  });
+});

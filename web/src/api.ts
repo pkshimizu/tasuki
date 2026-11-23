@@ -2,6 +2,7 @@
  * サーバーから内容を読み、変化の知らせ（Server-Sent Events）が来たら読み直す。
  */
 import { useEffect, useRef, useState } from "react";
+import type { OperationResult } from "../../src/admin/types.js";
 
 /** 読み直しをまとめる間隔。続けて届いた知らせで、何度も読み直さない */
 const REFRESH_DELAY_MS = 250;
@@ -88,4 +89,25 @@ export function useNow(): number {
     };
   }, []);
   return now;
+}
+
+/**
+ * 操作（止める・起動し直す・中断する）を送る。
+ * サーバーは、この印のヘッダーが付いた、管理画面そのものからの要求だけを受け付ける。
+ * 返事が読めなければ undefined。
+ */
+export async function operate(
+  path: string,
+  send: typeof fetch = fetch,
+): Promise<OperationResult | undefined> {
+  try {
+    const res = await send(path, {
+      method: "POST",
+      headers: { Accept: "application/json", "X-Tasuki-Admin": "1" },
+    });
+    const body = (await res.json()) as Partial<OperationResult>;
+    return typeof body.ok === "boolean" ? (body as OperationResult) : undefined;
+  } catch {
+    return undefined;
+  }
 }

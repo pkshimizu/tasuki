@@ -2,6 +2,7 @@
  * tasuki start: 本物の部品を組み立てて、監視スレッドを常駐させる。
  */
 import { fileURLToPath } from "node:url";
+import { adminOperations, type Operations } from "../admin/operations.js";
 import { adminRoutes } from "../admin/routes.js";
 import type { ViewSources } from "../admin/views.js";
 import { ChangeHub } from "../admin/hub.js";
@@ -46,6 +47,19 @@ export async function start(
   output: Output,
   env: Record<string, string | undefined>,
 ): Promise<number> {
+  // 管理画面から「再起動」されたら、設定を読み直して始め直す
+  for (;;) {
+    const result = await session(dir, output, env);
+    if (result !== "restart") return result;
+  }
+}
+
+/** 設定を読んでから止まるまで。起動し直すときは "restart" を返す */
+async function session(
+  dir: string,
+  output: Output,
+  env: Record<string, string | undefined>,
+): Promise<number | "restart"> {
   let loaded;
   try {
     loaded = loadConfig(dir);
@@ -146,6 +160,52 @@ export async function start(
   });
   monitorRef.current = monitor;
 
+  const stop = new AbortController();
+  /** 止める・起動し直す操作を受けて、エージェントの終了を待っているか */
+  let pending: "stop" | "restart" | null = null;
+  const operations: Operations = {
+    stop: () => {
+      pending = "stop";
+      if (!stop.signal.aborted) {
+        log(
+          "管理画面から止めます。新しい指示は出さず、動いているエージェントの終了を待ちます",
+        );
+        stop.abort();
+      }
+      hub.notify();
+      return { ok: true };
+    },
+    restart: () => {
+      if (pending === "stop") {
+        return { ok: false, reason: "stopping", detail: "" };
+      }
+      // 設定に誤りがあると起動し直せないので、止める前に確かめる
+      try {
+        loadConfig(dir);
+      } catch (e) {
+        if (!(e instanceof ConfigError)) throw e;
+        return {
+          ok: false,
+          reason: "invalid_config",
+          detail: e.problems.join("\n"),
+        };
+      }
+      pending = "restart";
+      if (!stop.signal.aborted) {
+        log(
+          "管理画面から起動し直します。動いているエージェントの終了を待ちます",
+        );
+        stop.abort();
+      }
+      hub.notify();
+      return { ok: true };
+    },
+    abortRun: (runId) =>
+      executor.abortRun(runId)
+        ? { ok: true }
+        : { ok: false, reason: "not_running", detail: "" },
+  };
+
   let admin: AdminServer | undefined;
   if (config.admin.enabled) {
     const worktreesDir = worktreeRoot(repo);
@@ -157,6 +217,7 @@ export async function start(
       executor: () => executor.snapshot(),
       threadUrl: (threadId) => chat.threadUrl(threadId),
       requirementUrl: (messageId) => chat.requirementUrl(messageId),
+      pending: () => pending,
       clock: systemClock,
       config,
       knowledge: () => knowledge.current(),
@@ -182,6 +243,7 @@ export async function start(
       admin = await startAdminServer({
         port: config.admin.port,
         routes: adminRoutes(sources),
+        operations: adminOperations(operations),
         hub,
         // dist/cli から見て、ビルドした画面は dist/web にある
         staticDir: fileURLToPath(new URL("../web/", import.meta.url)),
@@ -214,8 +276,10 @@ export async function start(
     })
     .catch(() => undefined);
 
-  const stop = new AbortController();
   const onSignal = () => {
+    // Ctrl+C は、起動し直す操作より優先して止める
+    pending = "stop";
+    hub.notify();
     if (!stop.signal.aborted) {
       log("止めます。新しい指示は出しません");
       stop.abort();
@@ -238,6 +302,11 @@ export async function start(
     await admin?.close();
     store.close();
     lock.release();
+  }
+  // 待っている間に Ctrl+C で止められることがあるので、ここで読み直す
+  if ((pending as "stop" | "restart" | null) === "restart") {
+    log("起動し直します");
+    return "restart";
   }
   log("止まりました");
   return 0;

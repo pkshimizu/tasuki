@@ -354,6 +354,38 @@ const ja = {
     issues: (n: number) => `Issue ${String(n)}`,
     pullRequests: (n: number) => `PR ${String(n)}`,
   },
+  ops: {
+    stop: "停止",
+    restart: "再起動",
+    abort: "中断",
+    cancel: "やめる",
+    pendingStop: "停止を待っています",
+    pendingRestart: "再起動を待っています",
+    stopTitle: "Tasuki を停止しますか？",
+    stopBody: (n: number) =>
+      `動いているエージェント（${String(n)} つ）の終了を待ってから止まります。終わるまで数分かかることがあります。`,
+    stopBodyNone: "動いているエージェントはありません。すぐに止まります。",
+    stopAfter: "止めたあとは、PC で tasuki start を実行すると再開します。",
+    stopConfirm: "終了を待って停止する",
+    restartTitle: "Tasuki を再起動しますか？",
+    restartBody:
+      "動いているエージェントの終了を待ってから、設定を読み込み直して起動し直します。",
+    restartConfirm: "再起動する",
+    abortTitle: (role: string) => `${role}を中断しますか？`,
+    abortBody: (target: string) => `${target}の作業を止めます。`,
+    abortKeep: (worktree: string) =>
+      `作業フォルダ ${worktree} の変更はそのまま残り、次にどうするかは司令塔が判断します。`,
+    abortKeepUnknown:
+      "作業フォルダの変更はそのまま残り、次にどうするかは司令塔が判断します。",
+    abortConfirm: "中断する",
+    errors: {
+      not_running: "このエージェントは、もう動いていません",
+      stopping: "停止を待っているところなので、再起動できません",
+      invalid_config:
+        "設定（.tasuki/config.yaml）に誤りがあるので、再起動しませんでした",
+      failed: "操作できませんでした。Tasuki が動いているか確かめてください",
+    },
+  },
   placeholder: "この画面は準備中です。",
 };
 
@@ -698,6 +730,38 @@ const en: Messages = {
     notFound: "This requirement was not found",
     issues: (n) => (n === 1 ? "1 issue" : `${String(n)} issues`),
     pullRequests: (n) => (n === 1 ? "1 PR" : `${String(n)} PRs`),
+  },
+  ops: {
+    stop: "Stop",
+    restart: "Restart",
+    abort: "Abort",
+    cancel: "Cancel",
+    pendingStop: "Waiting to stop",
+    pendingRestart: "Waiting to restart",
+    stopTitle: "Stop Tasuki?",
+    stopBody: (n) =>
+      `Tasuki stops after the running agents (${String(n)}) finish. This can take a few minutes.`,
+    stopBodyNone: "No agents are running. Tasuki stops right away.",
+    stopAfter: "To resume, run tasuki start on this PC.",
+    stopConfirm: "Wait and stop",
+    restartTitle: "Restart Tasuki?",
+    restartBody:
+      "Tasuki waits for the running agents to finish, then reloads the settings and starts again.",
+    restartConfirm: "Restart",
+    abortTitle: (role) => `Abort the ${role}?`,
+    abortBody: (target) => `This stops the work on ${target}.`,
+    abortKeep: (worktree) =>
+      `Changes in the work folder ${worktree} are kept, and the dispatcher decides what to do next.`,
+    abortKeepUnknown:
+      "Changes in the work folder are kept, and the dispatcher decides what to do next.",
+    abortConfirm: "Abort",
+    errors: {
+      not_running: "This agent is no longer running",
+      stopping: "Tasuki is waiting to stop, so it cannot restart",
+      invalid_config:
+        "The settings (.tasuki/config.yaml) have errors, so Tasuki did not restart",
+      failed: "The operation failed. Check that Tasuki is running",
+    },
   },
   placeholder: "This screen is not ready yet.",
 };
