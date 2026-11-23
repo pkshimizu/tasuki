@@ -40,6 +40,8 @@ export function commandExec(command: string): Exec {
           stderr: Buffer.concat(err).toString("utf8"),
         });
       });
+      // 入力を読まずに終わるコマンド（git など）では、書き込みが EPIPE になる。結果は close で受け取るので無視する
+      child.stdin.on("error", () => undefined);
       child.stdin.end(options.input ?? "");
     });
 }
