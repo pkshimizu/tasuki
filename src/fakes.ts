@@ -1,7 +1,17 @@
 /**
- * テスト用の偽の Discord と GitHub。メモリ上に状態を持つ。
+ * テスト用の偽の部品（Discord・GitHub・作業フォルダ・エージェント）と、それらを組み立てた監視スレッド。
  */
+import type { z } from "zod";
+import { Collector } from "./collector.js";
+import type { LoadedConfig } from "./config.js";
+import { Executor } from "./executor.js";
+import { Monitor } from "./monitor.js";
+import { SqliteStore } from "./store.js";
+import { testConfig } from "./testing.js";
+import type { AgentOutcome, AgentRun, RunAgent } from "./agent.js";
+import type { DispatchDecision } from "./dispatcher.js";
 import { type Chat, type ChatMessage, compareIds } from "./discord.js";
+import type { GuardContext } from "./guard.js";
 import {
   type GitHub,
   type Issue,
@@ -10,6 +20,9 @@ import {
   type PrComment,
   type PullRequest,
 } from "./github.js";
+import type { WorkerOutput } from "./roles.js";
+import { type Target, targetKey } from "./types.js";
+import type { Prepared, Workspace } from "./workspace.js";
 
 export class FakeChat implements Chat {
   requirements: ChatMessage[] = [];
@@ -264,4 +277,124 @@ export class FakeGitHub implements GitHub {
     }
     return Promise.resolve({ merged: true });
   }
+}
+
+/** 作業フォルダを作らず、対象ごとの名前だけを返す偽の Workspace */
+export class FakeWorkspace implements Workspace {
+  prepared: { key: string; access: string; prBranch: string | undefined }[] =
+    [];
+  /** PR のブランチ → 共有する作業フォルダ */
+  shared = new Map<string, string>();
+
+  prepare(
+    target: Target,
+    access: GuardContext["access"],
+    prBranch?: string,
+  ): Promise<Prepared> {
+    const key = targetKey(target);
+    this.prepared.push({ key, access, prBranch });
+    const cwd =
+      access !== "write"
+        ? `/worktrees/read-${key}`
+        : ((prBranch !== undefined ? this.shared.get(prBranch) : undefined) ??
+          `/worktrees/${key}`);
+    return Promise.resolve({ cwd, branch: prBranch ?? null, dirty: false });
+  }
+}
+
+type Handler<T> = (
+  run: AgentRun<z.ZodType>,
+) => AgentOutcome<T> | Promise<AgentOutcome<T>>;
+
+export function ok<T>(output: T): AgentOutcome<T> {
+  return { kind: "ok", output, costUsd: 0, turns: 1 };
+}
+
+export function output(extra: Partial<WorkerOutput> = {}): WorkerOutput {
+  return {
+    status: "done",
+    summary: "終えた",
+    questions: [],
+    pr: null,
+    verdict: null,
+    ...extra,
+  };
+}
+
+/** 役ごとに決めた動きをする偽のエージェント */
+export class ScriptedAgents {
+  runs: AgentRun<z.ZodType>[] = [];
+  dispatcher: Handler<DispatchDecision> = () =>
+    ok({ reasoning: "何もしない", actions: [] });
+  worker: Handler<WorkerOutput> = () => ok(output());
+
+  readonly runAgent = ((run: AgentRun<z.ZodType>) => {
+    this.runs.push(run);
+    return Promise.resolve(
+      run.name === "dispatcher" ? this.dispatcher(run) : this.worker(run),
+    );
+  }) as unknown as RunAgent;
+
+  /** 役の名前ごとの起動した回数 */
+  count(name: string): number {
+    return this.runs.filter((r) => r.name === name).length;
+  }
+}
+
+/** 偽の部品で監視スレッドを組み立てる */
+export function harness(extraYaml = "") {
+  const chat = new FakeChat();
+  const github = new FakeGitHub();
+  const store = new SqliteStore(":memory:");
+  const agents = new ScriptedAgents();
+  const logs: string[] = [];
+  const log = (t: string) => logs.push(t);
+  const loaded: LoadedConfig = {
+    dir: "/repo",
+    config: testConfig(extraYaml),
+    instructions: {
+      dispatcher: "",
+      "spec-master": "",
+      planner: "",
+      designer: "",
+      programmer: "",
+      reviewer: "",
+    },
+  };
+  const collector = new Collector({
+    chat,
+    github,
+    store,
+    config: loaded.config,
+    log,
+  });
+  const ref: { monitor?: Monitor } = {};
+  const executor = new Executor({
+    loaded,
+    defaultBranch: "main",
+    store,
+    chat,
+    github,
+    runAgent: agents.runAgent,
+    workspace: new FakeWorkspace(),
+    log,
+    onFinish: () => ref.monitor?.wakeUp(),
+  });
+  const monitor = new Monitor({
+    loaded,
+    store,
+    chat,
+    collector,
+    executor,
+    runAgent: agents.runAgent,
+    log,
+    sleep: () => new Promise((r) => setTimeout(r, 0)),
+  });
+  ref.monitor = monitor;
+  return { chat, github, store, agents, executor, monitor, logs };
+}
+
+/** 司令塔への依頼文から、新しい出来事の欄だけを取り出す */
+export function newEvents(prompt: string): string {
+  return prompt.split("## 進行中の要件")[0] ?? "";
 }

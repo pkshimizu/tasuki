@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { parseArgs } from "node:util";
 import { ConfigError, discordToken, loadConfig } from "./config.js";
+import { start } from "./start.js";
 
 export interface Output {
   out: (text: string) => void;
@@ -63,6 +64,7 @@ export async function main(
     return 0;
   }
   if (command === "check") return check(resolve(folder ?? "."), output, env);
+  if (command === "start") return start(resolve(folder ?? "."), output, env);
   output.err(`知らないコマンドです: ${command}`);
   output.err(HELP);
   return 2;

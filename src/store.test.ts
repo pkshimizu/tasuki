@@ -72,14 +72,21 @@ describe("質問スレッド", () => {
       target: { kind: "issue", number: 4 },
     });
     s.addQuestion({ threadId: "t2", title: "全体", body: "?", target: null });
-    s.setQuestionRead("t1", "500");
+    s.setQuestionRead("t1", "400", true);
+    s.setQuestionRead("t1", "500", false);
+    s.setQuestionRead("t2", "600", false);
     const [q1, q2] = s.questions();
     expect(q1).toMatchObject({
       threadId: "t1",
       target: { kind: "issue", number: 4 },
       lastReadId: "500",
+      answered: true,
     });
-    expect(q2).toMatchObject({ target: null, lastReadId: null });
+    expect(q2).toMatchObject({
+      target: null,
+      lastReadId: "600",
+      answered: false,
+    });
   });
 });
 
