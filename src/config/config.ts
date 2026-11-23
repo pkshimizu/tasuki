@@ -35,7 +35,12 @@ export const TOKEN_ENV = "TASUKI_DISCORD_TOKEN";
 const snowflake = z
   .string()
   .regex(/^\d{5,25}$/, '数字だけの ID を文字列（"..."）で書きます');
-const mergeMode = z.enum(["auto", "human"]);
+const mergeMode = z.enum(["auto", "human"], "auto か human を書きます");
+/** min から max までの整数 */
+const intBetween = (min: number, max: number) => {
+  const message = `${String(min)}〜${String(max)} の整数を書きます`;
+  return z.number(message).int(message).min(min, message).max(max, message);
+};
 const repoPath = z
   .string()
   .min(1)
@@ -70,10 +75,8 @@ export const configSchema = z.strictObject({
       require_ci: z.boolean().default(true),
     })
     .prefault({}),
-  poll_interval: z.number().int().min(10).max(3600).default(60),
-  limits: z
-    .strictObject({ agents: z.number().int().min(1).max(10).default(2) })
-    .prefault({}),
+  poll_interval: intBetween(10, 3600).default(60),
+  limits: z.strictObject({ agents: intBetween(1, 10).default(2) }).prefault({}),
   language: z.string().min(1).default("日本語"),
   paths: z
     .strictObject({
@@ -111,7 +114,7 @@ export const configSchema = z.strictObject({
       /** false にすると管理画面を配信しない */
       enabled: z.boolean().default(true),
       /** 使いたいポート。使用中なら空いているポートに切り替える */
-      port: z.number().int().min(1024).max(65535).default(4680),
+      port: intBetween(1024, 65535).default(4680),
     })
     .prefault({}),
   workspace: z

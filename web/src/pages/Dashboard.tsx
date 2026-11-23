@@ -13,7 +13,7 @@ import type {
 import type { Stage } from "../../../src/config/config.js";
 import { useLive, useNow } from "../api.js";
 import { DirectiveChip, RoleChip } from "../components/Chips.js";
-import { ConfirmDialog } from "../components/Dialog.js";
+import { ConfirmDialog, operation } from "../components/Dialog.js";
 import { Icon, ICONS } from "../components/Icon.js";
 import { linkProps, type Navigate } from "../components/Shell.js";
 import { ago, clock, elapsed } from "../format.js";
@@ -262,7 +262,7 @@ function AgentCard({
           title={t.ops.abortTitle(t.roles[a.role])}
           confirm={t.ops.abortConfirm}
           danger
-          path={`/api/ops/runs/${String(a.runId)}/abort`}
+          run={operation(t, `/api/ops/runs/${String(a.runId)}/abort`)}
           onClose={() => {
             setConfirming(false);
           }}

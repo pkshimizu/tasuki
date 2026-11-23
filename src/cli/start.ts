@@ -4,6 +4,11 @@
 import { fileURLToPath } from "node:url";
 import { adminOperations, type Operations } from "../admin/operations.js";
 import { adminRoutes } from "../admin/routes.js";
+import {
+  previewSettings,
+  saveSettings,
+  type SettingsSources,
+} from "../admin/settings.js";
 import type { ViewSources } from "../admin/views.js";
 import { ChangeHub } from "../admin/hub.js";
 import { type AdminServer, startAdminServer } from "../admin/server.js";
@@ -209,6 +214,14 @@ async function session(
   let admin: AdminServer | undefined;
   if (config.admin.enabled) {
     const worktreesDir = worktreeRoot(repo);
+    const settings: SettingsSources = {
+      repo,
+      github,
+      defaultBranch,
+      running: config,
+      tokenSet: true,
+      clock: systemClock,
+    };
     const sources: ViewSources = {
       repo,
       version: version(),
@@ -222,6 +235,7 @@ async function session(
       config,
       knowledge: () => knowledge.current(),
       worktrees: () => workspace.entries(),
+      settings,
       system: {
         startedAt,
         pid: process.pid,
@@ -243,7 +257,10 @@ async function session(
       admin = await startAdminServer({
         port: config.admin.port,
         routes: adminRoutes(sources),
-        operations: adminOperations(operations),
+        operations: adminOperations(operations, {
+          preview: (body) => previewSettings(settings, body),
+          save: (body) => saveSettings(settings, body),
+        }),
         hub,
         // dist/cli から見て、ビルドした画面は dist/web にある
         staticDir: fileURLToPath(new URL("../web/", import.meta.url)),

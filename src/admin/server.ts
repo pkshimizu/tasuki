@@ -43,6 +43,8 @@ export interface AdminServer {
 const HOST = "127.0.0.1";
 /** 操作の要求に、管理画面が付ける印 */
 export const ADMIN_HEADER = "x-tasuki-admin";
+/** 操作の要求の本文の大きさの上限 */
+const BODY_LIMIT = 256 * 1024;
 /** 閉じるときに、返事を送り終えるのを待つ時間 */
 const CLOSE_GRACE_MS = 300;
 const HEARTBEAT_MS = 25_000;
@@ -77,6 +79,41 @@ export function isFromAdminPage(headers: IncomingMessage["headers"]): boolean {
   if (headers.origin !== `http://${host ?? ""}`) return false;
   const site = headers["sec-fetch-site"];
   return site === undefined || site === "same-origin";
+}
+
+/** 操作の道か（POST だけを受ける） */
+function isOperation(path: string): boolean {
+  return path.startsWith("/api/ops/") || path.startsWith("/api/settings/");
+}
+
+/** 要求の本文を JSON として読む。空なら undefined。大きすぎるか読めなければ失敗 */
+export function readJsonBody(req: IncomingMessage): Promise<unknown> {
+  return new Promise((resolve, reject) => {
+    const chunks: Buffer[] = [];
+    let size = 0;
+    req.on("data", (chunk: Buffer) => {
+      size += chunk.length;
+      if (size > BODY_LIMIT) {
+        reject(new Error("too_large"));
+        req.destroy();
+        return;
+      }
+      chunks.push(chunk);
+    });
+    req.on("error", reject);
+    req.on("end", () => {
+      const text = Buffer.concat(chunks).toString("utf8").trim();
+      if (text === "") {
+        resolve(undefined);
+        return;
+      }
+      try {
+        resolve(JSON.parse(text));
+      } catch {
+        reject(new Error("invalid_json"));
+      }
+    });
+  });
 }
 
 function send(
@@ -188,7 +225,7 @@ function handle(
     return;
   }
   const path = (req.url ?? "/").split("?")[0] ?? "/";
-  if (path.startsWith("/api/ops/")) {
+  if (isOperation(path)) {
     if (req.method !== "POST") {
       send(res, 405, "text/plain; charset=utf-8", "Method Not Allowed");
       return;
@@ -197,18 +234,31 @@ function handle(
       send(res, 403, "text/plain; charset=utf-8", "Forbidden");
       return;
     }
-    // 要求の本文は使わない（読まずに捨てる）
-    req.resume();
-    try {
-      const result = options.operations?.(path) ?? NOT_FOUND;
-      if (result === NOT_FOUND) sendJson(res, 404, { error: "not_found" });
-      else sendJson(res, result.ok ? 200 : 409, result);
-    } catch (e) {
-      options.log(
-        `管理画面の操作 ${path} に失敗しました: ${e instanceof Error ? e.message : String(e)}`,
-      );
-      sendJson(res, 500, { error: "internal" });
-    }
+    void readJsonBody(req).then(
+      (body) =>
+        Promise.resolve()
+          .then(() => options.operations?.(path, body) ?? NOT_FOUND)
+          .then((result) => {
+            if (result === NOT_FOUND) {
+              sendJson(res, 404, { error: "not_found" });
+              return;
+            }
+            const refused =
+              typeof result === "object" &&
+              result !== null &&
+              (result as { ok?: unknown }).ok === false;
+            sendJson(res, refused ? 409 : 200, result);
+          })
+          .catch((e: unknown) => {
+            options.log(
+              `管理画面の操作 ${path} に失敗しました: ${e instanceof Error ? e.message : String(e)}`,
+            );
+            sendJson(res, 500, { error: "internal" });
+          }),
+      () => {
+        sendJson(res, 400, { error: "bad_request" });
+      },
+    );
     return;
   }
   if (req.method !== "GET" && req.method !== "HEAD") {

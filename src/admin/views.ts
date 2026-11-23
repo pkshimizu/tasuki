@@ -33,6 +33,7 @@ import {
   type MonitorSnapshot,
   toDirective,
 } from "./dashboard.js";
+import type { SettingsSources } from "./settings.js";
 import type {
   ActivityData,
   Directive,
@@ -52,6 +53,8 @@ export interface ViewSources extends AdminSources {
   config: Config;
   knowledge: () => LoadedKnowledge | undefined;
   worktrees: () => Promise<WorkspaceEntry[]>;
+  /** 設定の画面のための取り出し口 */
+  settings: SettingsSources;
   system: {
     startedAt: string;
     pid: number;

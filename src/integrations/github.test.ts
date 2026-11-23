@@ -299,3 +299,131 @@ describe("mergePullRequest", () => {
     });
   });
 });
+
+describe("ファイルを読む・変更を提案する", () => {
+  it("既定のブランチのファイルを読む。無ければ undefined", async () => {
+    const content = Buffer.from("poll_interval: 60\n# 日本語\n").toString(
+      "base64",
+    );
+    const { github, calls } = fakeGh([
+      {
+        when: "api repos/owner/name/contents/.tasuki/config.yaml",
+        // GitHub は、途中に改行を入れて返す
+        stdout: JSON.stringify({
+          content: `${content.slice(0, 10)}\n${content.slice(10)}\n`,
+          sha: "abc",
+        }),
+      },
+      {
+        when: "api repos/owner/name/contents/none.yaml",
+        code: 1,
+        stderr: "gh: Not Found (HTTP 404)",
+      },
+      {
+        when: "api repos/owner/name/contents/broken.yaml",
+        code: 1,
+        stderr: "gh: Server Error (HTTP 500)",
+      },
+    ]);
+    expect(await github.fileOnDefault(".tasuki/config.yaml")).toEqual({
+      text: "poll_interval: 60\n# 日本語\n",
+      sha: "abc",
+    });
+    expect(calls[0]).toEqual([
+      "api",
+      "repos/owner/name/contents/.tasuki/config.yaml",
+      "--jq",
+      "{content, sha}",
+    ]);
+    expect(await github.fileOnDefault("none.yaml")).toBeUndefined();
+    await expect(github.fileOnDefault("broken.yaml")).rejects.toThrow("500");
+  });
+
+  const proposal = {
+    path: ".tasuki/config.yaml",
+    text: "poll_interval: 30\n",
+    sha: "abc",
+    branch: "tasuki/config-1",
+    message: "chore: 設定を変える",
+    title: "chore: 設定を変える",
+    body: "本文",
+  };
+
+  it("既定のブランチから新しいブランチを作り、コミットを載せて PR を作る", async () => {
+    const inputs: (string | undefined)[] = [];
+    const { github, calls } = fakeGh([
+      { when: "api repos/owner/name --jq", stdout: "main\n" },
+      { when: "api repos/owner/name/commits/main", stdout: "head1\n" },
+      { when: "api repos/owner/name/git/refs -X POST" },
+      { when: "api repos/owner/name/contents/.tasuki/config.yaml -X PUT" },
+      {
+        when: "pr create",
+        stdout: "https://github.com/owner/name/pull/24\n",
+      },
+    ]);
+    const exec = (github as unknown as { exec: Exec }).exec;
+    (github as unknown as { exec: Exec }).exec = (args, options) => {
+      inputs.push(options?.input);
+      return exec(args, options);
+    };
+    expect(await github.proposeFile(proposal)).toEqual({
+      number: 24,
+      url: "https://github.com/owner/name/pull/24",
+    });
+    expect(calls[2]).toEqual([
+      "api",
+      "repos/owner/name/git/refs",
+      "-X",
+      "POST",
+      "-f",
+      "ref=refs/heads/tasuki/config-1",
+      "-f",
+      "sha=head1",
+    ]);
+    const put = JSON.parse(inputs[3]!) as Record<string, string>;
+    expect(put).toMatchObject({
+      message: "chore: 設定を変える",
+      sha: "abc",
+      branch: "tasuki/config-1",
+    });
+    expect(Buffer.from(put.content!, "base64").toString("utf8")).toBe(
+      "poll_interval: 30\n",
+    );
+    expect(calls[4]).toEqual([
+      "pr",
+      "create",
+      "--repo",
+      "owner/name",
+      "--head",
+      "tasuki/config-1",
+      "--base",
+      "main",
+      "--title",
+      "chore: 設定を変える",
+      "--body",
+      "本文",
+    ]);
+  });
+
+  it("コミットを載せられなかったら、作ったブランチを消して失敗を伝える", async () => {
+    const { github, calls } = fakeGh([
+      { when: "api repos/owner/name --jq", stdout: "main\n" },
+      { when: "api repos/owner/name/commits/main", stdout: "head1\n" },
+      { when: "api repos/owner/name/git/refs -X POST" },
+      {
+        when: "api repos/owner/name/contents/.tasuki/config.yaml -X PUT",
+        code: 1,
+        stderr: "gh: does not match (HTTP 409)",
+      },
+      { when: "api repos/owner/name/git/refs/heads/tasuki/config-1 -X DELETE" },
+    ]);
+    await expect(github.proposeFile(proposal)).rejects.toThrow("409");
+    expect(calls.at(-1)).toEqual([
+      "api",
+      "repos/owner/name/git/refs/heads/tasuki/config-1",
+      "-X",
+      "DELETE",
+    ]);
+    expect(calls.some((c) => c[0] === "pr")).toBe(false);
+  });
+});

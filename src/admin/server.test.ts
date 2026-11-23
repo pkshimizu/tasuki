@@ -31,24 +31,41 @@ async function start(extra: { port?: number; staticDir?: string } = {}) {
   const hub = new ChangeHub();
   const logs: string[] = [];
   const done: string[] = [];
+  const bodies: unknown[] = [];
   const server = await startAdminServer({
-    operations: adminOperations({
-      stop: () => {
-        done.push("stop");
-        return { ok: true };
+    operations: adminOperations(
+      {
+        stop: () => {
+          done.push("stop");
+          return { ok: true };
+        },
+        restart: () => {
+          done.push("restart");
+          return { ok: false, reason: "invalid_config", detail: "誤りがある" };
+        },
+        abortRun: (runId) => {
+          done.push(`abort:${String(runId)}`);
+          if (runId === 500) throw new Error("こわれた");
+          return runId === 7
+            ? { ok: true }
+            : { ok: false, reason: "not_running", detail: "" };
+        },
       },
-      restart: () => {
-        done.push("restart");
-        return { ok: false, reason: "invalid_config", detail: "誤りがある" };
+      {
+        preview: (body) => {
+          bodies.push(body);
+          return Promise.resolve({ problems: [], changed: [], diff: [] });
+        },
+        save: (body) => {
+          bodies.push(body);
+          return Promise.resolve({
+            ok: false,
+            reason: "unchanged",
+            detail: "",
+          });
+        },
       },
-      abortRun: (runId) => {
-        done.push(`abort:${String(runId)}`);
-        if (runId === 500) throw new Error("こわれた");
-        return runId === 7
-          ? { ok: true }
-          : { ok: false, reason: "not_running", detail: "" };
-      },
-    }),
+    ),
     port: extra.port ?? 0,
     routes: (path) => {
       if (path === "/api/app") return { repo: "owner/name" };
@@ -62,7 +79,7 @@ async function start(extra: { port?: number; staticDir?: string } = {}) {
     log: (t) => logs.push(t),
   });
   servers.push(server);
-  return { server, hub, logs, done };
+  return { server, hub, logs, done, bodies };
 }
 
 /** Host などを自由に決めて要求する */
@@ -71,6 +88,7 @@ function get(
   path: string,
   headers: Record<string, string> = {},
   method = "GET",
+  body?: string,
 ): Promise<{ status: number; type: string; body: string }> {
   return new Promise((resolve, reject) => {
     const req = request(
@@ -88,7 +106,7 @@ function get(
       },
     );
     req.on("error", reject);
-    req.end();
+    req.end(body);
   });
 }
 
@@ -355,5 +373,63 @@ describe("操作", () => {
     );
     expect(isFromAdminPage({ ...base, origin: "null" })).toBe(false);
     expect(isFromAdminPage({ ...base, "x-tasuki-admin": "0" })).toBe(false);
+  });
+});
+
+describe("本文つきの操作（設定）", () => {
+  const page = (port: number) => ({
+    Host: `127.0.0.1:${String(port)}`,
+    Origin: `http://127.0.0.1:${String(port)}`,
+    "X-Tasuki-Admin": "1",
+    "Content-Type": "application/json",
+  });
+
+  it("本文を JSON として渡し、結果を返す", async () => {
+    const { server, bodies } = await start();
+    const p = server.port;
+    const body = JSON.stringify({ sha: "s1", values: { 言語: "日本語" } });
+    const preview = await get(
+      p,
+      "/api/settings/preview",
+      page(p),
+      "POST",
+      body,
+    );
+    expect(preview.status).toBe(200);
+    expect(JSON.parse(preview.body)).toEqual({
+      problems: [],
+      changed: [],
+      diff: [],
+    });
+    expect(bodies).toEqual([{ sha: "s1", values: { 言語: "日本語" } }]);
+    // できなかった保存は 409
+    const save = await get(p, "/api/settings/save", page(p), "POST", body);
+    expect(save.status).toBe(409);
+    expect(JSON.parse(save.body)).toMatchObject({ reason: "unchanged" });
+  });
+
+  it("読めない本文・大きすぎる本文は断る", async () => {
+    const { server, bodies } = await start();
+    const p = server.port;
+    expect(
+      (await get(p, "/api/settings/save", page(p), "POST", "{こわれた")).status,
+    ).toBe(400);
+    const huge = JSON.stringify({ x: "a".repeat(300 * 1024) });
+    const res = await get(p, "/api/settings/save", page(p), "POST", huge).catch(
+      () => ({ status: 400 }),
+    );
+    expect(res.status).toBe(400);
+    expect(bodies).toEqual([]);
+  });
+
+  it("管理画面そのものからでない要求と、読むだけの要求では実行しない", async () => {
+    const { server, bodies } = await start();
+    const p = server.port;
+    const noMark = { Host: page(p).Host, Origin: page(p).Origin };
+    expect(
+      (await get(p, "/api/settings/save", noMark, "POST", "{}")).status,
+    ).toBe(403);
+    expect((await get(p, "/api/settings/save", page(p))).status).toBe(405);
+    expect(bodies).toEqual([]);
   });
 });

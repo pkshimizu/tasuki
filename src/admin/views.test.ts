@@ -3,7 +3,8 @@ import type { SituationPullRequest } from "../dispatcher/dispatcher.js";
 import { reviewState } from "../domain/review.js";
 import { emptyKnowledge } from "../knowledge/knowledge.js";
 import { SqliteStore } from "../store/store.js";
-import { testConfig } from "../testing/fixtures.js";
+import { FakeGitHub } from "../testing/fakes.js";
+import { MINIMAL_CONFIG, testConfig } from "../testing/fixtures.js";
 import type { MonitorSnapshot } from "./dashboard.js";
 import { adminRoutes } from "./routes.js";
 import { NOT_FOUND } from "./server.js";
@@ -15,6 +16,7 @@ import type {
   QuestionItem,
   RequirementDetail,
   RequirementRow,
+  SettingsData,
   SystemData,
 } from "./types.js";
 import { mergeBlockers, type ViewSources } from "./views.js";
@@ -55,6 +57,7 @@ function setup(extraYaml = "") {
   });
   const state: { github: MonitorSnapshot["github"] } = { github: null };
   const knowledge = emptyKnowledge();
+  const github = new FakeGitHub();
   const sources: ViewSources = {
     repo: "owner/name",
     version: "0.1.0",
@@ -83,6 +86,14 @@ function setup(extraYaml = "") {
       loadedAt: "2026-11-23T08:52:00.000Z",
       knowledge,
     }),
+    settings: {
+      repo: "owner/name",
+      github,
+      defaultBranch: "main",
+      running: testConfig(extraYaml),
+      tokenSet: true,
+      clock: { now: () => new Date("2026-11-23T09:00:00Z") },
+    },
     worktrees: () =>
       Promise.resolve([
         {
@@ -108,7 +119,7 @@ function setup(extraYaml = "") {
     },
   };
   const get = <T>(path: string) => adminRoutes(sources)(path) as T;
-  return { store, sources, state, knowledge, get };
+  return { store, sources, state, knowledge, get, github };
 }
 
 /** レビュー 1 回（指摘 3 件）と、その後の修正・コメントのある PR #21 を用意する */
@@ -685,5 +696,19 @@ describe("要件", () => {
     });
     expect(s.get("/api/requirements/99")).toBe(NOT_FOUND);
     expect(s.get("/api/requirements/%E0%A4%A")).toBe(NOT_FOUND);
+  });
+});
+
+describe("設定", () => {
+  it("既定のブランチの設定を返す", async () => {
+    const s = setup();
+    const file = s.github.setFile(".tasuki/config.yaml", MINIMAL_CONFIG);
+    const data = await s.get<Promise<SettingsData>>("/api/settings");
+    expect(data).toMatchObject({
+      sha: file.sha,
+      error: null,
+      differsFromRunning: false,
+    });
+    expect(data.values?.limits.agents).toBe(2);
   });
 });
