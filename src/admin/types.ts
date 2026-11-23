@@ -109,3 +109,162 @@ export interface DashboardData {
   requirements: ActiveRequirement[];
   decisions: DecisionSummary[];
 }
+
+// ---------- PR とレビュー
+
+import type { Finding, ReviewState, Severity } from "../domain/review.js";
+import type { EventType, RunStatus } from "../domain/types.js";
+
+export type { Finding, ReviewState, Severity };
+
+export interface PullRequestRow {
+  number: number;
+  title: string;
+  stage: Stage;
+  branch: string;
+  state: "open" | "merged" | "closed";
+  url: string;
+  updatedAt: string;
+  /** 開いている PR だけ。閉じた PR では null */
+  ci: "pass" | "fail" | "pending" | "none" | null;
+  failedChecks: string[];
+  conflicting: boolean | null;
+  /** この工程のマージの設定 */
+  merge: "auto" | "human";
+  review: ReviewState | null;
+}
+
+/** マージできない理由 */
+export type MergeBlocker =
+  | { kind: "ci_pending" }
+  | { kind: "ci_fail"; checks: string[] }
+  | { kind: "ci_none" }
+  | { kind: "conflict" }
+  | { kind: "draft" }
+  | { kind: "review_changes"; round: number }
+  | { kind: "review_stale"; sha: string };
+
+export interface ReviewRound {
+  round: number;
+  sha: string;
+  verdict: "approve" | "request_changes";
+  at: string;
+  /** レビュアーの要約 */
+  summary: string;
+  /** この回で出た指摘の数 */
+  findings: Record<Severity, number>;
+}
+
+/** 経過の 1 件。出来事・司令塔の判断・エージェントの実行のどれか */
+export type TimelineItem =
+  | {
+      kind: "event";
+      id: string;
+      at: string;
+      type: EventType;
+      /** 出来事の内容（1 行目が見出し、2 行目からが本文） */
+      text: string;
+      /** 司令塔に渡したか */
+      handled: boolean;
+    }
+  | {
+      kind: "decision";
+      id: string;
+      at: string;
+      /** もとになった出来事（1 件 1 行にしたもの） */
+      events: string[];
+      reasoning: string;
+      directives: Directive[];
+    }
+  | {
+      kind: "run";
+      id: string;
+      runId: number;
+      at: string;
+      role: WorkerRole;
+      target: Target;
+      status: RunStatus | "running";
+      finishedAt: string | null;
+      instruction: string;
+      summary: string;
+    };
+
+export interface PullRequestDetail {
+  pr: PullRequestRow;
+  /** マージできない理由。開いていない PR では空 */
+  blockers: MergeBlocker[];
+  reviews: ReviewRound[];
+  findings: Finding[];
+  timeline: TimelineItem[];
+}
+
+export interface PullRequestList {
+  open: PullRequestRow[];
+  closed: PullRequestRow[];
+}
+
+// ---------- 活動の履歴
+
+export interface ActivityData {
+  decisions: Extract<TimelineItem, { kind: "decision" }>[];
+  runs: Extract<TimelineItem, { kind: "run" }>[];
+  events: Extract<TimelineItem, { kind: "event" }>[];
+}
+
+// ---------- 質問
+
+export interface QuestionItem {
+  threadId: string;
+  title: string;
+  body: string;
+  origin: Role | null;
+  target: Target | null;
+  answered: boolean;
+  createdAt: string;
+  url: string | null;
+}
+
+// ---------- プロダクトの情報
+
+export interface ProductKind {
+  kind: string;
+  /** 設定に書かれた置き場 */
+  paths: string[];
+  /** 渡す先の役 */
+  roles: Role[];
+  docs: { path: string; content: string }[];
+}
+
+export interface ProductData {
+  /** 読み込んだコミット。まだ読み込んでいなければ null */
+  commit: string | null;
+  loadedAt: string | null;
+  kinds: ProductKind[];
+}
+
+// ---------- システム
+
+export interface SystemData {
+  version: string;
+  startedAt: string;
+  pid: number;
+  paths: { state: string; worktrees: string; repo: string };
+  /** エージェントが使うシェル */
+  shell: {
+    name: "bash" | "powershell";
+    path: string | null;
+    warning: string | null;
+  };
+  limitUntil: string | null;
+  adminUrl: string | null;
+  worktrees: {
+    name: string;
+    target: Target | null;
+    branch: string | null;
+    dirty: boolean;
+    /** 準備コマンドを実行済みか。準備コマンドの設定が無ければ null */
+    setupDone: boolean | null;
+  }[];
+  /** 最近のログ（古い順） */
+  logs: string[];
+}

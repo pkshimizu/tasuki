@@ -4,14 +4,67 @@
 import { useCallback, useEffect, useState } from "react";
 import type { AppInfo } from "../../src/admin/types.js";
 import { useLive } from "./api.js";
-import { Header, Sidebar } from "./components/Shell.js";
-import { type Lang, loadLang, MESSAGES, saveLang } from "./i18n.js";
+import { Header, type Navigate, Sidebar } from "./components/Shell.js";
+import {
+  type Lang,
+  loadLang,
+  type Messages,
+  MESSAGES,
+  saveLang,
+} from "./i18n.js";
 import { Dashboard } from "./pages/Dashboard.js";
-import { type Page, pageOf, pathOf } from "./routes.js";
+import { Activity } from "./pages/Activity.js";
+import { Product, Questions, System } from "./pages/Others.js";
+import { PullRequestPage, PullRequests } from "./pages/PullRequests.js";
+import { type Page, pathOf, type Route, routeOf } from "./routes.js";
+
+function Screen({
+  t,
+  route,
+  navigate,
+}: {
+  t: Messages;
+  route: Route;
+  navigate: Navigate;
+}) {
+  switch (route.page) {
+    case "dashboard":
+      return <Dashboard t={t} navigate={navigate} />;
+    case "prs":
+      return route.id === null ? (
+        <PullRequests t={t} navigate={navigate} />
+      ) : (
+        <PullRequestPage
+          key={route.id}
+          t={t}
+          number={route.id}
+          navigate={navigate}
+        />
+      );
+    case "activity":
+      return <Activity t={t} />;
+    case "questions":
+      return <Questions t={t} />;
+    case "product":
+      return <Product t={t} />;
+    case "system":
+      return <System t={t} />;
+    default:
+      return (
+        <main className="page">
+          <div className="page-title">
+            <h1>{t.menu[route.page]}</h1>
+          </div>
+          <div className="card placeholder">{t.placeholder}</div>
+        </main>
+      );
+  }
+}
 
 export function App() {
   const [lang, setLangState] = useState<Lang>(loadLang);
-  const [page, setPage] = useState<Page>(() => pageOf(location.pathname));
+  const [route, setRoute] = useState<Route>(() => routeOf(location.pathname));
+  const page = route.page;
   const { data: app, offline } = useLive<AppInfo>("/api/app");
   const t = MESSAGES[lang];
 
@@ -20,16 +73,16 @@ export function App() {
     setLangState(next);
   }, []);
 
-  const navigate = useCallback((next: Page) => {
-    history.pushState(null, "", pathOf(next));
-    setPage(next);
+  const navigate = useCallback((next: Page, id: string | null = null) => {
+    history.pushState(null, "", pathOf(next, id));
+    setRoute({ page: next, id });
     window.scrollTo(0, 0);
   }, []);
 
   // ブラウザの「戻る」「進む」に合わせる
   useEffect(() => {
     const onPop = () => {
-      setPage(pageOf(location.pathname));
+      setRoute(routeOf(location.pathname));
     };
     window.addEventListener("popstate", onPop);
     return () => {
@@ -57,16 +110,7 @@ export function App() {
           navigate={navigate}
         />
         {offline && <div className="banner">{t.offlineBanner}</div>}
-        {page === "dashboard" ? (
-          <Dashboard t={t} navigate={navigate} />
-        ) : (
-          <main className="page">
-            <div className="page-title">
-              <h1>{t.menu[page]}</h1>
-            </div>
-            <div className="card placeholder">{t.placeholder}</div>
-          </main>
-        )}
+        <Screen t={t} route={route} navigate={navigate} />
       </div>
     </div>
   );

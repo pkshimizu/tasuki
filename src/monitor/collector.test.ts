@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { Collector } from "./collector.js";
+import { backfillPullRequests, Collector } from "./collector.js";
 import { FakeChat, FakeGitHub } from "../testing/fakes.js";
 import { SqliteStore } from "../store/store.js";
 import { testConfig } from "../testing/fixtures.js";
@@ -324,5 +324,67 @@ describe("失敗", () => {
     expect(take()).toEqual([]);
     await collector.collect();
     expect(take()).toMatchObject([{ type: "docs_changed", stage: "spec" }]);
+  });
+});
+
+describe("PR の様子の記録", () => {
+  it("開いている PR と、閉じた PR の様子を覚える", async () => {
+    const { github, collector, store } = setup();
+    await collector.collect();
+    const pr = github.addPr("検索の仕様", ["docs/specs/search.md"], {
+      ci: "pass",
+    });
+    await collector.collect();
+    expect(store.pullRequests()).toMatchObject([
+      { number: pr.number, title: "検索の仕様", stage: "spec", state: "open" },
+    ]);
+    await github.mergePullRequest(pr.number, false);
+    await collector.collect();
+    expect(store.pullRequests()).toMatchObject([
+      { number: pr.number, state: "merged", url: pr.url },
+    ]);
+  });
+
+  it("記録の無い PR を、出来事の記録から補う（既にある記録は変えない）", () => {
+    const { store } = setup();
+    const changed = (
+      number: number,
+      change: "opened" | "updated" | "merged" | "closed",
+    ) =>
+      store.addEvent(`pr:${String(number)}:${change}`, {
+        type: "pr_changed",
+        number,
+        title: `PR ${String(number)}`,
+        change,
+        stage: "implementation",
+        branch: `b${String(number)}`,
+      });
+    changed(19, "opened");
+    changed(19, "updated");
+    changed(19, "merged");
+    changed(20, "opened");
+    changed(21, "opened");
+    changed(21, "closed");
+    store.addEvent("ci:19", { type: "ci_changed", number: 19, status: "pass" });
+    store.savePullRequest({
+      number: 20,
+      title: "既にある記録",
+      branch: "x",
+      stage: "spec",
+      state: "merged",
+      url: "u",
+      updatedAt: "",
+    });
+
+    expect(backfillPullRequests(store, "owner/name")).toBe(2);
+    expect(
+      store.pullRequests().map((p) => [p.number, p.state, p.title, p.url]),
+    ).toEqual([
+      [21, "closed", "PR 21", "https://github.com/owner/name/pull/21"],
+      [20, "merged", "既にある記録", "u"],
+      [19, "merged", "PR 19", "https://github.com/owner/name/pull/19"],
+    ]);
+    // もう一度呼んでも足さない
+    expect(backfillPullRequests(store, "owner/name")).toBe(0);
   });
 });

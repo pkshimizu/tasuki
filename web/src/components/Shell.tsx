@@ -9,17 +9,21 @@ import type { Lang, Messages } from "../i18n.js";
 import { type Page, PAGES, pathOf } from "../routes.js";
 import { Icon, ICONS, Logo, MENU_ICONS } from "./Icon.js";
 
-export type Navigate = (page: Page) => void;
+export type Navigate = (page: Page, id?: string | null) => void;
 
 /** ふつうのクリックだけ画面の中で切り替える（別のタブで開く操作はブラウザに任せる） */
-export function linkProps(page: Page, navigate: Navigate) {
+export function linkProps(
+  page: Page,
+  navigate: Navigate,
+  id: string | null = null,
+) {
   return {
-    href: pathOf(page),
+    href: pathOf(page, id),
     onClick: (e: MouseEvent) => {
       if (e.defaultPrevented || e.button !== 0) return;
       if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
       e.preventDefault();
-      navigate(page);
+      navigate(page, id);
     },
   };
 }

@@ -12,7 +12,7 @@ import {
   type PullRequest,
   stageOf,
 } from "../integrations/github.js";
-import type { Store } from "../store/store.js";
+import type { Store, StoredPullRequest } from "../store/store.js";
 
 /** エージェントが書いた PR・Issue・コメントに付ける印。人のコメントと見分ける */
 export const AGENT_MARKER = "<!-- tasuki:";
@@ -191,6 +191,15 @@ export class Collector {
         updatedAt: pr.updatedAt,
         ci: pr.ci,
       };
+      store.savePullRequest({
+        number: pr.number,
+        title: pr.title,
+        branch: pr.branch,
+        stage,
+        state: "open",
+        url: pr.url,
+        updatedAt: pr.updatedAt,
+      });
       // 初めて確かめたときは、今ある PR を出来事にせず、様子だけを覚える
       if (previous === undefined) continue;
 
@@ -241,6 +250,15 @@ export class Collector {
         continue;
       }
       await this.comments(pr.number);
+      store.savePullRequest({
+        number: pr.number,
+        title: pr.title,
+        branch: pr.branch,
+        stage: before.stage,
+        state: pr.state,
+        url: pr.url,
+        updatedAt: pr.updatedAt,
+      });
       const added = store.addEvent(`pr:${number}:${pr.state}`, {
         type: "pr_changed",
         number: pr.number,
@@ -319,4 +337,38 @@ export class Collector {
     store.setValue(KEY.issues, JSON.stringify(next));
     return open;
   }
+}
+
+/** 出来事の記録をさかのぼる件数 */
+const BACKFILL_EVENTS = 5000;
+
+/**
+ * PR の様子の記録が無い PR を、出来事の記録から補う。
+ * PR の様子を覚える前の版で扱った PR を、管理画面に出すため。既に記録のある PR は変えない。
+ */
+export function backfillPullRequests(store: Store, repo: string): number {
+  const known = new Set(store.pullRequests().map((p) => p.number));
+  const found = new Map<number, StoredPullRequest>();
+  // 新しい順に読むので、PR ごとに最初に見つかったものが最後の様子
+  for (const e of store.recentEvents(BACKFILL_EVENTS)) {
+    const p = e.payload;
+    if (p.type !== "pr_changed") continue;
+    if (known.has(p.number) || found.has(p.number)) continue;
+    found.set(p.number, {
+      number: p.number,
+      title: p.title,
+      branch: p.branch,
+      stage: p.stage,
+      state:
+        p.change === "merged"
+          ? "merged"
+          : p.change === "closed"
+            ? "closed"
+            : "open",
+      url: `https://github.com/${repo}/pull/${String(p.number)}`,
+      updatedAt: e.createdAt,
+    });
+  }
+  for (const pr of found.values()) store.savePullRequest(pr);
+  return found.size;
 }

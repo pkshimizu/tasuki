@@ -15,10 +15,11 @@ import type { AddressInfo } from "node:net";
 import { extname, join, resolve, sep } from "node:path";
 import type { ChangeHub } from "./hub.js";
 
-export interface AdminRoutes {
-  /** パス（例: /api/dashboard）ごとの、JSON にして返す値 */
-  [path: string]: () => unknown;
-}
+/** 道に当たる内容が無いときに返す印 */
+export const NOT_FOUND = Symbol("not_found");
+
+/** パス（例: /api/prs/21）から、JSON にして返す値を作る。無ければ NOT_FOUND */
+export type AdminRoutes = (path: string) => unknown;
 
 export interface AdminServerOptions {
   /** 使いたいポート。使用中なら空いているポートに切り替える */
@@ -176,19 +177,18 @@ function handle(
     return;
   }
   if (path.startsWith("/api/")) {
-    const route = options.routes[path];
-    if (!route) {
-      sendJson(res, 404, { error: "not_found" });
-      return;
-    }
-    try {
-      sendJson(res, 200, route());
-    } catch (e) {
-      options.log(
-        `管理画面の ${path} の組み立てに失敗しました: ${e instanceof Error ? e.message : String(e)}`,
-      );
-      sendJson(res, 500, { error: "internal" });
-    }
+    void Promise.resolve()
+      .then(() => options.routes(path))
+      .then((value) => {
+        if (value === NOT_FOUND) sendJson(res, 404, { error: "not_found" });
+        else sendJson(res, 200, value);
+      })
+      .catch((e: unknown) => {
+        options.log(
+          `管理画面の ${path} の組み立てに失敗しました: ${e instanceof Error ? e.message : String(e)}`,
+        );
+        sendJson(res, 500, { error: "internal" });
+      });
     return;
   }
   serveStatic(options, path, res);

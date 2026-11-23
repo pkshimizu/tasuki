@@ -13,12 +13,29 @@ export const PAGES = [
 ] as const;
 export type Page = (typeof PAGES)[number];
 
-export function pathOf(page: Page): string {
-  return page === "dashboard" ? "/" : `/${page}`;
+/** 今いる場所。id は、詳細の画面で開いているもの（PR の番号など） */
+export interface Route {
+  page: Page;
+  id: string | null;
+}
+
+export function pathOf(page: Page, id: string | null = null): string {
+  const base = page === "dashboard" ? "/" : `/${page}`;
+  return id === null ? base : `${base}/${encodeURIComponent(id)}`;
 }
 
 /** 道から画面を決める。知らない道はダッシュボード */
-export function pageOf(path: string): Page {
-  const first = path.split("/").filter(Boolean)[0];
-  return PAGES.find((p) => p === first) ?? "dashboard";
+export function routeOf(path: string): Route {
+  const [first, second] = path.split("/").filter(Boolean);
+  const page = PAGES.find((p) => p === first);
+  if (!page) return { page: "dashboard", id: null };
+  let id: string | null = null;
+  if (second !== undefined && page !== "dashboard") {
+    try {
+      id = decodeURIComponent(second);
+    } catch {
+      id = null;
+    }
+  }
+  return { page, id };
 }
