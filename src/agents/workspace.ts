@@ -3,7 +3,14 @@
  * ファイルを書く役は対象ごとの worktree で、読むだけの役は確かめたいコミットを取り出した worktree で動かす。
  */
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { homedir } from "node:os";
 import { basename, join, resolve } from "node:path";
 import {
@@ -49,6 +56,40 @@ export interface Workspace {
     access: GuardContext["access"],
     prBranch?: string,
   ): Promise<Prepared>;
+  /** 今ある作業フォルダの一覧 */
+  entries(): Promise<WorkspaceEntry[]>;
+  /** 作業フォルダを消す（コミットしていない変更も捨てる） */
+  remove(entry: WorkspaceEntry): Promise<void>;
+}
+
+export interface WorkspaceEntry {
+  /** フォルダの名前（例: issue-3、read-pr-7、requirement-123） */
+  name: string;
+  cwd: string;
+  /** 取り出しているブランチ。ブランチに居なければ null */
+  branch: string | null;
+  /** 追跡しているファイルに、コミットしていない変更があるか */
+  dirty: boolean;
+}
+
+/** 作業フォルダの名前から対象を読む。読むだけの役のフォルダは read が true */
+export function parseEntryName(
+  name: string,
+): { target: Target; read: boolean } | undefined {
+  const read = name.startsWith("read-");
+  const rest = read ? name.slice("read-".length) : name;
+  if (rest === "repo") return { target: { kind: "repo" }, read };
+  const m = /^(issue|pr|requirement)-(.+)$/.exec(rest);
+  if (!m) return undefined;
+  const [, kind, id] = m;
+  if (kind === "requirement") {
+    return { target: { kind: "requirement", id: id! }, read };
+  }
+  if (!/^\d+$/.test(id!)) return undefined;
+  return {
+    target: { kind: kind as "issue" | "pr", number: Number(id) },
+    read,
+  };
 }
 
 /** worktree を置くフォルダ */
@@ -147,6 +188,38 @@ export class GitWorkspace implements Workspace {
   private async ensure(dir: string, ref: string): Promise<void> {
     if (existsSync(dir)) return;
     await this.git(this.repoDir, ["worktree", "add", "--detach", dir, ref]);
+  }
+
+  async entries(): Promise<WorkspaceEntry[]> {
+    if (!existsSync(this.root)) return [];
+    const entries: WorkspaceEntry[] = [];
+    for (const item of readdirSync(this.root, { withFileTypes: true })) {
+      if (!item.isDirectory() || item.name.startsWith(".")) continue;
+      const cwd = join(this.root, item.name);
+      // worktree として壊れているフォルダは飛ばす
+      const branch = await this.exec(["-C", cwd, "branch", "--show-current"]);
+      const status = await this.exec([
+        "-C",
+        cwd,
+        "status",
+        "--porcelain",
+        "--untracked-files=no",
+      ]);
+      if (branch.code !== 0 || status.code !== 0) continue;
+      entries.push({
+        name: item.name,
+        cwd,
+        branch: branch.stdout.trim() || null,
+        dirty: status.stdout.trim().length > 0,
+      });
+    }
+    return entries;
+  }
+
+  async remove(entry: WorkspaceEntry): Promise<void> {
+    await this.git(this.repoDir, ["worktree", "remove", "--force", entry.cwd]);
+    rmSync(join(this.root, ".setup", `${entry.name}.txt`), { force: true });
+    await this.exec(["-C", this.repoDir, "worktree", "prune"]);
   }
 
   async prepare(

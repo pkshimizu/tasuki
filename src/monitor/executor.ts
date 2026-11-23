@@ -23,7 +23,11 @@ import {
   targetLabel,
   type WorkerRole,
 } from "../domain/types.js";
-import { describeWorkspace, type Workspace } from "../agents/workspace.js";
+import {
+  describeWorkspace,
+  parseEntryName,
+  type Workspace,
+} from "../agents/workspace.js";
 
 export interface ExecutorDeps {
   loaded: LoadedConfig;
@@ -59,6 +63,8 @@ export class Executor {
   private readonly running = new Map<number, Running>();
   private limitUntil: Date | null = null;
   private readonly abort = new AbortController();
+  /** 変更が残っていて消さなかった作業フォルダ（同じ知らせを繰り返さないため） */
+  private readonly keptDirty = new Set<string>();
   private readonly clock: Clock;
 
   constructor(private readonly deps: ExecutorDeps) {
@@ -337,6 +343,60 @@ export class Executor {
       this.deps.log(
         `質問の投稿に失敗しました: ${e instanceof Error ? e.message : String(e)}`,
       );
+    }
+  }
+
+  /**
+   * 対象が終わった作業フォルダ（閉じた Issue・開いていない PR・完了した要件）を消す。
+   * エージェントが動いているフォルダ、開いている PR のブランチを取り出しているフォルダ、
+   * コミットしていない変更が残っているフォルダは消さない。
+   */
+  async cleanup(github: {
+    issues: { number: number }[];
+    pullRequests: { number: number; branch: string }[];
+  }): Promise<void> {
+    const { workspace, store, log } = this.deps;
+    const openIssues = new Set(github.issues.map((i) => i.number));
+    const openPrs = new Set(github.pullRequests.map((p) => p.number));
+    const openBranches = new Set(github.pullRequests.map((p) => p.branch));
+    const openRequirements = new Set(
+      store.requirements("open").map((r) => r.id),
+    );
+    const busy = new Set(
+      [...this.running.values()].map((r) => r.cwd).filter(Boolean),
+    );
+    // これから作業フォルダを用意する実行があるときは、取り違えないよう見送る
+    if ([...this.running.values()].some((r) => r.cwd === undefined)) return;
+
+    for (const entry of await workspace.entries()) {
+      const parsed = parseEntryName(entry.name);
+      if (!parsed || busy.has(entry.cwd)) continue;
+      const { target, read } = parsed;
+      const finished =
+        (target.kind === "issue" && !openIssues.has(target.number)) ||
+        (target.kind === "pr" && !openPrs.has(target.number)) ||
+        (target.kind === "requirement" && !openRequirements.has(target.id));
+      if (!finished) continue;
+      if (entry.branch !== null && openBranches.has(entry.branch)) continue;
+      // 読むだけの役のフォルダには、残すべき変更は無い
+      if (entry.dirty && !read) {
+        if (!this.keptDirty.has(entry.name)) {
+          this.keptDirty.add(entry.name);
+          log(
+            `作業フォルダ ${entry.cwd} は対象が終わっていますが、コミットしていない変更があるので残します`,
+          );
+        }
+        continue;
+      }
+      try {
+        await workspace.remove(entry);
+        this.keptDirty.delete(entry.name);
+        log(`終わった作業フォルダを消しました: ${entry.name}`);
+      } catch (e) {
+        log(
+          `作業フォルダ ${entry.name} を消せませんでした: ${e instanceof Error ? e.message : String(e)}`,
+        );
+      }
     }
   }
 
