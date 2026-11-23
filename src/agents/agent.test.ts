@@ -86,6 +86,31 @@ describe("buildOptions", () => {
     expect(o.disallowedTools).toContain("Write");
   });
 
+  it("共通の実行のしかた（環境変数・渡さない道具）を足す", () => {
+    const runner = {
+      env: { CLAUDE_CODE_GIT_BASH_PATH: "C:\\Git\\bin\\bash.exe" },
+      disallowedTools: ["PowerShell"],
+    };
+    const write = buildOptions(run(), runner);
+    expect(write.disallowedTools).toEqual(["PowerShell"]);
+    expect(write.env).toMatchObject(runner.env);
+    // この PC の環境変数も引き継ぐ
+    expect(write.env!.PATH ?? write.env!.Path).toBeDefined();
+
+    const read = buildOptions(
+      run({ guard: { cwd, defaultBranch: "main", access: "read" } }),
+      runner,
+    );
+    expect(read.disallowedTools).toEqual([
+      "Write",
+      "Edit",
+      "MultiEdit",
+      "NotebookEdit",
+      "PowerShell",
+    ]);
+    expect(buildOptions(run()).env).toBeUndefined();
+  });
+
   it("許可を求められた操作は、危険なものだけを拒否する", async () => {
     const o = buildOptions(run());
     const ask = (command: string) =>
@@ -221,6 +246,11 @@ describe("rolePrompt", () => {
     expect(p).toContain("docs/specs/");
     expect(p).toContain("用語集に従う");
     expect(p).toContain("日本語");
+  });
+  it("文字化けしない読み書きのしかたを伝える", () => {
+    const p = rolePrompt("programmer", config, "");
+    expect(p).toContain("ファイルを読むときは Read");
+    expect(p).toContain("--body-file");
   });
   it("書けない役には、読むだけだと伝える", () => {
     expect(rolePrompt("reviewer", config, "")).toContain("この役は読むだけ");
