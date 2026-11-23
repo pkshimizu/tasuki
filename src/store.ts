@@ -33,8 +33,10 @@ export interface Question {
   title: string;
   body: string;
   target: Target | null;
-  /** 最後に読んだ返信の投稿 ID */
+  /** 最後に読んだ投稿の ID */
   lastReadId: string | null;
+  /** 人の返信を 1 度でも読んだか */
+  answered: boolean;
   createdAt: string;
 }
 
@@ -74,9 +76,16 @@ export interface Store {
   requirements(status?: Requirement["status"]): Requirement[];
   completeRequirement(id: string): boolean;
 
-  addQuestion(input: Omit<Question, "lastReadId" | "createdAt">): void;
+  addQuestion(
+    input: Omit<Question, "lastReadId" | "answered" | "createdAt">,
+  ): void;
   questions(): Question[];
-  setQuestionRead(threadId: string, lastReadId: string): void;
+  /** 読んだ位置を進める。answered が true なら、返信ありにする */
+  setQuestionRead(
+    threadId: string,
+    lastReadId: string,
+    answered: boolean,
+  ): void;
 
   startRun(input: {
     role: WorkerRole;
@@ -118,6 +127,7 @@ CREATE TABLE IF NOT EXISTS questions (
   body TEXT NOT NULL,
   target TEXT,
   last_read_id TEXT,
+  answered INTEGER NOT NULL DEFAULT 0,
   created_at TEXT NOT NULL
 );
 CREATE TABLE IF NOT EXISTS runs (
@@ -251,7 +261,9 @@ export class SqliteStore implements Store {
     return Number(r.changes) > 0;
   }
 
-  addQuestion(input: Omit<Question, "lastReadId" | "createdAt">): void {
+  addQuestion(
+    input: Omit<Question, "lastReadId" | "answered" | "createdAt">,
+  ): void {
     this.db
       .prepare(
         "INSERT OR IGNORE INTO questions (thread_id, title, body, target, created_at) VALUES (?, ?, ?, ?, ?)",
@@ -275,14 +287,21 @@ export class SqliteStore implements Store {
       body: r.body as string,
       target: r.target ? (JSON.parse(r.target as string) as Target) : null,
       lastReadId: (r.last_read_id as string | null) ?? null,
+      answered: r.answered === 1,
       createdAt: r.created_at as string,
     }));
   }
 
-  setQuestionRead(threadId: string, lastReadId: string): void {
+  setQuestionRead(
+    threadId: string,
+    lastReadId: string,
+    answered: boolean,
+  ): void {
     this.db
-      .prepare("UPDATE questions SET last_read_id = ? WHERE thread_id = ?")
-      .run(lastReadId, threadId);
+      .prepare(
+        "UPDATE questions SET last_read_id = ?, answered = MAX(answered, ?) WHERE thread_id = ?",
+      )
+      .run(lastReadId, answered ? 1 : 0, threadId);
   }
 
   startRun(input: {

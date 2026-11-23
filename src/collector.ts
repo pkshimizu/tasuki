@@ -145,7 +145,9 @@ export class Collector {
           })),
         });
       }
-      if (cursor !== undefined) store.setQuestionRead(q.threadId, cursor);
+      if (cursor !== undefined) {
+        store.setQuestionRead(q.threadId, cursor, lastReply !== undefined);
+      }
     }
   }
 
