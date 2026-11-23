@@ -5,7 +5,8 @@ import { z } from "zod";
 import { ROLES, STAGES } from "./config.js";
 
 /** エージェントが作業する対象 */
-export const targetSchema = z.discriminatedUnion("kind", [
+// 構造化出力の JSON Schema で使えるよう、oneOf にならない z.union にする
+export const targetSchema = z.union([
   z.strictObject({
     kind: z.literal("requirement"),
     id: z.string().describe("要件の投稿 ID"),
