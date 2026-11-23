@@ -1,0 +1,60 @@
+name: Release
+
+# v で始まるタグを push すると、ビルド済みのパッケージを作って GitHub Release に添付する。
+# 利用者は、その URL から npm install -g で入れる（インストール時のビルドは要らない）。
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: release
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      - name: タグと package.json の版が同じことを確かめる
+        run: |
+          version="v$(node -p "require('./package.json').version")"
+          if [ "$version" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::タグ（$GITHUB_REF_NAME）と package.json の版（$version）が違います"
+            exit 1
+          fi
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
+      # npm pack が prepare（ビルド）を実行し、dist と templates を含むパッケージを作る
+      - name: Pack
+        run: |
+          npm pack
+          # 版の付かない名前でも置き、「最新の版」を決まった URL で入れられるようにする
+          cp tasuki-agent-*.tgz tasuki-agent.tgz
+
+      # 作ったパッケージが入り、コマンドが起動できることを確かめる
+      - name: Smoke test
+        run: |
+          npm install -g ./tasuki-agent.tgz
+          test "v$(tasuki --version)" = "$GITHUB_REF_NAME"
+
+      - name: Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" tasuki-agent-*.tgz tasuki-agent.tgz --generate-notes --verify-tag

@@ -33,14 +33,15 @@ src/
 
 ## リリース
 
-配布は GitHub から直接インストールする形（`npm install -g github:pkshimizu/tasuki#<タグ>`）。npm のレジストリには公開しない（`package.json` の `private` は、誤って公開しないために残す）。
+配布は、GitHub Release に添付したビルド済みのパッケージを npm で入れる形（`npm install -g https://github.com/pkshimizu/tasuki/releases/latest/download/tasuki-agent.tgz`）。npm のレジストリには公開しない（`package.json` の `private` は、誤って公開しないために残す）。
 
 1. `package.json` の `version` を上げる PR をマージする（`npm version <patch|minor|major> --no-git-tag-version` で `package-lock.json` も揃える）
-2. main の先頭に `v<version>` のタグを打って push する
-3. `gh release create v<version> --generate-notes` で GitHub Release を作る
-4. `npm install -g github:pkshimizu/tasuki#v<version>` で入ることを確かめる
+2. main の先頭に `v<version>` のタグを打って push する（`git tag v<version> && git push origin v<version>`）
+3. `.github/workflows/release.yml` が、タグと版が同じことを確かめ、lint・型・テストを通し、`npm pack` でパッケージを作って GitHub Release に添付する（版つきの `tasuki-agent-<version>.tgz` と、最新を指す `tasuki-agent.tgz`）
+4. Release の URL から入ることを確かめる
 
-インストール時には `prepare`（`npm run build`）が走り、`dist/` と `templates/` が取り込まれる。配布物に含めるファイルを増やすときは `package.json` の `files` に足す。
+- `npm pack` のときに `prepare`（`npm run build`）が走り、`dist/` と `templates/` が取り込まれる。配布物に含めるファイルを増やすときは `package.json` の `files` に足す。
+- リポジトリを直接指定するグローバルのインストール（`npm install -g github:pkshimizu/tasuki`）は使えない。npm が、グローバルのインストールでは Git の依存のビルドに使うパッケージを用意できず、`prepare` が失敗する。
 
 ## 決まり
 

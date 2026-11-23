@@ -40,17 +40,17 @@ GitHub ──────────┼─▶ 監視スレッド ─▶ 司令�
 
 ### インストール
 
-GitHub から直接入れる。npm が取得してビルドするので、clone やビルドの手順は要らない。
+GitHub の Release に置いたビルド済みのパッケージを、npm で入れる。clone やビルドの手順は要らない。
 
 ```
-npm install -g github:pkshimizu/tasuki#v0.1.0
+npm install -g https://github.com/pkshimizu/tasuki/releases/latest/download/tasuki-agent.tgz
 tasuki --version
 ```
 
-- `#v0.1.0` は入れる版（タグ）。出ている版は [Releases](https://github.com/pkshimizu/tasuki/releases) で確かめる。`#` 以降を省くと、main の最新が入る。
-- 更新するときは、新しいタグを指定して同じコマンドを実行する。動いている Tasuki は、止めてから起動し直す。
+- 上の URL は最新の版。版を決めて入れるときは、`https://github.com/pkshimizu/tasuki/releases/download/v0.1.0/tasuki-agent-0.1.0.tgz` のように、タグと版の付いたファイルを指定する。出ている版は [Releases](https://github.com/pkshimizu/tasuki/releases) で確かめる。
+- 更新するときは、同じコマンドをもう一度実行する。動いている Tasuki は、止めてから起動し直す。
 - 消すときは `npm uninstall -g tasuki-agent`。
-- インストールには git が要る。Windows でビルドに失敗するときは、Node.js のバージョン（22.13 以上、23 未満）を確かめる。
+- `npm install -g github:pkshimizu/tasuki` の形（リポジトリを直接指定）では入らない。npm がグローバルへのインストールでは、ビルドに使うパッケージを用意できないため。
 
 開発するときは、clone して `npm ci` のあと `npm link` で、手元のコードを `tasuki` コマンドとして使える。
 
