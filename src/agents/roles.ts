@@ -2,9 +2,9 @@
  * 作業エージェントの役ごとの決まり（システムプロンプト）と、結果の形。
  */
 import { z } from "zod";
-import { type Config, ROLE_LABELS } from "./config.js";
+import { type Config, ROLE_LABELS } from "../config/config.js";
 import type { GuardContext } from "./guard.js";
-import type { WorkerRole } from "./types.js";
+import type { WorkerRole } from "../domain/types.js";
 
 /** 作業エージェントが返す結果 */
 export const workerOutputSchema = z.strictObject({

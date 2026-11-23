@@ -4,9 +4,9 @@
  * 監視スレッドが出来事を集め、指示を実行し、門番を守ることを確かめる。
  */
 import { describe, expect, it } from "vitest";
-import type { Action, DispatchDecision } from "./dispatcher.js";
+import type { Action, DispatchDecision } from "../dispatcher/dispatcher.js";
 import { harness, ok, output } from "./fakes.js";
-import type { TasukiEvent } from "./types.js";
+import type { TasukiEvent } from "../domain/types.js";
 
 describe("要件からマージまで", () => {
   it("仕様 → 質問と回答 → Issue → 実装 → レビューの指摘と修正 → マージ → 完了の知らせ", async () => {

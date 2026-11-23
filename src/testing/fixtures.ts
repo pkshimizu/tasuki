@@ -1,7 +1,7 @@
 /**
  * テストで共通に使う値。
  */
-import { parseConfig, type Config } from "./config.js";
+import { parseConfig, type Config } from "../config/config.js";
 
 export const MINIMAL_CONFIG = `
 github:

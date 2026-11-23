@@ -2,7 +2,7 @@
  * 部品の間で受け渡す値の形。
  */
 import { z } from "zod";
-import { ROLES, STAGES } from "./config.js";
+import { ROLES, STAGES } from "../config/config.js";
 
 /** エージェントが作業する対象 */
 // 構造化出力の JSON Schema で使えるよう、oneOf にならない z.union にする
@@ -30,6 +30,21 @@ export function targetKey(target: Target): string {
       return `pr:${String(target.number)}`;
     case "repo":
       return "repo";
+  }
+}
+
+/** 対象を人が読む名前にする */
+export function targetLabel(target: Target | null): string {
+  if (target === null) return "対象なし";
+  switch (target.kind) {
+    case "requirement":
+      return `要件 ${target.id}`;
+    case "issue":
+      return `Issue #${String(target.number)}`;
+    case "pr":
+      return `PR #${String(target.number)}`;
+    case "repo":
+      return "リポジトリ全体";
   }
 }
 

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import type { AgentOutcome } from "./agent.js";
-import type { LoadedConfig } from "./config.js";
-import type { Action } from "./dispatcher.js";
+import type { AgentOutcome } from "../agents/agent.js";
+import type { LoadedConfig } from "../config/config.js";
+import type { Action } from "../dispatcher/dispatcher.js";
 import { Executor } from "./executor.js";
 import {
   FakeChat,
@@ -10,11 +10,11 @@ import {
   ok,
   output,
   ScriptedAgents,
-} from "./fakes.js";
-import type { WorkerOutput } from "./roles.js";
-import { SqliteStore } from "./store.js";
-import { testConfig } from "./testing.js";
-import type { EventPayload } from "./types.js";
+} from "../testing/fakes.js";
+import type { WorkerOutput } from "../agents/roles.js";
+import { SqliteStore } from "../store/store.js";
+import { testConfig } from "../testing/fixtures.js";
+import type { EventPayload } from "../domain/types.js";
 
 function setup(extraYaml = "") {
   const chat = new FakeChat();

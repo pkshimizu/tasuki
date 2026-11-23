@@ -5,9 +5,9 @@
 import { existsSync } from "node:fs";
 import { homedir } from "node:os";
 import { join, resolve } from "node:path";
-import { commandExec, type Exec, run } from "./exec.js";
+import { commandExec, type Exec, run } from "../integrations/exec.js";
 import type { GuardContext } from "./guard.js";
-import { type Target, targetKey } from "./types.js";
+import { type Target, targetKey } from "../domain/types.js";
 
 export interface Prepared {
   /** 作業フォルダ */

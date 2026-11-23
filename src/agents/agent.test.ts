@@ -10,7 +10,7 @@ import {
   toJsonSchema,
 } from "./agent.js";
 import { rolePrompt, workerOutputSchema } from "./roles.js";
-import { testConfig } from "./testing.js";
+import { testConfig } from "../testing/fixtures.js";
 
 const cwd = resolve("/work/tree");
 

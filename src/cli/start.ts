@@ -1,17 +1,17 @@
 /**
  * tasuki start: 本物の部品を組み立てて、監視スレッドを常駐させる。
  */
-import { createRunAgent } from "./agent.js";
-import { Collector } from "./collector.js";
-import { ConfigError, discordToken, loadConfig } from "./config.js";
-import { DiscordChat } from "./discord.js";
-import { commandExec, run } from "./exec.js";
-import { Executor } from "./executor.js";
-import { GhGitHub } from "./github.js";
-import type { Output } from "./main.js";
-import { Monitor } from "./monitor.js";
-import { SqliteStore, stateFile } from "./store.js";
-import { GitWorkspace, worktreeRoot } from "./workspace.js";
+import { createRunAgent } from "../agents/agent.js";
+import { Collector } from "../monitor/collector.js";
+import { ConfigError, discordToken, loadConfig } from "../config/config.js";
+import { DiscordChat } from "../integrations/discord.js";
+import { commandExec, run } from "../integrations/exec.js";
+import { Executor } from "../monitor/executor.js";
+import { GhGitHub } from "../integrations/github.js";
+import type { Output } from "./output.js";
+import { Monitor } from "../monitor/monitor.js";
+import { SqliteStore, stateFile } from "../store/store.js";
+import { GitWorkspace, worktreeRoot } from "../agents/workspace.js";
 
 /** origin の URL が設定のリポジトリを指しているか */
 export function remoteMatches(url: string, repo: string): boolean {

@@ -2,7 +2,7 @@
  * GitHub とのやり取り。gh コマンドで PR・Issue・CI・コメントを読み、マージを行う。
  * マージは CI が合格しているときだけ行う（プログラムで必ず守る）。
  */
-import type { Config, Stage } from "./config.js";
+import { type Config, isUnder, type Stage } from "../config/config.js";
 import { commandExec, type Exec, run } from "./exec.js";
 
 export type CiStatus = "pass" | "fail" | "pending" | "none";
@@ -169,19 +169,17 @@ function toIssue(raw: RawIssue): Issue {
   };
 }
 
-function under(file: string, folder: string): boolean {
-  return file === folder || file.startsWith(`${folder}/`);
-}
-
 /**
  * PR の工程を、変えたファイルの置き場で決める。
  * 仕様の置き場だけなら仕様、デザインの置き場だけならデザイン、それ以外は実装。
  */
 export function stageOf(files: string[], paths: Config["paths"]): Stage {
   if (files.length === 0) return "implementation";
-  if (files.every((f) => under(f, paths.specs))) return "spec";
+  if (files.every((f) => isUnder(f, paths.specs))) return "spec";
   if (
-    files.every((f) => under(f, paths.design) || under(f, paths.design_system))
+    files.every(
+      (f) => isUnder(f, paths.design) || isUnder(f, paths.design_system),
+    )
   ) {
     return "design";
   }

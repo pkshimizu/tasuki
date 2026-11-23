@@ -3,16 +3,16 @@
  * 何をするかはここでは決めない（事実を集めて伝えるだけ）。
  * どれかの取得に失敗しても止まらず、次の確認で続きから読む。
  */
-import type { Config, Stage } from "./config.js";
-import type { Chat } from "./discord.js";
+import { type Config, isUnder, type Stage } from "../config/config.js";
+import type { Chat } from "../integrations/discord.js";
 import {
   type CiStatus,
   type GitHub,
   type Issue,
   type PullRequest,
   stageOf,
-} from "./github.js";
-import type { Store } from "./store.js";
+} from "../integrations/github.js";
+import type { Store } from "../store/store.js";
 
 /** エージェントが書いた PR・Issue・コメントに付ける印。人のコメントと見分ける */
 export const AGENT_MARKER = "<!-- tasuki:";
@@ -53,10 +53,6 @@ const KEY = {
 function readJson<T>(store: Store, name: string): T | undefined {
   const text = store.getValue(name);
   return text === undefined ? undefined : (JSON.parse(text) as T);
-}
-
-function under(file: string, folder: string): boolean {
-  return file === folder || file.startsWith(`${folder}/`);
 }
 
 export class Collector {
@@ -160,9 +156,9 @@ export class Collector {
       const files = await github.changedFiles(previous, head);
       const { specs, design, design_system } = config.paths;
       const groups = {
-        spec: files.filter((f) => under(f, specs)),
+        spec: files.filter((f) => isUnder(f, specs)),
         design: files.filter(
-          (f) => under(f, design) || under(f, design_system),
+          (f) => isUnder(f, design) || isUnder(f, design_system),
         ),
       };
       for (const stage of ["spec", "design"] as const) {

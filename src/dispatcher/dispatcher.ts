@@ -3,25 +3,26 @@
  * 段階の順番や回数の上限はプログラムで決めず、ここ（LLM）の判断に任せる。
  */
 import { z } from "zod";
-import type { AgentOutcome, RunAgent } from "./agent.js";
+import type { AgentOutcome, RunAgent } from "../agents/agent.js";
 import {
   type Config,
   type LoadedConfig,
   ROLE_LABELS,
   type Stage,
-} from "./config.js";
-import type { Issue, PullRequest } from "./github.js";
-import { languageRule } from "./roles.js";
+} from "../config/config.js";
+import type { Issue, PullRequest } from "../integrations/github.js";
+import { languageRule } from "../agents/roles.js";
 import {
   type EventPayload,
   type RunStatus,
   type Target,
   targetKey,
+  targetLabel,
   targetSchema,
   type TasukiEvent,
   type WorkerRole,
   workerRoleSchema,
-} from "./types.js";
+} from "../domain/types.js";
 
 export const actionSchema = z.union([
   z.strictObject({
@@ -107,20 +108,6 @@ const BODY_LIMIT = 1500;
 function clip(text: string, limit = BODY_LIMIT): string {
   const t = text.trim();
   return t.length <= limit ? t : `${t.slice(0, limit)}…（以下略）`;
-}
-
-function targetLabel(target: Target | null): string {
-  if (target === null) return "対象なし";
-  switch (target.kind) {
-    case "requirement":
-      return `要件 ${target.id}`;
-    case "issue":
-      return `Issue #${String(target.number)}`;
-    case "pr":
-      return `PR #${String(target.number)}`;
-    case "repo":
-      return "リポジトリ全体";
-  }
 }
 
 const STAGE_LABELS: Record<Stage, string> = {

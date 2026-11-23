@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { Collector } from "./collector.js";
-import { FakeChat, FakeGitHub } from "./fakes.js";
-import { SqliteStore } from "./store.js";
-import { testConfig } from "./testing.js";
-import type { EventPayload } from "./types.js";
+import { FakeChat, FakeGitHub } from "../testing/fakes.js";
+import { SqliteStore } from "../store/store.js";
+import { testConfig } from "../testing/fixtures.js";
+import type { EventPayload } from "../domain/types.js";
 
 function setup() {
   const chat = new FakeChat();

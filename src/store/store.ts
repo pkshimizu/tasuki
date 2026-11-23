@@ -13,7 +13,7 @@ import type {
   Target,
   TasukiEvent,
   WorkerRole,
-} from "./types.js";
+} from "../domain/types.js";
 
 export interface Clock {
   now(): Date;

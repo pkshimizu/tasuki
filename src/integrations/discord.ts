@@ -3,7 +3,7 @@
  * 外から PC への接続口（Webhook・Gateway）は作らない。
  * 読むのは設定したチャンネルと、許可した人の投稿だけ。
  */
-import type { Config } from "./config.js";
+import type { Config } from "../config/config.js";
 
 export interface ChatMessage {
   id: string;
