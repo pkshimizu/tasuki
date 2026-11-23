@@ -39,6 +39,20 @@ describe("parseConfig", () => {
     });
   });
 
+  it("作業フォルダの準備コマンドを読む", () => {
+    expect(parseConfig(MINIMAL_CONFIG).workspace).toEqual({
+      setup: [],
+      setup_on_change: [],
+    });
+    const c = parseConfig(
+      `${MINIMAL_CONFIG}workspace:\n  setup:\n    - npm ci\n  setup_on_change:\n    - package-lock.json\n`,
+    );
+    expect(c.workspace).toEqual({
+      setup: ["npm ci"],
+      setup_on_change: ["package-lock.json"],
+    });
+  });
+
   it("工程ごとのマージの設定を読む", () => {
     const c = parseConfig(`${MINIMAL_CONFIG}merge:\n  spec: auto\n`);
     expect(c.merge.spec).toBe("auto");

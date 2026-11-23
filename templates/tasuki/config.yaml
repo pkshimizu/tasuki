@@ -32,6 +32,13 @@ paths:
   design: docs/design # デザイン（HTML モック）の置き場
   design_system: docs/design-system # デザインシステムの置き場
 
+# 作業フォルダ（git worktree）を用意したあとに Tasuki が実行する準備コマンド
+# workspace:
+#   setup:
+#     - npm ci
+#   setup_on_change: # このファイルが変わったら、もう一度実行する
+#     - package-lock.json
+
 # 役ごとのモデル（省略すると Claude Code の既定のモデル）
 # agents:
 #   dispatcher:

@@ -133,6 +133,7 @@ verdict  : レビュアーの判定（approve／request_changes）
 - 司令塔の判断は 1 回ずつ順に行う。
 - 作業エージェントは `limits.agents`（既定 2）まで同時に動かす。
 - ファイルを書くエージェントは、対象ごとの git worktree（`~/.tasuki/worktrees/<owner>__<repo>/<対象>`）で動かす。
+- `workspace.setup` の準備コマンドは、作業フォルダごとに、初めて用意したときと `workspace.setup_on_change` のファイルが変わったときに実行する。読むだけの役の作業フォルダでも実行する。失敗しても止めず、失敗した内容をエージェントに伝える。
 - 同じ対象（同じ要件・Issue・PR）のエージェントを同時に 2 つ動かさない。重なった指示は、先の実行が終わったあとの判断に回す。
 
 ## 5. プログラムで必ず守ること
@@ -181,6 +182,11 @@ paths:
   specs: docs/specs
   design: docs/design
   design_system: docs/design-system
+workspace: # 作業フォルダの準備（省略可）
+  setup: # 作業フォルダを用意したあとに Tasuki が実行するコマンド
+    - npm ci
+  setup_on_change: # このファイルが変わったら、もう一度実行する
+    - package-lock.json
 agents: # 役ごとの設定（省略可）
   programmer:
     model: ...

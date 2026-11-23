@@ -60,7 +60,8 @@ Tasuki は Discord を PC から読みにいくだけで、外から PC への�
 
 1. `templates/tasuki/config.yaml` を、対象リポジトリの `.tasuki/config.yaml` にコピーして書き換え、既定のブランチに入れる。
 2. 既定のブランチを保護する（PR 必須・CI の合格必須）。エージェントが既定のブランチに直接 push するのを GitHub 側でも防ぐため。
-3. 役ごとに追加の指示があれば、`.tasuki/<役>/*.md` に書く（ファイル名の順に読む）。
+3. 依存パッケージの導入など、作業フォルダの準備が要るなら、`workspace.setup` にコマンドを書く。エージェントの作業フォルダ（git worktree）ごとに、初めて用意したときと `workspace.setup_on_change` のファイルが変わったときに Tasuki が実行する。
+4. 役ごとに追加の指示があれば、`.tasuki/<役>/*.md` に書く（ファイル名の順に読む）。
 
 ```
 .tasuki/

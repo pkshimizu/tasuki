@@ -2,10 +2,17 @@
  * エージェントの作業フォルダ（git worktree）を用意する。
  * ファイルを書く役は対象ごとの worktree で、読むだけの役は確かめたいコミットを取り出した worktree で動かす。
  */
-import { existsSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
-import { join, resolve } from "node:path";
-import { commandExec, type Exec, run } from "../integrations/exec.js";
+import { basename, join, resolve } from "node:path";
+import {
+  commandExec,
+  type Exec,
+  run,
+  type ShellExec,
+  shellExec,
+} from "../integrations/exec.js";
 import type { GuardContext } from "./guard.js";
 import { type Target, targetKey } from "../domain/types.js";
 
@@ -16,7 +23,21 @@ export interface Prepared {
   branch: string | null;
   /** コミットしていない変更があるか */
   dirty: boolean;
+  /** 今回実行した準備コマンド。実行しなかったときは無い */
+  setup?: { commands: string[]; error?: string };
 }
+
+/** 作業フォルダの準備 */
+export interface SetupConfig {
+  /** 実行するコマンド */
+  commands: readonly string[];
+  /** 変わったらもう一度実行するファイル（リポジトリからの相対パス） */
+  onChange: readonly string[];
+}
+
+/** 準備コマンド 1 つの制限時間 */
+export const SETUP_TIMEOUT_MS = 15 * 60 * 1000;
+const OUTPUT_TAIL = 1500;
 
 export interface Workspace {
   /**
@@ -42,7 +63,55 @@ export class GitWorkspace implements Workspace {
     private readonly root: string,
     private readonly defaultBranch: string,
     private readonly exec: Exec = commandExec("git"),
+    private readonly setup: SetupConfig = { commands: [], onChange: [] },
+    private readonly shell: ShellExec = shellExec(SETUP_TIMEOUT_MS),
   ) {}
+
+  /** 準備コマンドと、見張るファイルの中身から作る印。変わったら準備をやり直す */
+  private setupKey(dir: string): string {
+    const hash = createHash("sha256");
+    hash.update(JSON.stringify(this.setup.commands));
+    for (const file of this.setup.onChange) {
+      const path = join(dir, file);
+      hash.update(`\n${file}\n`);
+      if (existsSync(path)) hash.update(readFileSync(path));
+    }
+    return hash.digest("hex");
+  }
+
+  /**
+   * 準備コマンドを実行する。作業フォルダごとに、初めてのときと、見張るファイルが変わったときだけ。
+   * 失敗しても止めず、失敗した内容を返す（次の用意のときにもう一度実行する）。
+   */
+  private async runSetup(dir: string): Promise<Prepared["setup"]> {
+    const commands = [...this.setup.commands];
+    if (commands.length === 0) return undefined;
+    const marker = join(this.root, ".setup", `${basename(dir)}.txt`);
+    const key = this.setupKey(dir);
+    if (existsSync(marker) && readFileSync(marker, "utf8") === key) {
+      return undefined;
+    }
+    for (const command of commands) {
+      let failure: string | undefined;
+      try {
+        const result = await this.shell(command, dir);
+        if (result.code !== 0) {
+          failure = `${result.stderr}\n${result.stdout}`
+            .trim()
+            .slice(-OUTPUT_TAIL);
+        }
+      } catch (e) {
+        failure = e instanceof Error ? e.message : String(e);
+      }
+      if (failure !== undefined) {
+        return { commands, error: `${command} が失敗しました:\n${failure}` };
+      }
+    }
+    mkdirSync(join(this.root, ".setup"), { recursive: true });
+    // 準備コマンドが見張るファイルを書き換えることがあるので、終わったあとの中身で印を付ける
+    writeFileSync(marker, this.setupKey(dir));
+    return { commands };
+  }
 
   private git(cwd: string, args: string[]): Promise<string> {
     return run(this.exec, "git", ["-C", cwd, ...args]);
@@ -81,6 +150,17 @@ export class GitWorkspace implements Workspace {
   }
 
   async prepare(
+    target: Target,
+    access: GuardContext["access"],
+    prBranch?: string,
+  ): Promise<Prepared> {
+    const prepared = await this.checkout(target, access, prBranch);
+    const setup = await this.runSetup(prepared.cwd);
+    return setup === undefined ? prepared : { ...prepared, setup };
+  }
+
+  /** 対象の worktree を用意して、確かめたいコミットを取り出す */
+  private async checkout(
     target: Target,
     access: GuardContext["access"],
     prBranch?: string,
@@ -137,5 +217,14 @@ export function describeWorkspace(p: Prepared, defaultBranch: string): string {
     p.dirty
       ? "コミットしていない変更が残っています（前の実行の続きです）。git status で確かめてください。"
       : ""
-  }`;
+  }${describeSetup(p.setup)}`;
+}
+
+function describeSetup(setup: Prepared["setup"]): string {
+  if (setup === undefined) return "";
+  const list = setup.commands.map((c) => `\`${c}\``).join("、");
+  if (setup.error === undefined) {
+    return `\n作業フォルダの準備（${list}）は、Tasuki が実行済みです。`;
+  }
+  return `\n作業フォルダの準備（${list}）を Tasuki が実行しましたが、失敗しました。必要なら原因を確かめて、自分で実行してください。\n${setup.error}`;
 }
