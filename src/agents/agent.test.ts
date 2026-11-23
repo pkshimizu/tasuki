@@ -47,6 +47,10 @@ const output = {
   questions: [],
   pr: 12,
   verdict: null,
+  findings: [],
+  resolutions: [],
+  responses: [],
+  rule_proposals: [],
 };
 
 function success(structured: unknown = output) {
@@ -264,6 +268,21 @@ describe("rolePrompt", () => {
     const p = rolePrompt("programmer", config, none);
     expect(p).toContain("ファイルを読むときは Read");
     expect(p).toContain("--body-file");
+  });
+  it("直す役には最小の差分で直す決まりを、レビュアーには重要度と 2 回目以降の問い方を伝える", () => {
+    for (const role of ["spec-master", "designer", "programmer"] as const) {
+      const p = rolePrompt(role, config, none);
+      expect(p).toContain("## レビューの指摘を直すとき");
+      expect(p).toContain("最小の差分で直します");
+    }
+    const reviewer = rolePrompt("reviewer", config, none);
+    expect(reviewer).not.toContain("## レビューの指摘を直すとき");
+    expect(reviewer).toContain("blocker: このままではマージできない");
+    expect(reviewer).toContain("前回の修正が生んだ新しい blocker だけ");
+    expect(reviewer).toContain("minor / nit だけが残っているなら approve");
+    expect(rolePrompt("planner", config, none)).not.toContain(
+      "## レビューの指摘を直すとき",
+    );
   });
   it("書けない役には、読むだけだと伝える", () => {
     expect(rolePrompt("reviewer", config, none)).toContain("この役は読むだけ");

@@ -159,3 +159,116 @@ describe("ファイル", () => {
     );
   });
 });
+
+describe("レビューの記録", () => {
+  const f = (
+    severity: "blocker" | "major" | "minor" | "nit",
+    problem: string,
+  ) => ({
+    severity,
+    file: "src/a.ts",
+    line: 1,
+    problem,
+    suggestion: "直す",
+  });
+
+  it("回の番号と、指摘の通し番号を振る", () => {
+    const s = memory();
+    const first = s.addReview({
+      pr: 7,
+      sha: "sha1",
+      verdict: "request_changes",
+      runId: 1,
+      findings: [f("blocker", "落ちる"), f("minor", "名前")],
+      resolutions: [],
+    });
+    expect(first.review.round).toBe(1);
+    expect(first.firstNumber).toBe(1);
+    const second = s.addReview({
+      pr: 7,
+      sha: "sha2",
+      verdict: "approve",
+      runId: 2,
+      findings: [f("nit", "空行")],
+      resolutions: [],
+    });
+    expect(second.review.round).toBe(2);
+    expect(second.firstNumber).toBe(3);
+    expect(s.reviews(7).map((r) => [r.round, r.sha, r.verdict])).toEqual([
+      [1, "sha1", "request_changes"],
+      [2, "sha2", "approve"],
+    ]);
+    expect(s.findings(7).map((x) => [x.number, x.round, x.severity])).toEqual([
+      [1, 1, "blocker"],
+      [2, 1, "minor"],
+      [3, 2, "nit"],
+    ]);
+    // PR ごとに別々に数える
+    expect(s.reviews(8)).toEqual([]);
+    expect(
+      s.addReview({
+        pr: 8,
+        sha: "x",
+        verdict: "approve",
+        runId: 3,
+        findings: [f("major", "別の PR")],
+        resolutions: [],
+      }).firstNumber,
+    ).toBe(1);
+  });
+
+  it("対応の報告と、解消判定を指摘に反映する", () => {
+    const s = memory();
+    s.addReview({
+      pr: 7,
+      sha: "sha1",
+      verdict: "request_changes",
+      runId: 1,
+      findings: [
+        f("blocker", "a"),
+        f("major", "b"),
+        f("major", "c"),
+        f("minor", "d"),
+      ],
+      resolutions: [],
+    });
+    s.applyResponses(7, [
+      { number: 1, action: "fixed", note: "直した" },
+      { number: 2, action: "fixed", note: "直した" },
+      { number: 3, action: "deferred", note: "設計の変更が要る" },
+      { number: 4, action: "declined", note: "既存に合わせている" },
+      { number: 99, action: "fixed", note: "無い番号" },
+    ]);
+    expect(s.findings(7).map((x) => x.status)).toEqual([
+      "fixed",
+      "fixed",
+      "deferred",
+      "declined",
+    ]);
+
+    s.addReview({
+      pr: 7,
+      sha: "sha2",
+      verdict: "request_changes",
+      runId: 2,
+      findings: [],
+      resolutions: [
+        { number: 1, status: "resolved", note: "直っている" },
+        { number: 2, status: "worsened", note: "別の場所が壊れた" },
+        { number: 4, status: "resolved", note: "理由に納得" },
+      ],
+    });
+    expect(s.findings(7).map((x) => [x.status, x.note])).toEqual([
+      ["resolved", "直っている"],
+      ["open", "修正で悪くなった: 別の場所が壊れた"],
+      ["deferred", "設計の変更が要る"],
+      ["resolved", "理由に納得"],
+    ]);
+
+    // 解消済みの指摘は、あとから来た対応の報告で開き直さない
+    s.applyResponses(7, [
+      { number: 1, action: "declined", note: "遅れて届いた" },
+    ]);
+    expect(s.findings(7)[0]!.status).toBe("resolved");
+  });
+});

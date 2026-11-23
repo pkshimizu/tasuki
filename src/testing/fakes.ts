@@ -354,6 +354,10 @@ export function output(extra: Partial<WorkerOutput> = {}): WorkerOutput {
     questions: [],
     pr: null,
     verdict: null,
+    findings: [],
+    resolutions: [],
+    responses: [],
+    rule_proposals: [],
     ...extra,
   };
 }

@@ -161,6 +161,12 @@ describe("buildDispatchPrompt", () => {
             url: "",
             stage: "implementation",
             merge: "human",
+            review: {
+              rounds: 2,
+              lastVerdict: "request_changes",
+              reviewedHead: false,
+              open: { blocker: 0, major: 1, minor: 2, nit: 0 },
+            },
           },
         ],
         running: [
@@ -198,7 +204,7 @@ describe("buildDispatchPrompt", () => {
     );
     expect(prompt).toContain("### #3 検索 API\n先に済ませる Issue: #2");
     expect(prompt).toContain(
-      "#7「検索」: 実装、ブランチ tasuki/issue-3、作成者 bot、CI 合格、衝突なし、マージの設定 human（人がマージ）",
+      "#7「検索」: 実装、ブランチ tasuki/issue-3、作成者 bot、CI 合格、衝突なし、マージの設定 human（人がマージ）、レビュー 2 回（最後の判定 request_changes、レビューのあとにコミットが足されている、片付いていない指摘 major 1・minor 2）",
     );
     expect(prompt).toContain("- レビュアー（PR #7、");
     expect(prompt).toContain("プログラマー（Issue #3）終えた: PR #7 を作った");

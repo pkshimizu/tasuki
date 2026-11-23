@@ -10,6 +10,7 @@ import {
   ROLE_LABELS,
   type Stage,
 } from "../config/config.js";
+import { describeReviewState, type ReviewState } from "../domain/review.js";
 import type { Issue, PullRequest } from "../integrations/github.js";
 import { languageRule } from "../agents/roles.js";
 import { type Knowledge, knowledgePrompt } from "../knowledge/knowledge.js";
@@ -72,6 +73,8 @@ export interface SituationPullRequest extends PullRequest {
   stage: Stage;
   /** この工程のマージの設定 */
   merge: "auto" | "human";
+  /** レビューの様子。まだレビューしていなければ null */
+  review: ReviewState | null;
 }
 
 /** 今の状況。毎回 GitHub・Discord・記録から読み直す */
@@ -238,7 +241,7 @@ export function buildDispatchPrompt(
               conflicting: `${p.base} と衝突`,
               unknown: "衝突は未判定",
             }[p.mergeable]
-          }${p.draft ? "、下書き" : ""}、マージの設定 ${p.merge === "auto" ? "auto（Tasuki がマージ）" : "human（人がマージ）"}`,
+          }${p.draft ? "、下書き" : ""}、マージの設定 ${p.merge === "auto" ? "auto（Tasuki がマージ）" : "human（人がマージ）"}、${describeReviewState(p.review)}`,
       ),
     ),
     section(
@@ -324,10 +327,20 @@ export function dispatcherPrompt(
 - PR への人のコメントは、指摘か指示として扱います。
 - 必要なら、リポジトリのファイルや GitHub（gh pr view・gh pr diff・gh issue view など読むだけのコマンド）を自分で確かめてから決めます。ファイルは Read の道具で読みます（シェルのコマンドで読むと、日本語が文字化けすることがあります）。
 
+## レビューと修正
+
+- レビュアーは、指摘に番号と重要度（blocker / major / minor / nit）を付けて返します。監視スレッドが PR ごとに記録し、「開いている PR」にレビューの回数・最後の判定・片付いていない指摘の数を出します。
+- 修正を指示するときは、PR を対象にして、その PR を作った役に指示します。番号つきの指摘の一覧は監視スレッドが指示書に添えるので、書き写す必要はありません。指示書には、どの指摘を優先するか、人のコメントがあればその内容など、一覧に無いことを書きます。
+- 再レビューを指示するときも、これまでの指摘と対応は監視スレッドが添えます。レビュアーは前回からの差分だけを見ます。
+- 判定が approve でも minor / nit が残っていることがあります。直すかどうかは、手間と効果で決めます（直さずにマージしてかまいません）。
+- レビューの回数が増えているのに片付いていない指摘が減らないときは、同じ往復を続けません。指摘が設計の変更を求めているなら、いまの PR は塞げる範囲で終えて別の Issue に持ち越すようプランナーに頼む、Issue や仕様のほうを直す、人に質問する、のどれかを選びます。
+- 修正する役が「持ち越す」と返した指摘は、必要ならプランナーに Issue の作成を指示します。
+- レビュアーが「ルールの文書に足す提案」を返したら、同じ指摘が繰り返されないよう、プロダクトのルールの文書を更新する PR を、内容に合う役（実装ルール・レビュー観点ならプログラマー、仕様作成ルールなら仕様マスター）に指示します。急がないので、進行中の作業を先にします。
+
 ## マージ
 
 - merge_pr を出すのは、内容に問題がないと判断できたときです（ふつうはレビュアーが approve を返し、直すべき指摘が残っていないとき）。
-- 監視スレッドは、マージの設定が auto で、CI がすべて合格しているときだけマージします。それ以外は見送り、理由が出来事として届きます。
+- 監視スレッドは、マージの設定が auto で、CI がすべて合格しているときだけマージします。レビューした PR は、最後の判定が approve で、approve されたコミットが今の先頭と同じときだけマージします（approve のあとにコミットが足されたら、足された分をレビューしてからです）。それ以外は見送り、理由が出来事として届きます。
 - マージの設定が human の PR には merge_pr を出しません。人が GitHub でマージするのを待ちます。
 - CI が実行中なら待ちます。結果は出来事として届きます。
 - PR の作成とマージは、監視スレッドがお知らせチャンネルに自動で書きます。同じ内容を notify で重ねません。
