@@ -42,6 +42,8 @@ describe("check", () => {
     if (config !== undefined) {
       mkdirSync(join(dir, ".tasuki"));
       writeFileSync(join(dir, ".tasuki", "config.yaml"), config);
+      mkdirSync(join(dir, "docs"));
+      writeFileSync(join(dir, "docs", "CONTEXT.md"), "背景\n");
     }
     return dir;
   }
@@ -53,6 +55,10 @@ describe("check", () => {
     });
     expect(code).toBe(0);
     expect(c.out.at(-1)).toBe("問題はありません");
+    expect(c.out).toContain("  コンテキスト: docs/CONTEXT.md");
+    expect(c.out).toContain(
+      "  マージルール: なし（置き場: docs/rules/merge.md）",
+    );
   });
 
   it("トークンが無ければ 1", async () => {

@@ -2,6 +2,11 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { parseArgs } from "node:util";
 import { ConfigError, discordToken, loadConfig } from "../config/config.js";
+import {
+  describeKnowledge,
+  FsSource,
+  loadKnowledge,
+} from "../knowledge/knowledge.js";
 import { consoleOutput, type Output } from "./output.js";
 import { start } from "./start.js";
 
@@ -62,15 +67,22 @@ export async function main(
 }
 
 /** 設定を点検する。誤りがあれば 1 を返す */
-export function check(
+export async function check(
   dir: string,
   output: Output,
   env: Record<string, string | undefined>,
-): number {
+): Promise<number> {
   let failed = false;
   try {
     const { config } = loadConfig(dir);
     output.out(`設定を読みました: ${config.github.repo}`);
+    const knowledge = await loadKnowledge(new FsSource(dir), config.knowledge);
+    output.out(
+      "プロダクトの情報（このフォルダにある文書。動かすときは既定のブランチから読みます）:",
+    );
+    for (const line of describeKnowledge(knowledge, config.knowledge)) {
+      output.out(line);
+    }
   } catch (e) {
     if (!(e instanceof ConfigError)) throw e;
     for (const p of e.problems) output.err(p);

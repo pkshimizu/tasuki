@@ -7,6 +7,7 @@
 import type { RunAgent } from "../agents/agent.js";
 import { type LoadedConfig, ROLE_LABELS } from "../config/config.js";
 import type { Action } from "../dispatcher/dispatcher.js";
+import type { KnowledgeProvider } from "../knowledge/knowledge.js";
 import type { Chat } from "../integrations/discord.js";
 import { type GitHub, stageOf } from "../integrations/github.js";
 import {
@@ -32,6 +33,7 @@ export interface ExecutorDeps {
   github: GitHub;
   runAgent: RunAgent;
   workspace: Workspace;
+  knowledge: KnowledgeProvider;
   log: (text: string) => void;
   clock?: Clock;
   /** エージェントが終わったときに呼ぶ（次の確認を早めるため） */
@@ -280,7 +282,7 @@ export class Executor {
         systemPrompt: rolePrompt(
           role,
           loaded.config,
-          loaded.instructions[role],
+          await this.deps.knowledge.load(),
         ),
         prompt: `${instruction}\n\n---\n対象: ${targetLabel(target)}\n${describeWorkspace(prepared, defaultBranch)}`,
         schema: workerOutputSchema,

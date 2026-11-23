@@ -6,6 +6,7 @@ import { Executor } from "./executor.js";
 import {
   FakeChat,
   FakeGitHub,
+  FakeKnowledge,
   FakeWorkspace,
   ok,
   output,
@@ -28,15 +29,12 @@ function setup(extraYaml = "") {
   const loaded: LoadedConfig = {
     dir: "/repo",
     config: testConfig(extraYaml),
-    instructions: {
-      dispatcher: "",
-      "spec-master": "",
-      planner: "",
-      designer: "",
-      programmer: "テストを先に書く",
-      reviewer: "",
-    },
   };
+  const knowledge = new FakeKnowledge();
+  knowledge.knowledge.implementation_rules.push({
+    path: "docs/rules/implementation.md",
+    content: "テストを先に書く",
+  });
   const executor = new Executor({
     loaded,
     defaultBranch: "main",
@@ -45,6 +43,7 @@ function setup(extraYaml = "") {
     github,
     runAgent: agents.runAgent,
     workspace,
+    knowledge,
     log: (t) => logs.push(t),
     clock: { now: () => new Date(now) },
     onFinish: () => finished++,

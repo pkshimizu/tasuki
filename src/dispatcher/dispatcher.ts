@@ -12,6 +12,7 @@ import {
 } from "../config/config.js";
 import type { Issue, PullRequest } from "../integrations/github.js";
 import { languageRule } from "../agents/roles.js";
+import { type Knowledge, knowledgePrompt } from "../knowledge/knowledge.js";
 import {
   type EventPayload,
   type RunStatus,
@@ -275,7 +276,10 @@ export function buildDispatchPrompt(
   return parts.join("\n\n");
 }
 
-export function dispatcherPrompt(loaded: LoadedConfig): string {
+export function dispatcherPrompt(
+  loaded: LoadedConfig,
+  knowledge: Knowledge,
+): string {
   const { config } = loaded;
   return [
     `あなたは、ソフトウェア開発を複数のエージェントで進める仕組み「Tasuki」の司令塔です。
@@ -331,8 +335,7 @@ export function dispatcherPrompt(loaded: LoadedConfig): string {
 ## 結果
 
 reasoning に状況の見立てと理由を書き、actions に指示を実行する順に並べます。何もしないときは wait を 1 つだけ返します。`,
-    loaded.instructions.dispatcher &&
-      `## このリポジトリでの追加の指示\n\n${loaded.instructions.dispatcher}`,
+    knowledgePrompt("dispatcher", knowledge),
     languageRule(config.language),
   ]
     .filter(Boolean)
@@ -344,6 +347,7 @@ export interface DispatchInput {
   defaultBranch: string;
   events: TasukiEvent[];
   situation: Situation;
+  knowledge: Knowledge;
   signal?: AbortSignal | undefined;
 }
 
@@ -355,7 +359,7 @@ export function dispatch(
   const { loaded } = input;
   return runAgent({
     name: "dispatcher",
-    systemPrompt: dispatcherPrompt(loaded),
+    systemPrompt: dispatcherPrompt(loaded, input.knowledge),
     prompt: buildDispatchPrompt(input.events, input.situation, loaded.config),
     schema: decisionSchema,
     guard: {

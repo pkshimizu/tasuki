@@ -39,6 +39,36 @@ describe("parseConfig", () => {
     });
   });
 
+  it("プロダクトの情報の置き場は、既定値があり、1 つでも一覧でも書ける", () => {
+    const d = parseConfig(MINIMAL_CONFIG).knowledge;
+    expect(d.context).toEqual(["docs/CONTEXT.md"]);
+    expect(d.architecture).toEqual([
+      "docs/ARCHITECTURE.md",
+      "docs/architecture",
+    ]);
+    expect(d.review_perspectives).toEqual([
+      "docs/review-perspectives.md",
+      "docs/review-perspectives",
+    ]);
+    expect(d.merge_rules).toEqual(["docs/rules/merge.md"]);
+
+    const c = parseConfig(
+      `${MINIMAL_CONFIG}knowledge:\n  context: README.md\n  implementation_rules:\n    - docs/coding/\n    - docs/testing.md\n`,
+    ).knowledge;
+    expect(c.context).toEqual(["README.md"]);
+    expect(c.implementation_rules).toEqual(["docs/coding", "docs/testing.md"]);
+    expect(c.spec_rules).toEqual(["docs/rules/spec.md"]);
+  });
+
+  it("プロダクトの情報の置き場に、知らない種類やリポジトリの外は書けない", () => {
+    expect(
+      problems(`${MINIMAL_CONFIG}knowledge:\n  glossary: docs/a.md\n`),
+    ).toHaveLength(1);
+    expect(
+      problems(`${MINIMAL_CONFIG}knowledge:\n  context: ../a.md\n`),
+    ).toHaveLength(1);
+  });
+
   it("作業フォルダの準備コマンドを読む", () => {
     expect(parseConfig(MINIMAL_CONFIG).workspace).toEqual({
       setup: [],
@@ -96,17 +126,13 @@ describe("parseConfig", () => {
 });
 
 describe("loadConfig", () => {
-  it("設定と、役ごとの追加の指示をファイル名の順に読む", () => {
+  it("設定を読む", () => {
     const dir = mkdtempSync(join(tmpdir(), "tasuki-config-"));
-    mkdirSync(join(dir, ".tasuki", "programmer"), { recursive: true });
+    mkdirSync(join(dir, ".tasuki"), { recursive: true });
     writeFileSync(join(dir, ".tasuki", "config.yaml"), MINIMAL_CONFIG);
-    writeFileSync(join(dir, ".tasuki", "programmer", "2-b.md"), "二つめ\n");
-    writeFileSync(join(dir, ".tasuki", "programmer", "1-a.md"), "一つめ\n");
-    writeFileSync(join(dir, ".tasuki", "programmer", "memo.txt"), "読まない");
     const loaded = loadConfig(dir);
     expect(loaded.config.github.repo).toBe("owner/name");
-    expect(loaded.instructions.programmer).toBe("一つめ\n\n二つめ");
-    expect(loaded.instructions.reviewer).toBe("");
+    expect(loaded.dir).toBe(dir);
   });
 
   it("config.yaml が無ければ誤り", () => {

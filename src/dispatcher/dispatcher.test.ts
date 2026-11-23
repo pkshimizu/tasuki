@@ -11,6 +11,7 @@ import {
   dispatcherPrompt,
   type Situation,
 } from "./dispatcher.js";
+import { emptyKnowledge } from "../knowledge/knowledge.js";
 import { testConfig } from "../testing/fixtures.js";
 import type { EventPayload, TasukiEvent } from "../domain/types.js";
 
@@ -18,14 +19,6 @@ const config = testConfig("merge:\n  spec: auto\n");
 const loaded: LoadedConfig = {
   dir: "/repo",
   config,
-  instructions: {
-    dispatcher: "小さく進める",
-    "spec-master": "",
-    planner: "",
-    designer: "",
-    programmer: "",
-    reviewer: "",
-  },
 };
 
 function event(id: number, payload: EventPayload): TasukiEvent {
@@ -291,6 +284,7 @@ describe("dispatch", () => {
       defaultBranch: "main",
       events: [event(1, { type: "limit_recovered" })],
       situation: empty,
+      knowledge: emptyKnowledge(),
     });
     expect(outcome.kind).toBe("ok");
     expect(seen!.guard).toEqual({
@@ -303,11 +297,26 @@ describe("dispatch", () => {
 });
 
 describe("dispatcherPrompt", () => {
-  it("役・置き場・追加の指示・言語を入れる", () => {
-    const p = dispatcherPrompt(loaded);
+  it("役・置き場・プロダクトの情報・言語を入れる", () => {
+    const knowledge = emptyKnowledge();
+    knowledge.context.push({
+      path: "docs/CONTEXT.md",
+      content: "小さく進める",
+    });
+    knowledge.merge_rules.push({
+      path: "docs/rules/merge.md",
+      content: "金曜はマージしない",
+    });
+    knowledge.implementation_rules.push({
+      path: "docs/rules/implementation.md",
+      content: "テストを先に書く",
+    });
+    const p = dispatcherPrompt(loaded, knowledge);
     expect(p).toContain("owner/name");
     expect(p).toContain("docs/specs/");
     expect(p).toContain("小さく進める");
+    expect(p).toContain("金曜はマージしない");
+    expect(p).not.toContain("テストを先に書く");
     expect(p).toContain("日本語");
   });
 });
