@@ -62,6 +62,8 @@ export const configSchema = z.strictObject({
       spec: mergeMode.default("human"),
       design: mergeMode.default("human"),
       implementation: mergeMode.default("human"),
+      /** CI の無いリポジトリで自動マージを使うときだけ false にする */
+      require_ci: z.boolean().default(true),
     })
     .prefault({}),
   poll_interval: z.number().int().min(10).max(3600).default(60),

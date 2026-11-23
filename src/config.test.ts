@@ -27,6 +27,7 @@ describe("parseConfig", () => {
       spec: "human",
       design: "human",
       implementation: "human",
+      require_ci: true,
     });
     expect(c.poll_interval).toBe(60);
     expect(c.limits.agents).toBe(2);
