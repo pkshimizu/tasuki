@@ -1,0 +1,40 @@
+# Tasuki の設定。対象リポジトリの .tasuki/config.yaml に置く。
+# 点検: tasuki check <対象リポジトリのフォルダ>
+
+github:
+  repo: owner/name # 対象リポジトリ
+
+discord:
+  channels: # ID は数字だけでも文字列（"..."）で書く
+    requirements: "000000000000000000" # 要件チャンネル（人が要件を投稿する）
+    questions: "000000000000000000" # 質問チャンネル（Tasuki がスレッドを作って質問する）
+    notices: "000000000000000000" # お知らせチャンネル（PR の作成・マージ、要件の完了）
+  allowed_users: # 要件と返信を受け付ける人（ユーザー ID）
+    - "000000000000000000"
+
+# ここから下は省略できる（書いてあるのは既定値）
+
+merge: # 工程ごとに auto（CI が合格したら Tasuki がマージ）か human（人が GitHub でマージ）
+  spec: human
+  design: human
+  implementation: human
+  require_ci: true # CI の無いリポジトリで auto を使うときだけ false にする
+
+poll_interval: 60 # Discord と GitHub を確かめる間隔（秒）
+
+limits:
+  agents: 2 # 同時に動かす作業エージェントの数
+
+language: 日本語 # エージェントが書く文章の言語
+
+paths:
+  specs: docs/specs # 仕様の置き場
+  design: docs/design # デザイン（HTML モック）の置き場
+  design_system: docs/design-system # デザインシステムの置き場
+
+# 役ごとのモデル（省略すると Claude Code の既定のモデル）
+# agents:
+#   dispatcher:
+#     model: ...
+#   programmer:
+#     model: ...

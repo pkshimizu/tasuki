@@ -111,3 +111,27 @@ describe("discordToken", () => {
     expect(discordToken({})).toHaveProperty("problem");
   });
 });
+
+describe("ひな形", () => {
+  it("templates の config.yaml は、ID を書き換えれば読める", async () => {
+    const { readFileSync } = await import("node:fs");
+    const text = readFileSync(
+      new URL("../templates/tasuki/config.yaml", import.meta.url),
+      "utf8",
+    );
+    let n = 0;
+    const filled = text.replaceAll(
+      '"000000000000000000"',
+      () => `"10000000000000000${String(n++)}"`,
+    );
+    const c = parseConfig(filled);
+    expect(c.merge).toEqual({
+      spec: "human",
+      design: "human",
+      implementation: "human",
+      require_ci: true,
+    });
+    expect(c.limits.agents).toBe(2);
+    expect(c.poll_interval).toBe(60);
+  });
+});
