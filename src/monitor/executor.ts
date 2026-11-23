@@ -9,12 +9,23 @@ import { type LoadedConfig, ROLE_LABELS } from "../config/config.js";
 import type { Action } from "../dispatcher/dispatcher.js";
 import type { KnowledgeProvider } from "../knowledge/knowledge.js";
 import type { Chat } from "../integrations/discord.js";
-import { type GitHub, stageOf } from "../integrations/github.js";
+import {
+  type GitHub,
+  type PullRequest,
+  stageOf,
+} from "../integrations/github.js";
 import {
   ROLE_ACCESS,
   rolePrompt,
+  type WorkerOutput,
   workerOutputSchema,
 } from "../agents/roles.js";
+import {
+  describeNewFindings,
+  fixContext,
+  mergeReviewProblem,
+  reviewContext,
+} from "../domain/review.js";
 import { type Clock, type Store, systemClock } from "../store/store.js";
 import {
   type RunStatus,
@@ -192,6 +203,9 @@ export class Executor {
         "この工程のマージの設定は human です。人が GitHub でマージするのを待ちます",
       );
     }
+    // レビューした PR は、approve されたコミットが今の先頭と同じときだけマージする
+    const reviewProblem = mergeReviewProblem(pr.headSha, store.reviews(number));
+    if (reviewProblem) return refuse(reviewProblem);
     const result = await github.mergePullRequest(
       number,
       config.merge.require_ci,
@@ -265,10 +279,11 @@ export class Executor {
 
     try {
       const access = ROLE_ACCESS[role];
-      const prBranch =
+      const pr =
         target.kind === "pr"
-          ? (await github.pullRequest(target.number)).branch
+          ? await github.pullRequest(target.number)
           : undefined;
+      const prBranch = pr?.branch;
       const prepared = await workspace.prepare(target, access, prBranch);
       // 同じ作業フォルダで別の役が書いている間は、書く役を重ねない
       const sharing = [...this.running.values()].find(
@@ -290,7 +305,7 @@ export class Executor {
           loaded.config,
           await this.deps.knowledge.load(),
         ),
-        prompt: `${instruction}\n\n---\n対象: ${targetLabel(target)}\n${describeWorkspace(prepared, defaultBranch)}`,
+        prompt: `${instruction}${this.reviewNotes(role, pr)}\n\n---\n対象: ${targetLabel(target)}\n${describeWorkspace(prepared, defaultBranch)}`,
         schema: workerOutputSchema,
         guard: { cwd: prepared.cwd, defaultBranch, access },
         model: loaded.config.agents[role]?.model,
@@ -315,15 +330,75 @@ export class Executor {
         await this.postQuestions(entry, output.summary, questions);
       finish(
         output.status,
-        output.verdict !== null
-          ? `判定: ${output.verdict === "approve" ? "approve（マージしてよい）" : "request_changes（直す必要がある）"}\n${output.summary}`
-          : output.summary,
+        this.recordReview(runId, role, pr, output),
         questions,
         output.pr,
       );
     } catch (e) {
       finish("error", e instanceof Error ? e.message : String(e));
     }
+  }
+
+  /** PR が対象のとき、指示書に添えるレビューの経緯（レビュアー）か、指摘の一覧（直す役） */
+  private reviewNotes(role: WorkerRole, pr: PullRequest | undefined): string {
+    if (!pr) return "";
+    const { store } = this.deps;
+    const findings = store.findings(pr.number);
+    const notes =
+      role === "reviewer"
+        ? reviewContext(pr.headSha, store.reviews(pr.number), findings)
+        : fixContext(findings);
+    return notes ? `\n\n${notes}` : "";
+  }
+
+  /** レビューの結果と、指摘への対応を記録し、司令塔に渡す要約を返す */
+  private recordReview(
+    runId: number,
+    role: WorkerRole,
+    pr: PullRequest | undefined,
+    output: WorkerOutput,
+  ): string {
+    const { store } = this.deps;
+    const lines: string[] = [];
+    if (pr && role === "reviewer" && output.verdict !== null) {
+      const { firstNumber } = store.addReview({
+        pr: pr.number,
+        sha: pr.headSha,
+        verdict: output.verdict,
+        runId,
+        findings: output.findings,
+        resolutions: output.resolutions,
+      });
+      lines.push(
+        `判定: ${output.verdict === "approve" ? "approve（マージしてよい）" : "request_changes（直す必要がある）"}`,
+        describeNewFindings(output.findings, firstNumber),
+      );
+      if (output.resolutions.length > 0) {
+        const count = (s: string) =>
+          output.resolutions.filter((r) => r.status === s).length;
+        lines.push(
+          `これまでの指摘の判定: 解消 ${String(count("resolved"))}・未解消 ${String(count("unresolved"))}・悪化 ${String(count("worsened"))}`,
+        );
+      }
+    } else if (output.verdict !== null) {
+      lines.push(`判定: ${output.verdict}`);
+    } else if (pr && output.responses.length > 0) {
+      store.applyResponses(pr.number, output.responses);
+      const count = (a: string) =>
+        output.responses.filter((r) => r.action === a).length;
+      lines.push(
+        `指摘への対応: 直した ${String(count("fixed"))}・直さない ${String(count("declined"))}・持ち越す ${String(count("deferred"))}`,
+      );
+    }
+    lines.push(output.summary);
+    if (output.rule_proposals.length > 0) {
+      lines.push(
+        "",
+        "ルールの文書に足す提案:",
+        ...output.rule_proposals.map((p) => `- ${p}`),
+      );
+    }
+    return lines.join("\n");
   }
 
   /** エージェントが返した質問を、質問チャンネルのスレッドに書く */

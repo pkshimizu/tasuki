@@ -20,6 +20,7 @@ import {
   type PullRequest,
   stageOf,
 } from "../integrations/github.js";
+import { reviewState } from "../domain/review.js";
 import type { RunStatus } from "../domain/types.js";
 import type { Store } from "../store/store.js";
 
@@ -120,7 +121,16 @@ export class Monitor {
       issues: github.issues,
       pullRequests: github.pullRequests.map((pr) => {
         const stage = stageOf(pr.files, config.paths);
-        return { ...pr, stage, merge: config.merge[stage] };
+        return {
+          ...pr,
+          stage,
+          merge: config.merge[stage],
+          review: reviewState(
+            pr.headSha,
+            store.reviews(pr.number),
+            store.findings(pr.number),
+          ),
+        };
       }),
       running: store.runningRuns().map((r) => ({
         role: r.role,

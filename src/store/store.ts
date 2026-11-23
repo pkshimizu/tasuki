@@ -8,6 +8,13 @@ import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import type {
+  Finding,
+  FindingResponse,
+  NewFinding,
+  Resolution,
+  Review,
+} from "../domain/review.js";
+import type {
   EventPayload,
   RunStatus,
   Target,
@@ -99,6 +106,25 @@ export interface Store {
   addDecision(input: Omit<Decision, "id" | "createdAt">): void;
   recentDecisions(limit: number): Decision[];
 
+  /**
+   * レビューの結果を記録する。回の番号と、新しい指摘の通し番号を振り、
+   * 前の周の指摘に解消判定を反映する。
+   */
+  addReview(input: {
+    pr: number;
+    sha: string;
+    verdict: Review["verdict"];
+    runId: number;
+    findings: NewFinding[];
+    resolutions: Resolution[];
+  }): { review: Review; firstNumber: number };
+  /** 修正する役が返した、指摘ごとの対応を反映する */
+  applyResponses(pr: number, responses: FindingResponse[]): void;
+  /** PR のレビュー（古い順） */
+  reviews(pr: number): Review[];
+  /** PR の指摘（番号の順） */
+  findings(pr: number): Finding[];
+
   close(): void;
 }
 
@@ -139,6 +165,28 @@ CREATE TABLE IF NOT EXISTS runs (
   summary TEXT,
   started_at TEXT NOT NULL,
   finished_at TEXT
+);
+CREATE TABLE IF NOT EXISTS reviews (
+  pr INTEGER NOT NULL,
+  round INTEGER NOT NULL,
+  sha TEXT NOT NULL,
+  verdict TEXT NOT NULL,
+  run_id INTEGER NOT NULL,
+  created_at TEXT NOT NULL,
+  PRIMARY KEY (pr, round)
+);
+CREATE TABLE IF NOT EXISTS findings (
+  pr INTEGER NOT NULL,
+  number INTEGER NOT NULL,
+  round INTEGER NOT NULL,
+  severity TEXT NOT NULL,
+  file TEXT,
+  line INTEGER,
+  problem TEXT NOT NULL,
+  suggestion TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'open',
+  note TEXT NOT NULL DEFAULT '',
+  PRIMARY KEY (pr, number)
 );
 CREATE TABLE IF NOT EXISTS decisions (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -374,6 +422,107 @@ export class SqliteStore implements Store {
         createdAt: r.created_at as string,
       }))
       .reverse();
+  }
+
+  addReview(input: {
+    pr: number;
+    sha: string;
+    verdict: Review["verdict"];
+    runId: number;
+    findings: NewFinding[];
+    resolutions: Resolution[];
+  }): { review: Review; firstNumber: number } {
+    const round = this.reviews(input.pr).length + 1;
+    const existing = this.findings(input.pr);
+    const firstNumber = Math.max(0, ...existing.map((f) => f.number)) + 1;
+    const review: Review = {
+      pr: input.pr,
+      round,
+      sha: input.sha,
+      verdict: input.verdict,
+      runId: input.runId,
+      createdAt: this.now(),
+    };
+    this.db
+      .prepare(
+        "INSERT INTO reviews (pr, round, sha, verdict, run_id, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+      )
+      .run(
+        review.pr,
+        review.round,
+        review.sha,
+        review.verdict,
+        review.runId,
+        review.createdAt,
+      );
+    // 前の周の指摘に、解消判定を反映する（知らない番号は読み飛ばす）
+    const update = this.db.prepare(
+      "UPDATE findings SET status = ?, note = ? WHERE pr = ? AND number = ?",
+    );
+    for (const r of input.resolutions) {
+      update.run(
+        r.status === "resolved" ? "resolved" : "open",
+        r.status === "worsened" ? `修正で悪くなった: ${r.note}` : r.note,
+        input.pr,
+        r.number,
+      );
+    }
+    const insert = this.db.prepare(
+      "INSERT INTO findings (pr, number, round, severity, file, line, problem, suggestion) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+    );
+    input.findings.forEach((f, i) => {
+      insert.run(
+        input.pr,
+        firstNumber + i,
+        round,
+        f.severity,
+        f.file,
+        f.line,
+        f.problem,
+        f.suggestion,
+      );
+    });
+    return { review, firstNumber };
+  }
+
+  applyResponses(pr: number, responses: FindingResponse[]): void {
+    // 解消済みの指摘は、あとから来た対応の報告で開き直さない
+    const update = this.db.prepare(
+      "UPDATE findings SET status = ?, note = ? WHERE pr = ? AND number = ? AND status != 'resolved'",
+    );
+    for (const r of responses) update.run(r.action, r.note, pr, r.number);
+  }
+
+  reviews(pr: number): Review[] {
+    const rows = this.db
+      .prepare("SELECT * FROM reviews WHERE pr = ? ORDER BY round")
+      .all(pr) as Row[];
+    return rows.map((r) => ({
+      pr: r.pr as number,
+      round: r.round as number,
+      sha: r.sha as string,
+      verdict: r.verdict as Review["verdict"],
+      runId: r.run_id as number,
+      createdAt: r.created_at as string,
+    }));
+  }
+
+  findings(pr: number): Finding[] {
+    const rows = this.db
+      .prepare("SELECT * FROM findings WHERE pr = ? ORDER BY number")
+      .all(pr) as Row[];
+    return rows.map((r) => ({
+      pr: r.pr as number,
+      number: r.number as number,
+      round: r.round as number,
+      severity: r.severity as Finding["severity"],
+      file: (r.file as string | null) ?? null,
+      line: (r.line as number | null) ?? null,
+      problem: r.problem as string,
+      suggestion: r.suggestion as string,
+      status: r.status as Finding["status"],
+      note: r.note as string,
+    }));
   }
 
   close(): void {

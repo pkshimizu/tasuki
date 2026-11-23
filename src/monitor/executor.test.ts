@@ -140,32 +140,6 @@ describe("エージェントの起動", () => {
     ]);
   });
 
-  it("レビュアーの判定を要約の先頭に入れる", async () => {
-    const { executor, agents, github, events } = setup();
-    const pr = github.addPr("検索", ["src/a.ts"]);
-    agents.worker = () =>
-      ok(
-        output({
-          summary: "null の扱いが漏れている",
-          verdict: "request_changes",
-          pr: pr.number,
-        }),
-      );
-    await executor.execute([
-      {
-        type: "run_agent",
-        role: "reviewer",
-        target: { kind: "pr", number: pr.number },
-        instruction: "レビューする",
-      },
-    ]);
-    await executor.idle();
-    expect(events()[0]).toMatchObject({
-      summary:
-        "判定: request_changes（直す必要がある）\nnull の扱いが漏れている",
-    });
-  });
-
   it("同時に動かせる数を超えたら見送り、終われば起動できる", async () => {
     const { executor, agents } = setup();
     const holds = [deferred(), deferred()];
@@ -226,6 +200,165 @@ describe("エージェントの起動", () => {
     expect(agents.count("programmer")).toBe(1);
     hold.resolve(ok(output()));
     await executor.idle();
+  });
+});
+
+describe("レビューの記録と受け渡し", () => {
+  const review = (number: number): Action => ({
+    type: "run_agent",
+    role: "reviewer",
+    target: { kind: "pr", number },
+    instruction: "レビューする",
+  });
+  const fix = (number: number): Action => ({
+    type: "run_agent",
+    role: "programmer",
+    target: { kind: "pr", number },
+    instruction: "指摘を直す",
+  });
+  const major = {
+    severity: "major" as const,
+    file: "src/search.ts",
+    line: 12,
+    problem: "空の検索語の扱いが漏れている",
+    suggestion: "空なら全件を返す",
+  };
+
+  it("指摘に番号を振って記録し、判定と指摘の数を司令塔への要約に入れる", async () => {
+    const { executor, agents, github, store, events } = setup();
+    const pr = github.addPr("検索", ["src/search.ts"]);
+    agents.worker = () =>
+      ok(
+        output({
+          summary: "1 点、直す必要がある",
+          verdict: "request_changes",
+          pr: pr.number,
+          findings: [
+            major,
+            { ...major, severity: "nit", problem: "空行が多い" },
+          ],
+          rule_proposals: ["入力が空のときの扱いを仕様に必ず書く"],
+        }),
+      );
+    await executor.execute([review(pr.number)]);
+    await executor.idle();
+
+    expect(agents.runs[0]!.prompt).toContain("1 回目のレビューです");
+    expect(store.reviews(pr.number)).toMatchObject([
+      { round: 1, sha: pr.headSha, verdict: "request_changes" },
+    ]);
+    expect(
+      store.findings(pr.number).map((x) => [x.number, x.severity]),
+    ).toEqual([
+      [1, "major"],
+      [2, "nit"],
+    ]);
+    expect(events()[0]).toMatchObject({
+      summary: [
+        "判定: request_changes（直す必要がある）",
+        "新しい指摘: major 1・nit 1（#1〜#2）",
+        "1 点、直す必要がある",
+        "",
+        "ルールの文書に足す提案:",
+        "- 入力が空のときの扱いを仕様に必ず書く",
+      ].join("\n"),
+    });
+  });
+
+  it("直す役には番号つきの指摘を添え、対応の報告を記録する", async () => {
+    const { executor, agents, github, store, events } = setup();
+    const pr = github.addPr("検索", ["src/search.ts"]);
+    store.addReview({
+      pr: pr.number,
+      sha: pr.headSha,
+      verdict: "request_changes",
+      runId: 1,
+      findings: [
+        major,
+        { ...major, severity: "minor", problem: "名前が分かりにくい" },
+      ],
+      resolutions: [],
+    });
+    agents.worker = () =>
+      ok(
+        output({
+          summary: "直して push した",
+          pr: pr.number,
+          responses: [
+            { number: 1, action: "fixed", note: "空なら全件を返すようにした" },
+            { number: 2, action: "declined", note: "既存の命名に合わせている" },
+          ],
+        }),
+      );
+    await executor.execute([fix(pr.number)]);
+    await executor.idle();
+
+    const prompt = agents.runs[0]!.prompt;
+    expect(prompt).toContain("## レビューの指摘（番号つき）");
+    expect(prompt).toContain(
+      "- #1 [major] src/search.ts:12 空の検索語の扱いが漏れている",
+    );
+    expect(prompt).toContain("- #2 [minor]");
+    expect(store.findings(pr.number).map((x) => x.status)).toEqual([
+      "fixed",
+      "declined",
+    ]);
+    expect(events()[0]).toMatchObject({
+      summary:
+        "指摘への対応: 直した 1・直さない 1・持ち越す 0\n直して push した",
+    });
+  });
+
+  it("2 回目のレビューには、前回のコミットと指摘への対応を添え、解消判定を記録する", async () => {
+    const { executor, agents, github, store } = setup();
+    const pr = github.addPr("検索", ["src/search.ts"]);
+    // addPr が返す PR は、あとの更新で書き換わるので、最初のコミットを控える
+    const firstSha = pr.headSha;
+    store.addReview({
+      pr: pr.number,
+      sha: firstSha,
+      verdict: "request_changes",
+      runId: 1,
+      findings: [major],
+      resolutions: [],
+    });
+    store.applyResponses(pr.number, [
+      { number: 1, action: "fixed", note: "空なら全件を返すようにした" },
+    ]);
+    github.updatePr(pr.number, { headSha: "fixed-sha" });
+    agents.worker = () =>
+      ok(
+        output({
+          summary: "直っている",
+          verdict: "approve",
+          pr: pr.number,
+          resolutions: [{ number: 1, status: "resolved", note: "確かめた" }],
+        }),
+      );
+    await executor.execute([review(pr.number)]);
+    await executor.idle();
+
+    const prompt = agents.runs[0]!.prompt;
+    expect(prompt).toContain("2 回目のレビューです");
+    expect(prompt).toContain(`git diff ${firstSha}..HEAD`);
+    expect(prompt).toContain(
+      "状態: 直したと報告（空なら全件を返すようにした）",
+    );
+    expect(prompt).toContain("#2 から順に番号を振ります");
+    expect(store.reviews(pr.number).at(-1)).toMatchObject({
+      round: 2,
+      sha: "fixed-sha",
+      verdict: "approve",
+    });
+    expect(store.findings(pr.number)[0]!.status).toBe("resolved");
+  });
+
+  it("指摘が無い PR を直す役には、何も添えない", async () => {
+    const { executor, agents, github } = setup();
+    const pr = github.addPr("検索", ["src/search.ts"]);
+    await executor.execute([fix(pr.number)]);
+    await executor.idle();
+    expect(agents.runs[0]!.prompt).not.toContain("レビューの指摘");
   });
 });
 
@@ -319,6 +452,37 @@ describe("マージの門番", () => {
     expect(results[0]).toBe("マージした");
     expect(results[1]).toContain("見送り");
     expect(github.merged).toEqual([spec.number]);
+  });
+
+  it("レビューした PR は、approve されたコミットが今の先頭と同じときだけマージする", async () => {
+    const { executor, github, store, events } = setup(
+      "merge:\n  implementation: auto\n",
+    );
+    const pr = github.addPr("検索", ["src/a.ts"], { ci: "pass" });
+    const record = (verdict: "approve" | "request_changes", sha: string) =>
+      store.addReview({
+        pr: pr.number,
+        sha,
+        verdict,
+        runId: 1,
+        findings: [],
+        resolutions: [],
+      });
+    const merge = async () =>
+      (await executor.execute([{ type: "merge_pr", number: pr.number }]))[0];
+
+    record("request_changes", pr.headSha);
+    expect(await merge()).toContain("判定が request_changes です");
+
+    record("approve", pr.headSha);
+    github.updatePr(pr.number, { headSha: "after-approve", ci: "pass" });
+    expect(await merge()).toContain("コミットが足されています");
+    expect(github.merged).toEqual([]);
+    expect(events()).toHaveLength(2);
+
+    record("approve", "after-approve");
+    expect(await merge()).toBe("マージした");
+    expect(github.merged).toEqual([pr.number]);
   });
 
   it("CI が合格していなければ、auto でもマージしない", async () => {
