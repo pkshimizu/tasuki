@@ -188,7 +188,11 @@ export class DiscordChat implements Chat {
 
   private async read(channelId: string, after: string | undefined) {
     if (after === undefined) {
-      return { messages: [], cursor: await this.latestId(channelId) };
+      // 投稿がまだ無いチャンネルは、最初の投稿から読めるように位置を 0 にする
+      return {
+        messages: [],
+        cursor: (await this.latestId(channelId)) ?? "0",
+      };
     }
     const raw = await this.messagesAfter(channelId, after);
     return { messages: this.accept(raw), cursor: raw.at(-1)?.id ?? after };

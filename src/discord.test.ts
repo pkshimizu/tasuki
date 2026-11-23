@@ -90,6 +90,14 @@ describe("newRequirements", () => {
     );
   });
 
+  it("初めてのときにチャンネルが空なら、最初の投稿から読めるよう位置を 0 にする", async () => {
+    const { chat } = fake([{ json: [] }]);
+    expect(await chat.newRequirements(undefined)).toEqual({
+      messages: [],
+      cursor: "0",
+    });
+  });
+
   it("許可した人の投稿だけを古い順に返す", async () => {
     const { chat, calls } = fake([
       {
