@@ -40,3 +40,24 @@ export function elapsed(iso: string, now: number): string {
 export function secondsUntil(iso: string, now: number): number {
   return Math.max(0, Math.ceil((new Date(iso).getTime() - now) / 1000));
 }
+
+/** 日付の見出し（今日・昨日・月/日） */
+export function dayLabel(t: Messages, iso: string, now = Date.now()): string {
+  const d = new Date(iso);
+  const start = (x: Date) =>
+    new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+  const days = Math.round((start(new Date(now)) - start(d)) / 86_400_000);
+  if (days === 0) return t.day.today;
+  if (days === 1) return t.day.yesterday;
+  return t.day.date(d.getMonth() + 1, d.getDate());
+}
+
+/** 日付と時刻（例: 今日 17:44、11/22 09:05） */
+export function dateTime(t: Messages, iso: string, now = Date.now()): string {
+  return `${dayLabel(t, iso, now)} ${clock(iso)}`;
+}
+
+/** 始まりから終わりまでの時間（例: 2:05） */
+export function duration(startIso: string, endIso: string): string {
+  return elapsed(startIso, new Date(endIso).getTime());
+}

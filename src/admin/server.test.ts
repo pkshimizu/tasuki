@@ -7,6 +7,7 @@ import { ChangeHub } from "./hub.js";
 import {
   type AdminServer,
   isLocalHost,
+  NOT_FOUND,
   resolveStatic,
   startAdminServer,
 } from "./server.js";
@@ -29,11 +30,11 @@ async function start(extra: { port?: number; staticDir?: string } = {}) {
   const logs: string[] = [];
   const server = await startAdminServer({
     port: extra.port ?? 0,
-    routes: {
-      "/api/app": () => ({ repo: "owner/name" }),
-      "/api/broken": () => {
-        throw new Error("組み立てに失敗");
-      },
+    routes: (path) => {
+      if (path === "/api/app") return { repo: "owner/name" };
+      if (path === "/api/slow") return Promise.resolve({ slow: true });
+      if (path === "/api/broken") throw new Error("組み立てに失敗");
+      return NOT_FOUND;
     },
     hub,
     // 本番と同じく、末尾に区切りの付いた指定で動かす
@@ -78,6 +79,10 @@ describe("API", () => {
     expect(res.status).toBe(200);
     expect(res.type).toContain("application/json");
     expect(JSON.parse(res.body)).toEqual({ repo: "owner/name" });
+    // 時間のかかる組み立て（Promise）も返せる
+    expect(JSON.parse((await get(server.port, "/api/slow")).body)).toEqual({
+      slow: true,
+    });
   });
 
   it("知らない道は 404、組み立ての失敗は 500 にしてログに出す", async () => {

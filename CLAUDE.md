@@ -25,7 +25,7 @@ src/
   agents/         エージェント（agent: Agent SDK での実行、guard: 危険な操作の拒否、roles: 役の決まり、workspace: git worktree）
   integrations/   外部とのやり取り（discord・github・exec）
   store/          記録（SQLite）
-  admin/          管理画面のサーバー側（server: 配信、dashboard: 内容の組み立て、hub: 変化の知らせ、types: API の形）
+  admin/          管理画面のサーバー側（server: 配信、routes: API の道、dashboard・views: 内容の組み立て、hub: 変化の知らせ、types: API の形）
   testing/        テスト用の部品（fakes・fixtures）と通しのテスト（e2e）
 web/              管理画面の画面側（React ＋ Vite）。ビルドすると dist/web に出る
 docs/design/admin/  管理画面のデザイン

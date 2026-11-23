@@ -171,6 +171,15 @@ export async function loadKnowledge(
 
 export interface KnowledgeProvider {
   load(): Promise<Knowledge>;
+  /** 最後に読み込んだ内容。まだ読み込んでいなければ undefined */
+  current?(): LoadedKnowledge | undefined;
+}
+
+export interface LoadedKnowledge {
+  /** 読み込んだコミット */
+  commit: string;
+  loadedAt: string;
+  knowledge: Knowledge;
 }
 
 /**
@@ -178,7 +187,7 @@ export interface KnowledgeProvider {
  * 先頭のコミットが前回と同じなら、読み直さない。
  */
 export class GitKnowledge implements KnowledgeProvider {
-  private cache: { commit: string; knowledge: Knowledge } | undefined;
+  private cache: LoadedKnowledge | undefined;
 
   constructor(
     private readonly repoDir: string,
@@ -201,8 +210,12 @@ export class GitKnowledge implements KnowledgeProvider {
       new GitSource(this.repoDir, commit, this.exec),
       this.paths,
     );
-    this.cache = { commit, knowledge };
+    this.cache = { commit, loadedAt: new Date().toISOString(), knowledge };
     return knowledge;
+  }
+
+  current(): LoadedKnowledge | undefined {
+    return this.cache;
   }
 }
 

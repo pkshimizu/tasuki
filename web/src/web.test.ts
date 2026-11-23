@@ -1,15 +1,20 @@
 import { describe, expect, it } from "vitest";
 import type { Directive } from "../../src/admin/types.js";
 import { directiveLabel, outcomeLabel } from "./components/Chips.js";
+import { lineCount } from "./components/Markdown.js";
+import { splitEventText } from "./components/Timeline.js";
 import {
   ago,
   clock,
   clockWithSeconds,
+  dateTime,
+  dayLabel,
+  duration,
   elapsed,
   secondsUntil,
 } from "./format.js";
 import { defaultLang, MESSAGES, requirementName, targetLabel } from "./i18n.js";
-import { pageOf, PAGES, pathOf } from "./routes.js";
+import { PAGES, pathOf, routeOf } from "./routes.js";
 
 const ja = MESSAGES.ja;
 const en = MESSAGES.en;
@@ -47,14 +52,22 @@ describe("時刻の表示", () => {
 
 describe("道", () => {
   it("画面と道を行き来できる", () => {
-    for (const page of PAGES) expect(pageOf(pathOf(page))).toBe(page);
+    for (const page of PAGES) {
+      expect(routeOf(pathOf(page))).toEqual({ page, id: null });
+    }
     expect(pathOf("dashboard")).toBe("/");
     expect(pathOf("prs")).toBe("/prs");
+    expect(pathOf("prs", "21")).toBe("/prs/21");
+    expect(routeOf("/prs/21")).toEqual({ page: "prs", id: "21" });
+    expect(routeOf(pathOf("questions", "a b/c"))).toEqual({
+      page: "questions",
+      id: "a b/c",
+    });
   });
-  it("下の道は上の画面に、知らない道はダッシュボードにする", () => {
-    expect(pageOf("/prs/21")).toBe("prs");
-    expect(pageOf("/unknown")).toBe("dashboard");
-    expect(pageOf("")).toBe("dashboard");
+  it("知らない道はダッシュボードにする", () => {
+    expect(routeOf("/unknown/1")).toEqual({ page: "dashboard", id: null });
+    expect(routeOf("")).toEqual({ page: "dashboard", id: null });
+    expect(routeOf("/prs/%E0%A4%A")).toEqual({ page: "prs", id: null });
   });
 });
 
@@ -149,5 +162,44 @@ describe("司令塔の指示と結果", () => {
       directiveLabel(ja, { ...base, type: "complete_requirement" }, names)
         .label,
     ).toBe("要件を完了");
+  });
+});
+
+describe("日付の表示", () => {
+  const now = new Date(2026, 10, 23, 18, 0, 0).getTime();
+  const at = (d: number, h: number, m: number) =>
+    new Date(2026, 10, d, h, m, 0).toISOString();
+
+  it("今日・昨日・月/日", () => {
+    expect(dayLabel(ja, at(23, 0, 5), now)).toBe("今日");
+    expect(dayLabel(ja, at(22, 23, 59), now)).toBe("昨日");
+    expect(dayLabel(ja, at(15, 9, 0), now)).toBe("11/15");
+    expect(dayLabel(en, at(23, 9, 0), now)).toBe("Today");
+  });
+
+  it("日付と時刻、始まりから終わりまでの時間", () => {
+    expect(dateTime(ja, at(23, 17, 44), now)).toBe("今日 17:44");
+    expect(dateTime(ja, at(22, 9, 5), now)).toBe("昨日 09:05");
+    expect(duration(at(23, 17, 0), at(23, 17, 2))).toBe("2:00");
+  });
+});
+
+describe("文章の表示", () => {
+  it("空行を除いた行数を数える", () => {
+    expect(lineCount("1 行目\n\n2 行目\n  \n3 行目")).toBe(3);
+    expect(lineCount("")).toBe(0);
+  });
+
+  it("出来事の内容を、見出しと本文に分ける", () => {
+    expect(
+      splitEventText("PR #21 に human のコメント:\n文言を直して\n2 行目"),
+    ).toEqual({
+      title: "PR #21 に human のコメント",
+      body: "文言を直して\n2 行目",
+    });
+    expect(splitEventText("PR #21 の CI が合格した")).toEqual({
+      title: "PR #21 の CI が合格した",
+      body: "",
+    });
   });
 });

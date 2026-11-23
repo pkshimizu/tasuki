@@ -7,7 +7,7 @@ import { mkdirSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
-import type { Role } from "../config/config.js";
+import type { Role, Stage } from "../config/config.js";
 import type {
   Finding,
   FindingResponse,
@@ -61,6 +61,17 @@ export interface Run {
   finishedAt: string | null;
 }
 
+/** 記録に残す PR の様子 */
+export interface StoredPullRequest {
+  number: number;
+  title: string;
+  branch: string;
+  stage: Stage;
+  state: "open" | "merged" | "closed";
+  url: string;
+  updatedAt: string;
+}
+
 export interface Decision {
   id: number;
   /** 判断のもとになった出来事の要約 */
@@ -77,6 +88,8 @@ export interface Store {
   /** まだ司令塔に渡していない出来事（古い順） */
   pendingEvents(): TasukiEvent[];
   markHandled(ids: number[]): void;
+  /** 最近の出来事（新しい順）。司令塔に渡したかどうかを添える */
+  recentEvents(limit: number): (TasukiEvent & { handled: boolean })[];
 
   /** 読んだ位置や前回の様子など、名前で引く値 */
   getValue(name: string): string | undefined;
@@ -105,6 +118,11 @@ export interface Store {
   finishRun(id: number, status: RunStatus, summary: string): void;
   runningRuns(): Run[];
   recentRuns(limit: number): Run[];
+  run(id: number): Run | undefined;
+
+  /** PR の様子を覚える（閉じたあとも管理画面に出すため） */
+  savePullRequest(pr: StoredPullRequest): void;
+  pullRequests(): StoredPullRequest[];
 
   addDecision(input: Omit<Decision, "id" | "createdAt">): void;
   recentDecisions(limit: number): Decision[];
@@ -191,6 +209,15 @@ CREATE TABLE IF NOT EXISTS findings (
   note TEXT NOT NULL DEFAULT '',
   PRIMARY KEY (pr, number)
 );
+CREATE TABLE IF NOT EXISTS pull_requests (
+  number INTEGER PRIMARY KEY,
+  title TEXT NOT NULL,
+  branch TEXT NOT NULL,
+  stage TEXT NOT NULL,
+  state TEXT NOT NULL,
+  url TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS decisions (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   events TEXT NOT NULL,
@@ -266,6 +293,21 @@ export class SqliteStore implements Store {
       key: r.key as string,
       payload: JSON.parse(r.payload as string) as EventPayload,
       createdAt: r.created_at as string,
+    }));
+  }
+
+  recentEvents(limit: number): (TasukiEvent & { handled: boolean })[] {
+    const rows = this.db
+      .prepare(
+        "SELECT id, key, payload, created_at, handled_at FROM events ORDER BY id DESC LIMIT ?",
+      )
+      .all(limit) as Row[];
+    return rows.map((r) => ({
+      id: r.id as number,
+      key: r.key as string,
+      payload: JSON.parse(r.payload as string) as EventPayload,
+      createdAt: r.created_at as string,
+      handled: r.handled_at !== null,
     }));
   }
 
@@ -413,6 +455,47 @@ export class SqliteStore implements Store {
     )
       .map(toRun)
       .reverse();
+  }
+
+  run(id: number): Run | undefined {
+    const row = this.db.prepare("SELECT * FROM runs WHERE id = ?").get(id) as
+      Row | undefined;
+    return row ? toRun(row) : undefined;
+  }
+
+  savePullRequest(pr: StoredPullRequest): void {
+    this.db
+      .prepare(
+        `INSERT INTO pull_requests (number, title, branch, stage, state, url, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT(number) DO UPDATE SET title = excluded.title, branch = excluded.branch,
+           stage = excluded.stage, state = excluded.state, url = excluded.url,
+           updated_at = excluded.updated_at`,
+      )
+      .run(
+        pr.number,
+        pr.title,
+        pr.branch,
+        pr.stage,
+        pr.state,
+        pr.url,
+        pr.updatedAt,
+      );
+  }
+
+  pullRequests(): StoredPullRequest[] {
+    const rows = this.db
+      .prepare("SELECT * FROM pull_requests ORDER BY number DESC")
+      .all() as Row[];
+    return rows.map((r) => ({
+      number: r.number as number,
+      title: r.title as string,
+      branch: r.branch as string,
+      stage: r.stage as Stage,
+      state: r.state as StoredPullRequest["state"],
+      url: r.url as string,
+      updatedAt: r.updated_at as string,
+    }));
   }
 
   addDecision(input: Omit<Decision, "id" | "createdAt">): void {

@@ -48,6 +48,9 @@ export const ICONS = {
   repo: "M4 5a2 2 0 0 1 2-2h14v15H6a2 2 0 0 0-2 2zM4 20a2 2 0 0 0 2 2h14v-4M9 3v8l2-1.5L13 11V3",
   alert: "M12 4l9 16H3zM12 10v5M12 17.5v.01",
   flag: "M5 21V4h12l-2 4 2 4H5",
+  chevronDown: "M6 9l6 6 6-6",
+  chevronUp: "M6 15l6-6 6 6",
+  blocked: "M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18zM8 8l8 8",
 } as const;
 
 export function Icon({
