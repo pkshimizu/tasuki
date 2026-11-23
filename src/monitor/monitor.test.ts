@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { harness, newEvents, ok, output } from "./fakes.js";
-import { remoteMatches } from "./start.js";
+import { harness, newEvents, ok, output } from "../testing/fakes.js";
+import { remoteMatches } from "../cli/start.js";
 
 describe("tick", () => {
   it("出来事が無ければ司令塔を呼ばない", async () => {

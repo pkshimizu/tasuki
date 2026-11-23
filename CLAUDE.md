@@ -10,6 +10,26 @@
 
 CI（`check`）は lint → 整形 → 型 → テスト → ビルドの順に実行する。main へのマージには `check` の合格が必要。
 
+## 構成
+
+```
+src/
+  cli.ts          入口
+  cli/            コマンド（main: 振り分けと check、start: 部品の組み立て、output: 出力先）
+  config/         .tasuki/ の設定と、役ごとの追加の指示の読み込み
+  domain/         部品の間で受け渡す値の形（対象・出来事・実行結果）
+  monitor/        監視スレッド（monitor: 繰り返し、collector: 集める、executor: 実行する）
+  dispatcher/     司令塔（決まり・入力の組み立て・指示の形）
+  agents/         エージェント（agent: Agent SDK での実行、guard: 危険な操作の拒否、roles: 役の決まり、workspace: git worktree）
+  integrations/   外部とのやり取り（discord・github・exec）
+  store/          記録（SQLite）
+  testing/        テスト用の部品（fakes・fixtures）と通しのテスト（e2e）
+```
+
+- テストは対象のファイルの隣に `*.test.ts` で置く
+- `testing/` はテストからだけ import する（ビルドには含めない）
+- `config/`・`domain/`・`integrations/`・`store/` は、`monitor/`・`dispatcher/`・`cli/` を import しない
+
 ## 決まり
 
 - 作業は Issue を作ってから始め、Issue ごとにブランチ（`feature/<番号>-<名前>`）と PR を作る

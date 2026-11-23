@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import type { AgentRun, RunAgent } from "./agent.js";
-import { toJsonSchema } from "./agent.js";
-import type { LoadedConfig } from "./config.js";
+import type { AgentRun, RunAgent } from "../agents/agent.js";
+import { toJsonSchema } from "../agents/agent.js";
+import type { LoadedConfig } from "../config/config.js";
 import {
   buildDispatchPrompt,
   decisionSchema,
@@ -11,8 +11,8 @@ import {
   dispatcherPrompt,
   type Situation,
 } from "./dispatcher.js";
-import { testConfig } from "./testing.js";
-import type { EventPayload, TasukiEvent } from "./types.js";
+import { testConfig } from "../testing/fixtures.js";
+import type { EventPayload, TasukiEvent } from "../domain/types.js";
 
 const config = testConfig("merge:\n  spec: auto\n");
 const loaded: LoadedConfig = {

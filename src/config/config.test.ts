@@ -8,7 +8,7 @@ import {
   loadConfig,
   parseConfig,
 } from "./config.js";
-import { MINIMAL_CONFIG } from "./testing.js";
+import { MINIMAL_CONFIG } from "../testing/fixtures.js";
 
 function problems(text: string): string[] {
   try {
@@ -116,7 +116,7 @@ describe("ひな形", () => {
   it("templates の config.yaml は、ID を書き換えれば読める", async () => {
     const { readFileSync } = await import("node:fs");
     const text = readFileSync(
-      new URL("../templates/tasuki/config.yaml", import.meta.url),
+      new URL("../../templates/tasuki/config.yaml", import.meta.url),
       "utf8",
     );
     let n = 0;

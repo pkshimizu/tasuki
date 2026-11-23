@@ -5,7 +5,7 @@ import {
   DiscordError,
   splitMessage,
 } from "./discord.js";
-import { ALLOWED_USER, testConfig } from "./testing.js";
+import { ALLOWED_USER, testConfig } from "../testing/fixtures.js";
 
 interface Call {
   method: string;

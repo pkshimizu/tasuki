@@ -2,16 +2,20 @@
  * テスト用の偽の部品（Discord・GitHub・作業フォルダ・エージェント）と、それらを組み立てた監視スレッド。
  */
 import type { z } from "zod";
-import { Collector } from "./collector.js";
-import type { LoadedConfig } from "./config.js";
-import { Executor } from "./executor.js";
-import { Monitor } from "./monitor.js";
-import { SqliteStore } from "./store.js";
-import { testConfig } from "./testing.js";
-import type { AgentOutcome, AgentRun, RunAgent } from "./agent.js";
-import type { DispatchDecision } from "./dispatcher.js";
-import { type Chat, type ChatMessage, compareIds } from "./discord.js";
-import type { GuardContext } from "./guard.js";
+import { Collector } from "../monitor/collector.js";
+import type { LoadedConfig } from "../config/config.js";
+import { Executor } from "../monitor/executor.js";
+import { Monitor } from "../monitor/monitor.js";
+import { SqliteStore } from "../store/store.js";
+import { testConfig } from "./fixtures.js";
+import type { AgentOutcome, AgentRun, RunAgent } from "../agents/agent.js";
+import type { DispatchDecision } from "../dispatcher/dispatcher.js";
+import {
+  type Chat,
+  type ChatMessage,
+  compareIds,
+} from "../integrations/discord.js";
+import type { GuardContext } from "../agents/guard.js";
 import {
   type GitHub,
   type Issue,
@@ -19,10 +23,10 @@ import {
   mergeProblem,
   type PrComment,
   type PullRequest,
-} from "./github.js";
-import type { WorkerOutput } from "./roles.js";
-import { type Target, targetKey } from "./types.js";
-import type { Prepared, Workspace } from "./workspace.js";
+} from "../integrations/github.js";
+import type { WorkerOutput } from "../agents/roles.js";
+import { type Target, targetKey } from "../domain/types.js";
+import type { Prepared, Workspace } from "../agents/workspace.js";
 
 export class FakeChat implements Chat {
   requirements: ChatMessage[] = [];

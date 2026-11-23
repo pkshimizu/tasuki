@@ -1,18 +1,9 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { parseArgs } from "node:util";
-import { ConfigError, discordToken, loadConfig } from "./config.js";
+import { ConfigError, discordToken, loadConfig } from "../config/config.js";
+import { consoleOutput, type Output } from "./output.js";
 import { start } from "./start.js";
-
-export interface Output {
-  out: (text: string) => void;
-  err: (text: string) => void;
-}
-
-const consoleOutput: Output = {
-  out: (text) => console.log(text),
-  err: (text) => console.error(text),
-};
 
 export const HELP = `使い方: tasuki <コマンド> [オプション]
 
@@ -25,8 +16,8 @@ export const HELP = `使い方: tasuki <コマンド> [オプション]
   -v, --version  バージョンを表示する`;
 
 export function version(): string {
-  // src（テスト）と dist（ビルド後）のどちらから呼んでも 1 つ上が package.json
-  const url = new URL("../package.json", import.meta.url);
+  // src/cli（テスト）と dist/cli（ビルド後）のどちらから呼んでも 2 つ上が package.json
+  const url = new URL("../../package.json", import.meta.url);
   const pkg = JSON.parse(readFileSync(url, "utf8")) as { version: string };
   return pkg.version;
 }

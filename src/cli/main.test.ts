@@ -2,8 +2,9 @@ import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { MINIMAL_CONFIG } from "./testing.js";
-import { HELP, main, type Output } from "./main.js";
+import { MINIMAL_CONFIG } from "../testing/fixtures.js";
+import { HELP, main } from "./main.js";
+import type { Output } from "./output.js";
 
 function capture() {
   const out: string[] = [];

@@ -7,7 +7,7 @@ import {
   stageOf,
   summarizeChecks,
 } from "./github.js";
-import { testConfig } from "./testing.js";
+import { testConfig } from "../testing/fixtures.js";
 
 /** 引数の先頭が合う答えを返す偽の gh */
 function fakeGh(

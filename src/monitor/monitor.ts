@@ -2,21 +2,25 @@
  * 監視スレッド。集める → 司令塔に判断を頼む → 指示を実行する、を繰り返す。
  * 次に何をするかはここでは決めない。
  */
-import type { RunAgent } from "./agent.js";
+import type { RunAgent } from "../agents/agent.js";
 import type { Collector } from "./collector.js";
-import type { LoadedConfig } from "./config.js";
+import type { LoadedConfig } from "../config/config.js";
 import {
   type Action,
   describeAction,
   describeEvent,
   dispatch,
   type Situation,
-} from "./dispatcher.js";
-import type { Chat } from "./discord.js";
+} from "../dispatcher/dispatcher.js";
+import type { Chat } from "../integrations/discord.js";
 import type { Executor } from "./executor.js";
-import { type Issue, type PullRequest, stageOf } from "./github.js";
-import type { RunStatus } from "./types.js";
-import type { Store } from "./store.js";
+import {
+  type Issue,
+  type PullRequest,
+  stageOf,
+} from "../integrations/github.js";
+import type { RunStatus } from "../domain/types.js";
+import type { Store } from "../store/store.js";
 
 export interface MonitorDeps {
   loaded: LoadedConfig;

@@ -4,20 +4,25 @@
  * - マージは、設定が auto で CI が合格しているときだけ行う（プログラムで必ず守る）
  * - 実行できなかった指示は理由を返す（自動ではやり直さない。やり直すかは司令塔が決める）
  */
-import type { RunAgent } from "./agent.js";
-import { type LoadedConfig, ROLE_LABELS } from "./config.js";
-import type { Action } from "./dispatcher.js";
-import type { Chat } from "./discord.js";
-import { type GitHub, stageOf } from "./github.js";
-import { ROLE_ACCESS, rolePrompt, workerOutputSchema } from "./roles.js";
-import { type Clock, type Store, systemClock } from "./store.js";
+import type { RunAgent } from "../agents/agent.js";
+import { type LoadedConfig, ROLE_LABELS } from "../config/config.js";
+import type { Action } from "../dispatcher/dispatcher.js";
+import type { Chat } from "../integrations/discord.js";
+import { type GitHub, stageOf } from "../integrations/github.js";
+import {
+  ROLE_ACCESS,
+  rolePrompt,
+  workerOutputSchema,
+} from "../agents/roles.js";
+import { type Clock, type Store, systemClock } from "../store/store.js";
 import {
   type RunStatus,
   type Target,
   targetKey,
+  targetLabel,
   type WorkerRole,
-} from "./types.js";
-import { describeWorkspace, type Workspace } from "./workspace.js";
+} from "../domain/types.js";
+import { describeWorkspace, type Workspace } from "../agents/workspace.js";
 
 export interface ExecutorDeps {
   loaded: LoadedConfig;
@@ -46,19 +51,6 @@ interface Running {
   /** 作業フォルダ。用意できるまでは undefined */
   cwd: string | undefined;
   done: Promise<void>;
-}
-
-function targetLabel(target: Target): string {
-  switch (target.kind) {
-    case "requirement":
-      return `要件 ${target.id}`;
-    case "issue":
-      return `Issue #${String(target.number)}`;
-    case "pr":
-      return `PR #${String(target.number)}`;
-    case "repo":
-      return "リポジトリ全体";
-  }
 }
 
 export class Executor {

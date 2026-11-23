@@ -171,3 +171,8 @@ export function discordToken(
   }
   return { token };
 }
+
+/** file が folder そのものか、その下にあるか（どちらもリポジトリからの相対パス） */
+export function isUnder(file: string, folder: string): boolean {
+  return file === folder || file.startsWith(`${folder}/`);
+}
