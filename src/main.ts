@@ -1,5 +1,7 @@
 import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { parseArgs } from "node:util";
+import { ConfigError, discordToken, loadConfig } from "./config.js";
 
 export interface Output {
   out: (text: string) => void;
@@ -32,6 +34,7 @@ export function version(): string {
 export async function main(
   argv: string[],
   output: Output = consoleOutput,
+  env: Record<string, string | undefined> = process.env,
 ): Promise<number> {
   let parsed;
   try {
@@ -54,12 +57,38 @@ export async function main(
     output.out(version());
     return 0;
   }
-  const [command] = positionals;
+  const [command, folder] = positionals;
   if (values.help || command === undefined) {
     output.out(HELP);
     return 0;
   }
+  if (command === "check") return check(resolve(folder ?? "."), output, env);
   output.err(`知らないコマンドです: ${command}`);
   output.err(HELP);
   return 2;
+}
+
+/** 設定を点検する。誤りがあれば 1 を返す */
+export function check(
+  dir: string,
+  output: Output,
+  env: Record<string, string | undefined>,
+): number {
+  let failed = false;
+  try {
+    const { config } = loadConfig(dir);
+    output.out(`設定を読みました: ${config.github.repo}`);
+  } catch (e) {
+    if (!(e instanceof ConfigError)) throw e;
+    for (const p of e.problems) output.err(p);
+    failed = true;
+  }
+  const token = discordToken(env);
+  if ("problem" in token) {
+    output.err(token.problem);
+    failed = true;
+  }
+  if (failed) return 1;
+  output.out("問題はありません");
+  return 0;
 }
