@@ -46,6 +46,44 @@ export function commandExec(command: string): Exec {
     });
 }
 
+export type ShellExec = (command: string, cwd: string) => Promise<ExecResult>;
+
+/** 1 行のコマンドをシェルで動かす（設定に書かれた準備コマンド用）。制限時間を過ぎたら終わらせる */
+export function shellExec(timeoutMs: number): ShellExec {
+  return (command, cwd) =>
+    new Promise((resolve, reject) => {
+      const child = spawn(command, {
+        cwd,
+        shell: true,
+        windowsHide: true,
+        stdio: ["ignore", "pipe", "pipe"],
+      });
+      const out: Buffer[] = [];
+      const err: Buffer[] = [];
+      let timedOut = false;
+      const timer = setTimeout(() => {
+        timedOut = true;
+        child.kill();
+      }, timeoutMs);
+      child.stdout.on("data", (d: Buffer) => out.push(d));
+      child.stderr.on("data", (d: Buffer) => err.push(d));
+      child.on("error", (e) => {
+        clearTimeout(timer);
+        reject(e);
+      });
+      child.on("close", (code) => {
+        clearTimeout(timer);
+        resolve({
+          code: timedOut ? null : code,
+          stdout: Buffer.concat(out).toString("utf8"),
+          stderr: timedOut
+            ? `制限時間（${String(Math.round(timeoutMs / 1000))} 秒）を過ぎたので終わらせました`
+            : Buffer.concat(err).toString("utf8"),
+        });
+      });
+    });
+}
+
 export class CommandError extends Error {
   constructor(
     readonly command: string,

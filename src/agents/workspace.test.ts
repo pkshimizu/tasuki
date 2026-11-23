@@ -132,6 +132,81 @@ describe("GitWorkspace", () => {
   });
 });
 
+describe("準備コマンド", () => {
+  /** 実行した回数を count.txt に足していく準備コマンド */
+  const COUNT =
+    "node -e \"const fs=require('fs');fs.appendFileSync('count.txt','x')\"";
+  const count = (cwd: string) =>
+    readFileSync(join(cwd, "count.txt"), "utf8").length;
+
+  function withSetup(commands: string[], onChange: string[] = []) {
+    const s = setup();
+    const workspace = new GitWorkspace(
+      s.repo,
+      join(s.base, "worktrees"),
+      "main",
+      undefined,
+      { commands, onChange },
+    );
+    return { ...s, workspace };
+  }
+
+  it("作業フォルダを初めて用意したときだけ実行する", async () => {
+    const { workspace } = withSetup([COUNT]);
+    const target = { kind: "issue", number: 3 } as const;
+    const first = await workspace.prepare(target, "write");
+    expect(first.setup).toEqual({ commands: [COUNT] });
+    expect(count(first.cwd)).toBe(1);
+
+    const second = await workspace.prepare(target, "write");
+    expect(second.setup).toBeUndefined();
+    expect(count(second.cwd)).toBe(1);
+  });
+
+  it("読むだけの役の作業フォルダでも実行する", async () => {
+    const { workspace } = withSetup([COUNT]);
+    const review = await workspace.prepare({ kind: "repo" }, "read");
+    expect(review.setup).toEqual({ commands: [COUNT] });
+    expect(count(review.cwd)).toBe(1);
+  });
+
+  it("見張るファイルが変わったら、もう一度実行する", async () => {
+    const { workspace, pushTo } = withSetup([COUNT], ["a.txt"]);
+    const target = { kind: "repo" } as const;
+    const first = await workspace.prepare(target, "read");
+    expect(count(first.cwd)).toBe(1);
+    await workspace.prepare(target, "read");
+    expect(count(first.cwd)).toBe(1);
+
+    pushTo("main", "a.txt", "two\n");
+    const third = await workspace.prepare(target, "read");
+    expect(third.setup).toEqual({ commands: [COUNT] });
+    expect(count(first.cwd)).toBe(2);
+  });
+
+  it("失敗したら内容を返し、次の用意のときにもう一度実行する", async () => {
+    const FAIL =
+      "node -e \"console.error('依存を入れられません');process.exit(1)\"";
+    const { workspace } = withSetup([COUNT, FAIL, COUNT]);
+    const target = { kind: "issue", number: 3 } as const;
+    const first = await workspace.prepare(target, "write");
+    expect(first.setup?.error).toContain("が失敗しました");
+    expect(first.setup?.error).toContain("依存を入れられません");
+    // 失敗したコマンドのあとは実行しない
+    expect(count(first.cwd)).toBe(1);
+
+    const second = await workspace.prepare(target, "write");
+    expect(second.setup?.error).toBeDefined();
+    expect(count(second.cwd)).toBe(2);
+  });
+
+  it("準備コマンドが無ければ何もしない", async () => {
+    const { workspace } = withSetup([]);
+    const p = await workspace.prepare({ kind: "repo" }, "read");
+    expect(p.setup).toBeUndefined();
+  });
+});
+
 describe("describeWorkspace", () => {
   it("ブランチと、残っている変更を伝える", () => {
     expect(
@@ -143,6 +218,27 @@ describe("describeWorkspace", () => {
     expect(
       describeWorkspace({ cwd: "/w", branch: null, dirty: false }, "main"),
     ).toContain("origin/main の最新から作業用のブランチを作ってください");
+  });
+  it("準備コマンドの結果を伝える", () => {
+    const base = { cwd: "/w", branch: null, dirty: false };
+    expect(
+      describeWorkspace({ ...base, setup: { commands: ["npm ci"] } }, "main"),
+    ).toContain("作業フォルダの準備（`npm ci`）は、Tasuki が実行済みです。");
+    expect(
+      describeWorkspace(
+        {
+          ...base,
+          setup: {
+            commands: ["npm ci"],
+            error: "npm ci が失敗しました:\nE404",
+          },
+        },
+        "main",
+      ),
+    ).toContain(
+      "失敗しました。必要なら原因を確かめて、自分で実行してください。\nnpm ci が失敗しました:\nE404",
+    );
+    expect(describeWorkspace(base, "main")).not.toContain("準備");
   });
 });
 

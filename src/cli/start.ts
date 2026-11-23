@@ -88,7 +88,16 @@ export async function start(
     chat,
     github,
     runAgent,
-    workspace: new GitWorkspace(dir, worktreeRoot(repo), defaultBranch),
+    workspace: new GitWorkspace(
+      dir,
+      worktreeRoot(repo),
+      defaultBranch,
+      undefined,
+      {
+        commands: config.workspace.setup,
+        onChange: config.workspace.setup_on_change,
+      },
+    ),
     log,
     onFinish: () => monitorRef.current?.wakeUp(),
   });

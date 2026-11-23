@@ -78,6 +78,14 @@ export const configSchema = z.strictObject({
       design_system: repoPath.default("docs/design-system"),
     })
     .prefault({}),
+  workspace: z
+    .strictObject({
+      /** 作業フォルダを用意したあとに実行するコマンド（例: npm ci） */
+      setup: z.array(z.string().min(1)).default([]),
+      /** このファイルが変わったら、準備コマンドをもう一度実行する（例: package-lock.json） */
+      setup_on_change: z.array(repoPath).default([]),
+    })
+    .prefault({}),
   agents: z
     .strictObject({
       dispatcher: agentSchema.optional(),
