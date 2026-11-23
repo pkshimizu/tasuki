@@ -2,6 +2,12 @@
   "name": "tasuki-agent",
   "version": "0.1.0",
   "description": "要件から仕様・タスク分解・実装・レビューまでを、役割ごとのエージェントで進めるソフトウェア開発 AI",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pkshimizu/tasuki.git"
+  },
+  "homepage": "https://github.com/pkshimizu/tasuki#readme",
   "private": true,
   "type": "module",
   "bin": {
@@ -12,6 +18,7 @@
     "templates"
   ],
   "scripts": {
+    "prepare": "npm run build",
     "build": "tsc -p tsconfig.build.json",
     "start": "node dist/cli.js",
     "lint": "eslint",

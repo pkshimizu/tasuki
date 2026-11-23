@@ -38,13 +38,21 @@ GitHub ──────────┼─▶ 監視スレッド ─▶ 司令�
 - Claude Code にログインしておく（エージェントはこの PC の Claude Code のログインで動く）
 - 対象リポジトリを clone しておく（`origin` が対象リポジトリを指していること）
 
+### インストール
+
+GitHub の Release に置いたビルド済みのパッケージを、npm で入れる。clone やビルドの手順は要らない。
+
 ```
-git clone https://github.com/pkshimizu/tasuki.git
-cd tasuki
-npm ci
-npm run build
-npm link   # tasuki コマンドを使えるようにする
+npm install -g https://github.com/pkshimizu/tasuki/releases/latest/download/tasuki-agent.tgz
+tasuki --version
 ```
+
+- 上の URL は最新の版。版を決めて入れるときは、`https://github.com/pkshimizu/tasuki/releases/download/v0.1.0/tasuki-agent-0.1.0.tgz` のように、タグと版の付いたファイルを指定する。出ている版は [Releases](https://github.com/pkshimizu/tasuki/releases) で確かめる。
+- 更新するときは、同じコマンドをもう一度実行する。動いている Tasuki は、止めてから起動し直す。
+- 消すときは `npm uninstall -g tasuki-agent`。
+- `npm install -g github:pkshimizu/tasuki` の形（リポジトリを直接指定）では入らない。npm がグローバルへのインストールでは、ビルドに使うパッケージを用意できないため。
+
+開発するときは、clone して `npm ci` のあと `npm link` で、手元のコードを `tasuki` コマンドとして使える。
 
 ### Discord
 
@@ -58,7 +66,7 @@ Tasuki は Discord を PC から読みにいくだけで、外から PC への�
 
 ### 対象リポジトリ
 
-1. `templates/tasuki/config.yaml` を、対象リポジトリの `.tasuki/config.yaml` にコピーして書き換え、既定のブランチに入れる。
+1. 対象リポジトリのフォルダで `tasuki init` を実行する。設定のひな形が `.tasuki/config.yaml` にできるので、Discord のチャンネルとユーザーの ID を書き換え、`tasuki check` で点検して、既定のブランチに入れる。
 2. 既定のブランチを保護する（PR 必須・CI の合格必須）。エージェントが既定のブランチに直接 push するのを GitHub 側でも防ぐため。
 3. 依存パッケージの導入など、作業フォルダの準備が要るなら、`workspace.setup` にコマンドを書く。エージェントの作業フォルダ（git worktree）ごとに、初めて用意したときと `workspace.setup_on_change` のファイルが変わったときに Tasuki が実行する。
 4. プロダクトの情報を、対象リポジトリの文書として書く（下の「プロダクトの情報」）。
@@ -90,6 +98,7 @@ Tasuki は Discord を PC から読みにいくだけで、外から PC への�
 ## 動かし方
 
 ```
+tasuki init [フォルダ]    設定のひな形を .tasuki/config.yaml に書き出す
 tasuki check [フォルダ]   設定を点検する
 tasuki start [フォルダ]   常駐して開発を進める
 ```
@@ -154,3 +163,7 @@ npm run format      整形
 ```
 
 作業は Issue を作ってから始め、Issue ごとにブランチと PR を作る。決まりは [CLAUDE.md](CLAUDE.md)。
+
+## ライセンス
+
+[MIT](LICENSE)
