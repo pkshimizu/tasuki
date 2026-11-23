@@ -341,7 +341,7 @@ export function Dashboard({
                 <a
                   key={r.id}
                   className="card req"
-                  {...linkProps("requirements", navigate)}
+                  {...linkProps("requirements", navigate, r.id)}
                 >
                   <div className="req-text clamp2">{r.content}</div>
                   <div className="meta">
@@ -352,11 +352,23 @@ export function Dashboard({
                     <span aria-hidden="true">·</span>
                     <span>{ago(t, r.createdAt, now)}</span>
                   </div>
-                  {r.questions > 0 && (
+                  {r.questions + r.issues + r.pullRequests > 0 && (
                     <div className="chips">
-                      <span className="badge accent md">
-                        {d.questions} {r.questions}
-                      </span>
+                      {r.questions > 0 && (
+                        <span className="badge accent md">
+                          {d.questions} {r.questions}
+                        </span>
+                      )}
+                      {r.issues > 0 && (
+                        <span className="badge neutral md">
+                          {t.requirements.issues(r.issues)}
+                        </span>
+                      )}
+                      {r.pullRequests > 0 && (
+                        <span className="badge neutral md">
+                          {t.requirements.pullRequests(r.pullRequests)}
+                        </span>
+                      )}
                     </div>
                   )}
                 </a>

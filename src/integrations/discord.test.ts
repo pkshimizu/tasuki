@@ -240,3 +240,18 @@ describe("失敗", () => {
     await expect(chat.notify("x")).rejects.toThrow(DiscordError);
   });
 });
+
+describe("要件の投稿の URL", () => {
+  it("サーバーの ID が分かってから返す", async () => {
+    const { chat, calls } = fake([{ json: { guild_id: "g1" } }]);
+    expect(chat.requirementUrl("55")).toBeUndefined();
+    expect(chat.threadUrl("200")).toBeUndefined();
+    expect(await chat.resolveServer()).toBe("g1");
+    expect(await chat.resolveServer()).toBe("g1");
+    expect(calls).toHaveLength(1);
+    expect(chat.requirementUrl("55")).toBe(
+      "https://discord.com/channels/g1/1000000000000000001/55",
+    );
+    expect(chat.threadUrl("200")).toBe("https://discord.com/channels/g1/200");
+  });
+});

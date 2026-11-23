@@ -57,6 +57,7 @@ function compact(action: Action, result: string): Record<string, unknown> {
         role: action.role,
         target: action.target,
         instruction: action.instruction.slice(0, 200),
+        requirement: action.requirement ?? null,
         result,
       };
     case "ask_human":

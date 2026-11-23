@@ -74,6 +74,7 @@ function setup(
       dirtyWorktrees: [],
       ...executor,
     }),
+    requirementUrl: (id) => `https://discord.test/req/${id}`,
     threadUrl: (id) => (id === "t1" ? "https://discord.test/t1" : undefined),
     clock: { now: () => new Date(NOW) },
   };
@@ -336,6 +337,8 @@ describe("buildDashboard", () => {
         author: "清水",
         createdAt: "2026-11-23T08:01:00.000Z",
         questions: 1,
+        issues: 0,
+        pullRequests: 0,
       },
     ]);
   });
@@ -396,6 +399,7 @@ describe("toDirective", () => {
       role: "reviewer",
       target: { kind: "pr", number: 19 },
       number: null,
+      requirement: null,
       outcome: "done",
       detail: "起動した（実行 2）",
     });
@@ -407,6 +411,7 @@ describe("toDirective", () => {
       }),
     ).toMatchObject({
       number: 21,
+      requirement: null,
       outcome: "skipped",
       detail: "この工程のマージの設定は human です",
     });

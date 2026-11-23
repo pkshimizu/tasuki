@@ -726,3 +726,45 @@ describe("作業フォルダの片付け", () => {
     ).toBe(true);
   });
 });
+
+describe("要件との結びつき", () => {
+  it("どの要件のための実行かを記録する（対象が要件なら、その要件）", async () => {
+    const { executor, store } = setup();
+    await executor.execute([
+      {
+        type: "run_agent",
+        role: "programmer",
+        target: { kind: "issue", number: 20 },
+        instruction: "実装する",
+        requirement: "10",
+      },
+      {
+        type: "run_agent",
+        role: "spec-master",
+        target: { kind: "requirement", id: "11" },
+        instruction: "仕様を作る",
+      },
+    ]);
+    await executor.idle();
+    await executor.execute([
+      {
+        type: "run_agent",
+        role: "reviewer",
+        target: { kind: "pr", number: 40 },
+        instruction: "設定の PR を見る",
+        requirement: null,
+      },
+    ]);
+    await executor.idle();
+    expect(
+      store
+        .recentRuns(10)
+        .map((r) => [r.role, r.requirement])
+        .sort(),
+    ).toEqual([
+      ["programmer", "10"],
+      ["reviewer", null],
+      ["spec-master", "11"],
+    ]);
+  });
+});

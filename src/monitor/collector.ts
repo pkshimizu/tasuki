@@ -372,3 +372,58 @@ export function backfillPullRequests(store: Store, repo: string): number {
   for (const pr of found.values()) store.savePullRequest(pr);
   return found.size;
 }
+
+const RUN_REQUIREMENTS_DONE = "backfill:run-requirements";
+
+/**
+ * どの要件のための実行かの記録が無い実行を、1 度だけ補う。
+ * 要件との結びつきを覚える前の版で動かした実行を、管理画面で要件ごとに追うため。
+ * 実行を始めたときに進行中の要件が 1 つだけなら、その要件のための実行とみなす
+ * （2 つ以上あって決められないものは、そのままにする）。
+ */
+export function backfillRunRequirements(store: Store): number {
+  if (store.getValue(RUN_REQUIREMENTS_DONE) !== undefined) return 0;
+  const requirements = store.requirements();
+  // 要件を完了にした時刻
+  const doneAt = new Map<string, string>();
+  for (const d of store.recentDecisions(BACKFILL_EVENTS)) {
+    for (const raw of d.actions) {
+      const a = raw as {
+        type?: unknown;
+        requirementId?: unknown;
+        result?: unknown;
+      };
+      if (
+        a.type === "complete_requirement" &&
+        typeof a.requirementId === "string" &&
+        typeof a.result === "string" &&
+        !/^(見送り|失敗)/.test(a.result) &&
+        !doneAt.has(a.requirementId)
+      ) {
+        doneAt.set(a.requirementId, d.createdAt);
+      }
+    }
+  }
+  let count = 0;
+  for (const run of store.recentRuns(BACKFILL_EVENTS)) {
+    if (run.requirement !== null) continue;
+    if (run.target.kind === "requirement") {
+      store.setRunRequirement(run.id, run.target.id);
+      count++;
+      continue;
+    }
+    const active = requirements.filter((r) => {
+      if (r.createdAt > run.startedAt) return false;
+      if (r.status === "open") return true;
+      const done = doneAt.get(r.id);
+      return done !== undefined && run.startedAt <= done;
+    });
+    const only = active.length === 1 ? active[0] : undefined;
+    if (only) {
+      store.setRunRequirement(run.id, only.id);
+      count++;
+    }
+  }
+  store.setValue(RUN_REQUIREMENTS_DONE, "done");
+  return count;
+}

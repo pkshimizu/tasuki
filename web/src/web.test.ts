@@ -120,6 +120,7 @@ describe("司令塔の指示と結果", () => {
     role: null,
     target: null,
     number: null,
+    requirement: null,
     outcome: "none",
     detail: "",
   };

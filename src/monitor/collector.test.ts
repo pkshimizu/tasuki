@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { backfillPullRequests, Collector } from "./collector.js";
+import {
+  backfillPullRequests,
+  backfillRunRequirements,
+  Collector,
+} from "./collector.js";
 import { FakeChat, FakeGitHub } from "../testing/fakes.js";
 import { SqliteStore } from "../store/store.js";
 import { testConfig } from "../testing/fixtures.js";
@@ -386,5 +390,57 @@ describe("PR の様子の記録", () => {
     ]);
     // もう一度呼んでも足さない
     expect(backfillPullRequests(store, "owner/name")).toBe(0);
+  });
+});
+
+describe("実行と要件の結びつきを補う", () => {
+  function timed() {
+    let t = Date.parse("2026-11-23T08:00:00Z");
+    const store = new SqliteStore(":memory:", {
+      now: () => new Date((t += 60_000)),
+    });
+    const start = (target: Parameters<typeof store.startRun>[0]["target"]) =>
+      store.startRun({ role: "programmer", target, instruction: "x" });
+    return { store, start };
+  }
+
+  it("進行中の要件が 1 つだけのときの実行を、その要件に結びつける", () => {
+    const { store, start } = timed();
+    const before = start({ kind: "pr", number: 1 });
+    store.addRequirement({ id: "10", author: "a", content: "カードモード" });
+    const spec = start({ kind: "requirement", id: "10" });
+    const impl = start({ kind: "issue", number: 20 });
+    store.completeRequirement("10");
+    store.addDecision({
+      events: [],
+      reasoning: "終わった",
+      actions: [
+        {
+          type: "complete_requirement",
+          requirementId: "10",
+          result: "完了にした",
+        },
+      ],
+    });
+    const after = start({ kind: "pr", number: 22 });
+
+    expect(backfillRunRequirements(store)).toBe(2);
+    expect(
+      [before, spec, impl, after].map((id) => store.run(id)?.requirement),
+    ).toEqual([null, "10", "10", null]);
+  });
+
+  it("進行中の要件が 2 つあるときは決めない。補うのは 1 度だけ", () => {
+    const { store, start } = timed();
+    store.addRequirement({ id: "10", author: "a", content: "A" });
+    store.addRequirement({ id: "11", author: "a", content: "B" });
+    const impl = start({ kind: "issue", number: 20 });
+    expect(backfillRunRequirements(store)).toBe(0);
+    expect(store.run(impl)?.requirement).toBeNull();
+
+    store.completeRequirement("11");
+    const later = start({ kind: "issue", number: 21 });
+    expect(backfillRunRequirements(store)).toBe(0);
+    expect(store.run(later)?.requirement).toBeNull();
   });
 });

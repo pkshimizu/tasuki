@@ -13,6 +13,8 @@ import type {
   PullRequestDetail,
   PullRequestList,
   QuestionItem,
+  RequirementDetail,
+  RequirementRow,
   SystemData,
 } from "./types.js";
 import { mergeBlockers, type ViewSources } from "./views.js";
@@ -72,6 +74,7 @@ function setup(extraYaml = "") {
       dirtyWorktrees: [],
     }),
     threadUrl: (id) => `https://discord.test/${id}`,
+    requirementUrl: (id) => `https://discord.test/req/${id}`,
     clock: { now: () => new Date("2026-11-23T09:00:00Z") },
     config: testConfig(extraYaml),
     knowledge: () => ({
@@ -486,5 +489,200 @@ describe("システム", () => {
     const s = setup("workspace:\n  setup:\n    - npm ci\n");
     const sys = await s.get<Promise<SystemData>>("/api/system");
     expect(sys.worktrees[0]!.setupDone).toBe(false);
+  });
+});
+
+describe("要件", () => {
+  /** 要件 10（仕様の PR #19 → Issue #20 → 実装の PR #21）と、関係のない要件 11 を用意する */
+  function scenario() {
+    const s = setup();
+    const { store } = s;
+    store.addRequirement({ id: "10", author: "清水", content: "カードモード" });
+    store.addEvent("req:10", {
+      type: "requirement_posted",
+      requirementId: "10",
+      author: "清水",
+      content: "カードモード",
+    });
+    store.addRequirement({ id: "11", author: "清水", content: "検索" });
+
+    const spec = store.startRun({
+      role: "spec-master",
+      target: { kind: "requirement", id: "10" },
+      instruction: "仕様を作る",
+    });
+    store.finishRun(spec, "done", "仕様の PR を作った");
+    store.addEvent("run:spec", {
+      type: "agent_finished",
+      runId: spec,
+      role: "spec-master",
+      target: { kind: "requirement", id: "10" },
+      status: "done",
+      summary: "仕様の PR を作った",
+      questions: [],
+      pr: 19,
+    });
+    store.savePullRequest({
+      number: 19,
+      title: "docs: カードモードの仕様",
+      branch: "tasuki/spec-flashcards",
+      stage: "spec",
+      state: "merged",
+      url: "https://github.com/owner/name/pull/19",
+      updatedAt: "2026-11-23T08:10:00Z",
+    });
+    store.addEvent("issue:20:opened", {
+      type: "issue_changed",
+      number: 20,
+      title: "カードモードを追加する",
+      change: "opened",
+    });
+    store.addEvent("issue:30:opened", {
+      type: "issue_changed",
+      number: 30,
+      title: "関係のない Issue",
+      change: "opened",
+    });
+    const impl = store.startRun({
+      role: "programmer",
+      target: { kind: "issue", number: 20 },
+      instruction: "実装する",
+      requirement: "10",
+    });
+    store.addDecision({
+      events: ["Issue #20 ができた"],
+      reasoning: "実装を始める",
+      actions: [
+        {
+          type: "run_agent",
+          role: "programmer",
+          target: { kind: "issue", number: 20 },
+          instruction: "実装する",
+          requirement: "10",
+          result: "起動した",
+        },
+      ],
+    });
+    store.addDecision({
+      events: ["関係のない出来事"],
+      reasoning: "待つ",
+      actions: [{ type: "wait", reason: "何もない" }],
+    });
+    // 要件に結びつかない実行
+    store.startRun({
+      role: "reviewer",
+      target: { kind: "pr", number: 40 },
+      instruction: "設定の PR を見る",
+    });
+    store.addQuestion({
+      threadId: "t1",
+      title: "プログラマーからの質問",
+      body: "1. どちらにしますか",
+      target: { kind: "issue", number: 20 },
+      origin: "programmer",
+    });
+    store.addQuestion({
+      threadId: "t2",
+      title: "関係のない質問",
+      body: "x",
+      target: { kind: "pr", number: 40 },
+      origin: "reviewer",
+    });
+    s.state.github = {
+      issues: [
+        {
+          number: 20,
+          title: "カードモードを追加する",
+          body: "",
+          state: "open",
+          labels: [],
+          updatedAt: "2026-11-23T08:20:00Z",
+          url: "https://github.com/owner/name/issues/20",
+        },
+      ],
+      pullRequests: [],
+    };
+    return { ...s, spec, impl };
+  }
+
+  it("一覧を新しい順に返し、結びつくものの数を数える", () => {
+    const s = scenario();
+    expect(s.get<RequirementRow[]>("/api/requirements")).toMatchObject([
+      {
+        id: "11",
+        status: "open",
+        counts: { questions: 0, waiting: 0, issues: 0, pullRequests: 0 },
+      },
+      {
+        id: "10",
+        content: "カードモード",
+        author: "清水",
+        url: "https://discord.test/req/10",
+        counts: { questions: 1, waiting: 1, issues: 1, pullRequests: 1 },
+      },
+    ]);
+  });
+
+  it("詳細に、結びつく質問・Issue・PR を返す", () => {
+    const s = scenario();
+    const d = s.get<RequirementDetail>("/api/requirements/10");
+    // 新しい順
+    expect(d.related.map((x) => [x.id, x.done])).toEqual([
+      ["issue:20", false],
+      ["question:t1", false],
+      ["pr:19", true],
+    ]);
+    expect(d.related.find((x) => x.kind === "pr")).toMatchObject({
+      number: 19,
+      title: "docs: カードモードの仕様",
+      stage: "spec",
+      state: "merged",
+    });
+    expect(d.related.find((x) => x.kind === "issue")).toMatchObject({
+      title: "カードモードを追加する",
+      state: "open",
+      url: "https://github.com/owner/name/issues/20",
+    });
+  });
+
+  it("開いている Issue の一覧に無い Issue は、閉じたものとして返す", () => {
+    const s = scenario();
+    s.state.github = { issues: [], pullRequests: [] };
+    const d = s.get<RequirementDetail>("/api/requirements/10");
+    expect(d.related.find((x) => x.kind === "issue")).toMatchObject({
+      title: "カードモードを追加する",
+      state: "closed",
+      done: true,
+    });
+  });
+
+  it("経過に、この要件の出来事・判断・実行だけを新しい順に並べる", () => {
+    const s = scenario();
+    const d = s.get<RequirementDetail>("/api/requirements/10");
+    expect(
+      d.timeline.map((x) =>
+        x.kind === "event"
+          ? x.type
+          : x.kind === "run"
+            ? `run:${x.role}`
+            : `decision:${x.reasoning}`,
+      ),
+    ).toEqual([
+      "decision:実装を始める",
+      "run:programmer",
+      "issue_changed",
+      "run:spec-master",
+      "requirement_posted",
+    ]);
+  });
+
+  it("結びつくものの無い要件と、無い要件", () => {
+    const s = scenario();
+    expect(s.get<RequirementDetail>("/api/requirements/11")).toMatchObject({
+      related: [],
+      timeline: [],
+    });
+    expect(s.get("/api/requirements/99")).toBe(NOT_FOUND);
+    expect(s.get("/api/requirements/%E0%A4%A")).toBe(NOT_FOUND);
   });
 });

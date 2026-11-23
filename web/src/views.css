@@ -797,3 +797,60 @@ tr.detail .md-fade {
   overflow-wrap: anywhere;
   color: var(--muted);
 }
+
+/* ---------- 要件 ---------- */
+.stack.wide {
+  gap: 24px;
+  min-width: 0;
+}
+a.list-item {
+  text-decoration: none;
+}
+.list .empty {
+  padding: 16px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.tabs.pad {
+  padding: 4px 8px 0;
+}
+.req-body .md {
+  font-size: 15px;
+}
+.rel-list {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  overflow: hidden;
+}
+.rel-list li + li {
+  border-top: 1px solid var(--line2);
+}
+.rel {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 11px 16px;
+  font-size: 13px;
+  color: var(--text);
+}
+.rel:hover {
+  background: var(--sub);
+}
+.rel-kind {
+  width: 44px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--faint);
+}
+.rel strong {
+  flex: 1 1 200px;
+  min-width: 0;
+  font-weight: 600;
+}
+.rel-at {
+  font-size: 12px;
+  color: var(--faint);
+  white-space: nowrap;
+}

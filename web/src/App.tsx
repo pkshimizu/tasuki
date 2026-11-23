@@ -16,6 +16,7 @@ import { Dashboard } from "./pages/Dashboard.js";
 import { Activity } from "./pages/Activity.js";
 import { Product, Questions, System } from "./pages/Others.js";
 import { PullRequestPage, PullRequests } from "./pages/PullRequests.js";
+import { Requirements } from "./pages/Requirements.js";
 import { type Page, pathOf, type Route, routeOf } from "./routes.js";
 
 function Screen({
@@ -30,6 +31,8 @@ function Screen({
   switch (route.page) {
     case "dashboard":
       return <Dashboard t={t} navigate={navigate} />;
+    case "requirements":
+      return <Requirements t={t} id={route.id} navigate={navigate} />;
     case "prs":
       return route.id === null ? (
         <PullRequests t={t} navigate={navigate} />

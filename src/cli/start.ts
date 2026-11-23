@@ -9,7 +9,11 @@ import { type AdminServer, startAdminServer } from "../admin/server.js";
 import { version } from "./version.js";
 import { createRunAgent } from "../agents/agent.js";
 import { GIT_BASH_ENV, setupShell } from "../agents/shell.js";
-import { backfillPullRequests, Collector } from "../monitor/collector.js";
+import {
+  backfillPullRequests,
+  backfillRunRequirements,
+  Collector,
+} from "../monitor/collector.js";
 import { ConfigError, discordToken, loadConfig } from "../config/config.js";
 import { DiscordChat } from "../integrations/discord.js";
 import { commandExec, run } from "../integrations/exec.js";
@@ -97,6 +101,7 @@ export async function start(
   }
   const store = new SqliteStore(stateFile(repo));
   backfillPullRequests(store, repo);
+  backfillRunRequirements(store);
   const chat = new DiscordChat(token.token, config.discord);
   const shell = await setupShell();
   if (shell.warning) log(shell.warning);
@@ -151,6 +156,7 @@ export async function start(
       monitor: () => monitor.snapshot(),
       executor: () => executor.snapshot(),
       threadUrl: (threadId) => chat.threadUrl(threadId),
+      requirementUrl: (messageId) => chat.requirementUrl(messageId),
       clock: systemClock,
       config,
       knowledge: () => knowledge.current(),
@@ -199,6 +205,14 @@ export async function start(
         `プロダクトの情報を読み込めませんでした（エージェントを起動するときにやり直します）: ${e instanceof Error ? e.message : String(e)}`,
       );
     });
+
+  // 管理画面から Discord の投稿やスレッドを開けるよう、サーバーの ID を先に調べておく（失敗しても続ける）
+  void chat
+    .resolveServer()
+    .then(() => {
+      hub.notify();
+    })
+    .catch(() => undefined);
 
   const stop = new AbortController();
   const onSignal = () => {
