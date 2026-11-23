@@ -9,6 +9,7 @@ import { DiscordChat } from "../integrations/discord.js";
 import { commandExec, run } from "../integrations/exec.js";
 import { Executor } from "../monitor/executor.js";
 import { GhGitHub } from "../integrations/github.js";
+import { acquireLock, lockFile } from "./lock.js";
 import type { Output } from "./output.js";
 import { GitKnowledge } from "../knowledge/knowledge.js";
 import { Monitor } from "../monitor/monitor.js";
@@ -75,6 +76,11 @@ export async function start(
   const log = (text: string) => {
     output.out(`[${new Date().toLocaleTimeString("ja-JP")}] ${text}`);
   };
+  const lock = acquireLock(lockFile(stateFile(repo)));
+  if ("problem" in lock) {
+    output.err(lock.problem);
+    return 1;
+  }
   const store = new SqliteStore(stateFile(repo));
   const chat = new DiscordChat(token.token, config.discord);
   const shell = await setupShell();
@@ -138,6 +144,7 @@ export async function start(
     process.off("SIGINT", onSignal);
     process.off("SIGTERM", onSignal);
     store.close();
+    lock.release();
   }
   log("止まりました");
   return 0;

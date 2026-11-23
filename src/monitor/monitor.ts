@@ -152,6 +152,7 @@ export class Monitor {
     const { store, collector, executor, loaded, log } = this.deps;
     const collected = await collector.collect();
     executor.checkLimit();
+    if (collected.github) await executor.cleanup(collected.github);
 
     const events = store.pendingEvents();
     if (events.length === 0) return;

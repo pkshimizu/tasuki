@@ -31,7 +31,11 @@ import {
 } from "../integrations/github.js";
 import type { WorkerOutput } from "../agents/roles.js";
 import { type Target, targetKey } from "../domain/types.js";
-import type { Prepared, Workspace } from "../agents/workspace.js";
+import type {
+  Prepared,
+  Workspace,
+  WorkspaceEntry,
+} from "../agents/workspace.js";
 
 export class FakeChat implements Chat {
   requirements: ChatMessage[] = [];
@@ -305,6 +309,19 @@ export class FakeWorkspace implements Workspace {
     [];
   /** PR のブランチ → 共有する作業フォルダ */
   shared = new Map<string, string>();
+  /** 今ある作業フォルダ（片付けのテスト用に、テストが入れる） */
+  existing: WorkspaceEntry[] = [];
+  removed: string[] = [];
+
+  entries(): Promise<WorkspaceEntry[]> {
+    return Promise.resolve([...this.existing]);
+  }
+
+  remove(entry: WorkspaceEntry): Promise<void> {
+    this.existing = this.existing.filter((e) => e.name !== entry.name);
+    this.removed.push(entry.name);
+    return Promise.resolve();
+  }
 
   prepare(
     target: Target,

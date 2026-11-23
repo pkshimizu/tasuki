@@ -450,3 +450,115 @@ describe("失敗と再起動", () => {
     ]);
   });
 });
+
+describe("作業フォルダの片付け", () => {
+  const entry = (
+    name: string,
+    extra: { branch?: string; dirty?: boolean } = {},
+  ) => ({
+    name,
+    cwd: `/worktrees/${name}`,
+    branch: extra.branch ?? null,
+    dirty: extra.dirty ?? false,
+  });
+
+  it("閉じた Issue・開いていない PR・完了した要件の作業フォルダを消す", async () => {
+    const { executor, workspace, github, store, logs } = setup();
+    const openIssue = github.addIssue("まだ開いている");
+    const closedIssue = github.addIssue("閉じた");
+    github.updateIssue(closedIssue.number, { state: "closed" });
+    const openPr = github.addPr("開いている PR", ["src/a.ts"]);
+    const mergedPr = github.addPr("マージした PR", ["src/b.ts"]);
+    github.updatePr(mergedPr.number, { state: "merged" });
+    store.addRequirement({ id: "100", author: "清水", content: "進行中" });
+    store.addRequirement({ id: "200", author: "清水", content: "完了" });
+    store.completeRequirement("200");
+    workspace.existing = [
+      entry(`issue-${String(openIssue.number)}`),
+      entry(`issue-${String(closedIssue.number)}`),
+      entry(`pr-${String(openPr.number)}`),
+      entry(`read-pr-${String(openPr.number)}`),
+      entry(`read-pr-${String(mergedPr.number)}`),
+      entry("requirement-100"),
+      entry("requirement-200"),
+      entry("read-repo"),
+      entry("memo"),
+    ];
+    await executor.cleanup({
+      issues: await github.openIssues(),
+      pullRequests: await github.openPullRequests(),
+    });
+    expect(workspace.removed).toEqual([
+      `issue-${String(closedIssue.number)}`,
+      `read-pr-${String(mergedPr.number)}`,
+      "requirement-200",
+    ]);
+    expect(logs.filter((l) => l.includes("消しました"))).toHaveLength(3);
+  });
+
+  it("開いている PR のブランチを取り出している作業フォルダは消さない", async () => {
+    const { executor, workspace, github } = setup();
+    const pr = github.addPr("修正中", ["src/a.ts"], {
+      branch: "tasuki/issue-9",
+    });
+    workspace.existing = [entry("issue-9", { branch: "tasuki/issue-9" })];
+    await executor.cleanup({
+      issues: [],
+      pullRequests: await github.openPullRequests(),
+    });
+    expect(workspace.removed).toEqual([]);
+
+    github.updatePr(pr.number, { state: "merged" });
+    await executor.cleanup({ issues: [], pullRequests: [] });
+    expect(workspace.removed).toEqual(["issue-9"]);
+  });
+
+  it("コミットしていない変更があれば消さず、1 回だけ知らせる。読むだけの役のフォルダは消す", async () => {
+    const { executor, workspace, logs } = setup();
+    workspace.existing = [
+      entry("issue-9", { dirty: true }),
+      entry("read-pr-8", { dirty: true }),
+    ];
+    await executor.cleanup({ issues: [], pullRequests: [] });
+    await executor.cleanup({ issues: [], pullRequests: [] });
+    expect(workspace.removed).toEqual(["read-pr-8"]);
+    expect(logs.filter((l) => l.includes("残します"))).toHaveLength(1);
+  });
+
+  it("エージェントが動いている作業フォルダは消さない", async () => {
+    const { executor, agents, workspace } = setup();
+    const hold = deferred();
+    agents.worker = () => hold.promise;
+    await executor.execute([runProgrammer(5)]);
+    await new Promise((r) => setTimeout(r, 0));
+    // FakeWorkspace は対象のキー（issue:5）を作業フォルダの場所に使う
+    workspace.existing = [
+      {
+        name: "issue-5",
+        cwd: "/worktrees/issue:5",
+        branch: null,
+        dirty: false,
+      },
+    ];
+    await executor.cleanup({ issues: [], pullRequests: [] });
+    expect(workspace.removed).toEqual([]);
+
+    hold.resolve(ok(output()));
+    await executor.idle();
+    await executor.cleanup({ issues: [], pullRequests: [] });
+    expect(workspace.removed).toEqual(["issue-5"]);
+  });
+
+  it("消せなくても、ほかの作業フォルダの片付けを続ける", async () => {
+    const { executor, workspace, logs } = setup();
+    workspace.existing = [entry("issue-1"), entry("issue-2")];
+    const remove = workspace.remove.bind(workspace);
+    workspace.remove = (e) =>
+      e.name === "issue-1" ? Promise.reject(new Error("使用中")) : remove(e);
+    await executor.cleanup({ issues: [], pullRequests: [] });
+    expect(workspace.removed).toEqual(["issue-2"]);
+    expect(
+      logs.some((l) => l.includes("issue-1 を消せませんでした: 使用中")),
+    ).toBe(true);
+  });
+});

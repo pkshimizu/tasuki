@@ -1,9 +1,14 @@
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { describeWorkspace, GitWorkspace, worktreeRoot } from "./workspace.js";
+import {
+  describeWorkspace,
+  GitWorkspace,
+  parseEntryName,
+  worktreeRoot,
+} from "./workspace.js";
 
 function git(cwd: string, ...args: string[]): string {
   return execFileSync("git", ["-C", cwd, ...args], { encoding: "utf8" }).trim();
@@ -204,6 +209,91 @@ describe("準備コマンド", () => {
     const { workspace } = withSetup([]);
     const p = await workspace.prepare({ kind: "repo" }, "read");
     expect(p.setup).toBeUndefined();
+  });
+});
+
+describe("作業フォルダの一覧と削除", () => {
+  it("作業フォルダの名前・ブランチ・変更の有無を返し、消せる", async () => {
+    const { workspace, repo } = setup();
+    const issue = await workspace.prepare(
+      { kind: "issue", number: 3 },
+      "write",
+    );
+    git(issue.cwd, "checkout", "-q", "-b", "tasuki/issue-3");
+    writeFileSync(join(issue.cwd, "a.txt"), "changed\n");
+    // 追跡していないファイル（依存パッケージなど）は、変更に数えない
+    writeFileSync(join(issue.cwd, "untracked.txt"), "x\n");
+    const review = await workspace.prepare({ kind: "pr", number: 7 }, "read");
+
+    const entries = await workspace.entries();
+    expect(entries).toEqual([
+      {
+        name: "issue-3",
+        cwd: issue.cwd,
+        branch: "tasuki/issue-3",
+        dirty: true,
+      },
+      { name: "read-pr-7", cwd: review.cwd, branch: null, dirty: false },
+    ]);
+
+    for (const e of entries) await workspace.remove(e);
+    expect(await workspace.entries()).toEqual([]);
+    expect(existsSync(issue.cwd)).toBe(false);
+    expect(git(repo, "worktree", "list").split("\n")).toHaveLength(1);
+    // 消したあと、同じ対象の作業フォルダを作り直せる
+    const again = await workspace.prepare(
+      { kind: "issue", number: 3 },
+      "write",
+    );
+    expect(again.dirty).toBe(false);
+  });
+
+  it("消したら、準備コマンドは次に用意したときにもう一度実行する", async () => {
+    const COUNT =
+      "node -e \"const fs=require('fs');fs.appendFileSync('count.txt','x')\"";
+    const s = setup();
+    const workspace = new GitWorkspace(
+      s.repo,
+      join(s.base, "worktrees"),
+      "main",
+      undefined,
+      { commands: [COUNT], onChange: [] },
+    );
+    const target = { kind: "repo" } as const;
+    await workspace.prepare(target, "read");
+    const [entry] = await workspace.entries();
+    await workspace.remove(entry!);
+    const again = await workspace.prepare(target, "read");
+    expect(again.setup).toEqual({ commands: [COUNT] });
+  });
+
+  it("作業フォルダがまだ無ければ空を返す", async () => {
+    expect(await setup().workspace.entries()).toEqual([]);
+  });
+});
+
+describe("parseEntryName", () => {
+  it("名前から対象を読む", () => {
+    expect(parseEntryName("issue-3")).toEqual({
+      target: { kind: "issue", number: 3 },
+      read: false,
+    });
+    expect(parseEntryName("read-pr-7")).toEqual({
+      target: { kind: "pr", number: 7 },
+      read: true,
+    });
+    expect(parseEntryName("requirement-1574335613631467533")).toEqual({
+      target: { kind: "requirement", id: "1574335613631467533" },
+      read: false,
+    });
+    expect(parseEntryName("read-repo")).toEqual({
+      target: { kind: "repo" },
+      read: true,
+    });
+  });
+  it("知らない名前は読まない", () => {
+    expect(parseEntryName("memo")).toBeUndefined();
+    expect(parseEntryName("issue-abc")).toBeUndefined();
   });
 });
 
