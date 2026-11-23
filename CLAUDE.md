@@ -15,7 +15,7 @@ CI（`check`）は lint → 整形 → 型 → テスト → ビルドの順に�
 ```
 src/
   cli.ts          入口
-  cli/            コマンド（main: 振り分けと check、start: 部品の組み立て、output: 出力先）
+  cli/            コマンド（main: 振り分けと check、init: ひな形の書き出し、start: 部品の組み立て、lock: 二重起動の防止、output: 出力先）
   config/         .tasuki/config.yaml の読み込み
   knowledge/      プロダクトの情報（対象リポジトリの文書）の読み込みと、指示への埋め込み
   domain/         部品の間で受け渡す値の形（対象・出来事・実行結果）
@@ -30,6 +30,17 @@ src/
 - テストは対象のファイルの隣に `*.test.ts` で置く
 - `testing/` はテストからだけ import する（ビルドには含めない）
 - `config/`・`domain/`・`knowledge/`・`integrations/`・`store/` は、`monitor/`・`dispatcher/`・`cli/` を import しない
+
+## リリース
+
+配布は GitHub から直接インストールする形（`npm install -g github:pkshimizu/tasuki#<タグ>`）。npm のレジストリには公開しない（`package.json` の `private` は、誤って公開しないために残す）。
+
+1. `package.json` の `version` を上げる PR をマージする（`npm version <patch|minor|major> --no-git-tag-version` で `package-lock.json` も揃える）
+2. main の先頭に `v<version>` のタグを打って push する
+3. `gh release create v<version> --generate-notes` で GitHub Release を作る
+4. `npm install -g github:pkshimizu/tasuki#v<version>` で入ることを確かめる
+
+インストール時には `prepare`（`npm run build`）が走り、`dist/` と `templates/` が取り込まれる。配布物に含めるファイルを増やすときは `package.json` の `files` に足す。
 
 ## 決まり
 

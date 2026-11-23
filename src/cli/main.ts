@@ -7,12 +7,14 @@ import {
   FsSource,
   loadKnowledge,
 } from "../knowledge/knowledge.js";
+import { init } from "./init.js";
 import { consoleOutput, type Output } from "./output.js";
 import { start } from "./start.js";
 
 export const HELP = `使い方: tasuki <コマンド> [オプション]
 
 コマンド:
+  init [フォルダ]   設定のひな形を .tasuki/config.yaml に書き出す（既にあれば上書きしない）
   check [フォルダ]  対象リポジトリの .tasuki/config.yaml を点検する（既定は今のフォルダ）
   start [フォルダ]  常駐して開発を進める（Ctrl+C で、動いているエージェントの終了を待って止まる）
 
@@ -59,6 +61,7 @@ export async function main(
     output.out(HELP);
     return 0;
   }
+  if (command === "init") return init(resolve(folder ?? "."), output);
   if (command === "check") return check(resolve(folder ?? "."), output, env);
   if (command === "start") return start(resolve(folder ?? "."), output, env);
   output.err(`知らないコマンドです: ${command}`);
