@@ -35,6 +35,8 @@ export interface Chat {
   notify(text: string): Promise<void>;
   /** スレッドをブラウザで開く URL。サーバーがまだ分からなければ undefined */
   threadUrl(threadId: string): string | undefined;
+  /** 要件の投稿をブラウザで開く URL。サーバーがまだ分からなければ undefined */
+  requirementUrl(messageId: string): string | undefined;
 }
 
 export const MESSAGE_LIMIT = 2000;
@@ -252,22 +254,28 @@ export class DiscordChat implements Chat {
     return thread.id;
   }
 
-  async activeQuestionThreads(): Promise<Map<string, string | null>> {
-    const questions = this.discord.channels.questions;
+  /** サーバーの ID を調べる（1 回だけ）。投稿やスレッドの URL を作るのに使う */
+  async resolveServer(): Promise<string> {
     if (this.guildId === undefined) {
       const channel = await this.request<{ guild_id: string }>(
         "GET",
-        `/channels/${questions}`,
+        `/channels/${this.discord.channels.questions}`,
       );
       this.guildId = channel.guild_id;
     }
+    return this.guildId;
+  }
+
+  async activeQuestionThreads(): Promise<Map<string, string | null>> {
+    const questions = this.discord.channels.questions;
+    const guildId = await this.resolveServer();
     const active = await this.request<{
       threads: {
         id: string;
         parent_id: string;
         last_message_id: string | null;
       }[];
-    }>("GET", `/guilds/${this.guildId}/threads/active`);
+    }>("GET", `/guilds/${guildId}/threads/active`);
     return new Map(
       active.threads
         .filter((t) => t.parent_id === questions)
@@ -284,8 +292,13 @@ export class DiscordChat implements Chat {
   }
 
   threadUrl(threadId: string): string | undefined {
-    // サーバーの ID は、質問スレッドを初めて確かめたときに分かる
+    // サーバーの ID は、起動のあとか、質問スレッドを初めて確かめたときに分かる
     if (this.guildId === undefined) return undefined;
     return `https://discord.com/channels/${this.guildId}/${threadId}`;
+  }
+
+  requirementUrl(messageId: string): string | undefined {
+    if (this.guildId === undefined) return undefined;
+    return `https://discord.com/channels/${this.guildId}/${this.discord.channels.requirements}/${messageId}`;
   }
 }

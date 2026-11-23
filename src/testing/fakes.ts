@@ -131,6 +131,10 @@ export class FakeChat implements Chat {
   threadUrl(threadId: string): string | undefined {
     return `https://discord.test/channels/g1/${threadId}`;
   }
+
+  requirementUrl(messageId: string): string | undefined {
+    return `https://discord.test/channels/g1/req/${messageId}`;
+  }
 }
 
 export class FakeGitHub implements GitHub {

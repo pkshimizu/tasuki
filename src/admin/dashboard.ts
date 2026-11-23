@@ -2,6 +2,7 @@
  * 管理画面に出す内容を、記録と今の様子から組み立てる。
  */
 import { type Role, ROLES } from "../config/config.js";
+import { requirementLinks } from "./requirements.js";
 import type { SituationPullRequest } from "../dispatcher/dispatcher.js";
 import { type Target, targetKey, type WorkerRole } from "../domain/types.js";
 import type { Issue } from "../integrations/github.js";
@@ -50,6 +51,8 @@ export interface AdminSources {
   executor: () => ExecutorSnapshot;
   /** Discord のスレッドの URL。まだ分からなければ undefined */
   threadUrl: (threadId: string) => string | undefined;
+  /** 要件の投稿の URL */
+  requirementUrl: (messageId: string) => string | undefined;
   clock: Clock;
 }
 
@@ -160,6 +163,12 @@ export function toDirective(raw: unknown): Directive | undefined {
     role: isRole(a.role) && a.role !== "dispatcher" ? a.role : null,
     target: isTarget(a.target) ? a.target : null,
     number: typeof a.number === "number" ? a.number : null,
+    requirement:
+      typeof a.requirement === "string"
+        ? a.requirement
+        : typeof a.requirementId === "string"
+          ? a.requirementId
+          : null,
     outcome,
     detail:
       type === "wait"
@@ -220,6 +229,7 @@ export function buildDashboard(s: AdminSources): DashboardData {
   const e = s.executor();
   const questions = s.store.questions();
   const runs = new Map(s.store.runningRuns().map((r) => [r.id, r]));
+  const links = requirementLinks(s.store);
 
   return {
     awaitingReply: questions
@@ -255,6 +265,7 @@ export function buildDashboard(s: AdminSources): DashboardData {
     }),
     requirements: s.store.requirements("open").map((r) => {
       const key = targetKey({ kind: "requirement", id: r.id });
+      const l = links.get(r.id);
       return {
         id: r.id,
         content: r.content,
@@ -263,6 +274,8 @@ export function buildDashboard(s: AdminSources): DashboardData {
         questions: questions.filter(
           (q) => q.target !== null && targetKey(q.target) === key,
         ).length,
+        issues: l?.issues.size ?? 0,
+        pullRequests: l?.pullRequests.size ?? 0,
       };
     }),
     decisions: s.store

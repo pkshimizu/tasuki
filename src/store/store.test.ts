@@ -119,6 +119,25 @@ describe("エージェントの実行", () => {
     expect(recent[0]!.finishedAt).not.toBeNull();
     expect(s.recentRuns(1).map((r) => r.id)).toEqual([b]);
   });
+
+  it("どの要件のための実行かを覚える", () => {
+    const s = memory();
+    const a = s.startRun({
+      role: "programmer",
+      target: { kind: "issue", number: 3 },
+      instruction: "実装する",
+      requirement: "10",
+    });
+    const b = s.startRun({
+      role: "reviewer",
+      target: { kind: "pr", number: 2 },
+      instruction: "レビューする",
+    });
+    expect(s.run(a)?.requirement).toBe("10");
+    expect(s.run(b)?.requirement).toBeNull();
+    s.setRunRequirement(b, "11");
+    expect(s.run(b)?.requirement).toBe("11");
+  });
 });
 
 describe("司令塔の判断", () => {

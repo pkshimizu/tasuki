@@ -70,6 +70,9 @@ export interface ActiveRequirement {
   createdAt: string;
   /** この要件についての質問の数 */
   questions: number;
+  /** この要件に結びつく Issue・PR の数 */
+  issues: number;
+  pullRequests: number;
 }
 
 /** 司令塔の指示と、その結果 */
@@ -85,6 +88,8 @@ export interface Directive {
   target: Target | null;
   /** merge_pr の PR 番号 */
   number: number | null;
+  /** どの要件のための指示か（run_agent・complete_requirement）。無ければ null */
+  requirement: string | null;
   /** 実行したか、見送ったか、失敗したか。wait は none */
   outcome: "done" | "skipped" | "failed" | "none";
   /** 結果の説明（見送りや失敗の理由） */
@@ -267,4 +272,62 @@ export interface SystemData {
   }[];
   /** 最近のログ（古い順） */
   logs: string[];
+}
+
+// ---------- 要件
+
+export interface RequirementRow {
+  id: string;
+  content: string;
+  author: string;
+  status: "open" | "done";
+  createdAt: string;
+  /** Discord の投稿。まだ分からなければ null */
+  url: string | null;
+  /** 結びつくものの数。waiting は返信待ちの質問 */
+  counts: {
+    questions: number;
+    waiting: number;
+    issues: number;
+    pullRequests: number;
+  };
+}
+
+/** 要件に結びつくもの。done は、終わったもの（返信のあった質問・閉じた Issue・PR） */
+export type RelatedItem =
+  | {
+      kind: "question";
+      id: string;
+      title: string;
+      origin: Role | null;
+      done: boolean;
+      at: string;
+      url: string | null;
+    }
+  | {
+      kind: "issue";
+      id: string;
+      number: number;
+      title: string | null;
+      state: "open" | "closed" | null;
+      done: boolean;
+      at: string | null;
+      url: string;
+    }
+  | {
+      kind: "pr";
+      id: string;
+      number: number;
+      title: string | null;
+      stage: Stage | null;
+      state: "open" | "merged" | "closed" | null;
+      done: boolean;
+      at: string | null;
+      url: string;
+    };
+
+export interface RequirementDetail {
+  requirement: RequirementRow;
+  related: RelatedItem[];
+  timeline: TimelineItem[];
 }

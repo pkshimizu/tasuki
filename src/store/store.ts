@@ -55,6 +55,8 @@ export interface Run {
   role: WorkerRole;
   target: Target;
   instruction: string;
+  /** どの要件のための実行か。分からなければ null */
+  requirement: string | null;
   status: RunStatus | "running";
   summary: string | null;
   startedAt: string;
@@ -114,8 +116,11 @@ export interface Store {
     role: WorkerRole;
     target: Target;
     instruction: string;
+    requirement?: string | null | undefined;
   }): number;
   finishRun(id: number, status: RunStatus, summary: string): void;
+  /** 実行が、どの要件のためのものかを入れる */
+  setRunRequirement(id: number, requirement: string): void;
   runningRuns(): Run[];
   recentRuns(limit: number): Run[];
   run(id: number): Run | undefined;
@@ -182,6 +187,7 @@ CREATE TABLE IF NOT EXISTS runs (
   role TEXT NOT NULL,
   target TEXT NOT NULL,
   instruction TEXT NOT NULL,
+  requirement TEXT,
   status TEXT NOT NULL DEFAULT 'running',
   summary TEXT,
   started_at TEXT NOT NULL,
@@ -235,6 +241,7 @@ function toRun(r: Row): Run {
     role: r.role as WorkerRole,
     target: JSON.parse(r.target as string) as Target,
     instruction: r.instruction as string,
+    requirement: (r.requirement as string | null) ?? null,
     status: r.status as Run["status"],
     summary: (r.summary as string | null) ?? null,
     startedAt: r.started_at as string,
@@ -266,6 +273,9 @@ export class SqliteStore implements Store {
       ).some((c) => c.name === column);
     if (!has("questions", "origin")) {
       this.db.exec("ALTER TABLE questions ADD COLUMN origin TEXT");
+    }
+    if (!has("runs", "requirement")) {
+      this.db.exec("ALTER TABLE runs ADD COLUMN requirement TEXT");
     }
   }
 
@@ -417,15 +427,17 @@ export class SqliteStore implements Store {
     role: WorkerRole;
     target: Target;
     instruction: string;
+    requirement?: string | null | undefined;
   }): number {
     const r = this.db
       .prepare(
-        "INSERT INTO runs (role, target, instruction, started_at) VALUES (?, ?, ?, ?)",
+        "INSERT INTO runs (role, target, instruction, requirement, started_at) VALUES (?, ?, ?, ?, ?)",
       )
       .run(
         input.role,
         JSON.stringify(input.target),
         input.instruction,
+        input.requirement ?? null,
         this.now(),
       );
     return Number(r.lastInsertRowid);
@@ -437,6 +449,12 @@ export class SqliteStore implements Store {
         "UPDATE runs SET status = ?, summary = ?, finished_at = ? WHERE id = ?",
       )
       .run(status, summary, this.now(), id);
+  }
+
+  setRunRequirement(id: number, requirement: string): void {
+    this.db
+      .prepare("UPDATE runs SET requirement = ? WHERE id = ?")
+      .run(requirement, id);
   }
 
   runningRuns(): Run[] {

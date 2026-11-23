@@ -171,7 +171,12 @@ export class Executor {
     const { store, chat } = this.deps;
     switch (action.type) {
       case "run_agent":
-        return this.start(action.role, action.target, action.instruction);
+        return this.start(
+          action.role,
+          action.target,
+          action.instruction,
+          action.requirement ?? null,
+        );
       case "ask_human": {
         const threadId = await chat.createQuestionThread(
           action.title,
@@ -234,7 +239,12 @@ export class Executor {
   }
 
   /** エージェントを裏で起動する。起動できなければ理由を返す */
-  private start(role: WorkerRole, target: Target, instruction: string): string {
+  private start(
+    role: WorkerRole,
+    target: Target,
+    instruction: string,
+    requirement: string | null,
+  ): string {
     const { store, loaded } = this.deps;
     this.checkLimit();
     if (this.abort.signal.aborted) return "見送り: Tasuki を止めています";
@@ -249,7 +259,14 @@ export class Executor {
     if (this.running.size >= loaded.config.limits.agents) {
       return `見送り: 同時に動かせる数（${String(loaded.config.limits.agents)}）に達しています`;
     }
-    const runId = store.startRun({ role, target, instruction });
+    const runId = store.startRun({
+      role,
+      target,
+      instruction,
+      // 対象が要件そのものなら、その要件のための実行
+      requirement:
+        requirement ?? (target.kind === "requirement" ? target.id : null),
+    });
     const entry: Running = {
       runId,
       role,

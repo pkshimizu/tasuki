@@ -174,7 +174,7 @@ function reviewRounds(number: number, store: Store): ReviewRound[] {
 
 // ---------- 経過（出来事・判断・実行）
 
-function runItem(run: Run): Extract<TimelineItem, { kind: "run" }> {
+export function runItem(run: Run): Extract<TimelineItem, { kind: "run" }> {
   return {
     kind: "run",
     id: `run:${String(run.id)}`,
@@ -189,7 +189,7 @@ function runItem(run: Run): Extract<TimelineItem, { kind: "run" }> {
   };
 }
 
-function decisionItem(
+export function decisionItem(
   d: Decision,
 ): Extract<TimelineItem, { kind: "decision" }> {
   return {
@@ -204,7 +204,7 @@ function decisionItem(
   };
 }
 
-function eventItem(e: {
+export function eventItem(e: {
   id: number;
   payload: EventPayload;
   createdAt: string;
@@ -221,7 +221,7 @@ function eventItem(e: {
 }
 
 /** 出来事が、その PR についてのものか */
-function eventIsAboutPr(p: EventPayload, number: number): boolean {
+export function eventIsAboutPr(p: EventPayload, number: number): boolean {
   switch (p.type) {
     case "pr_changed":
     case "ci_changed":
@@ -233,14 +233,14 @@ function eventIsAboutPr(p: EventPayload, number: number): boolean {
   }
 }
 
-function directiveIsAboutPr(d: Directive, number: number): boolean {
+export function directiveIsAboutPr(d: Directive, number: number): boolean {
   return (
     (d.type === "merge_pr" && d.number === number) ||
     (d.target?.kind === "pr" && d.target.number === number)
   );
 }
 
-function byTimeDesc(a: TimelineItem, b: TimelineItem): number {
+export function byTimeDesc(a: TimelineItem, b: TimelineItem): number {
   return b.at.localeCompare(a.at) || b.id.localeCompare(a.id);
 }
 
