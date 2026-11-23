@@ -1,6 +1,7 @@
 /**
  * ダッシュボード。上から、要対応・動いているエージェント・進行中の要件・最近の司令塔の判断。
  */
+import { useState } from "react";
 import type {
   AwaitingMerge,
   AwaitingReply,
@@ -12,6 +13,7 @@ import type {
 import type { Stage } from "../../../src/config/config.js";
 import { useLive, useNow } from "../api.js";
 import { DirectiveChip, RoleChip } from "../components/Chips.js";
+import { ConfirmDialog } from "../components/Dialog.js";
 import { Icon, ICONS } from "../components/Icon.js";
 import { linkProps, type Navigate } from "../components/Shell.js";
 import { ago, clock, elapsed } from "../format.js";
@@ -208,6 +210,8 @@ function AgentCard({
   names,
   navigate,
 }: Common & { a: RunningAgent }) {
+  const [confirming, setConfirming] = useState(false);
+  const target = targetLabel(t, a.target, names);
   return (
     <article className="card agent">
       <div className="agent-top">
@@ -237,10 +241,42 @@ function AgentCard({
             .filter(Boolean)
             .join(" · ")}
         </span>
-        <a className="button sm" {...linkProps("activity", navigate)}>
-          {t.dashboard.viewBrief}
-        </a>
+        <span className="inline">
+          <a className="button sm" {...linkProps("activity", navigate)}>
+            {t.dashboard.viewBrief}
+          </a>
+          <button
+            type="button"
+            className="button sm"
+            onClick={() => {
+              setConfirming(true);
+            }}
+          >
+            {t.ops.abort}
+          </button>
+        </span>
       </div>
+      {confirming && (
+        <ConfirmDialog
+          t={t}
+          title={t.ops.abortTitle(t.roles[a.role])}
+          confirm={t.ops.abortConfirm}
+          danger
+          path={`/api/ops/runs/${String(a.runId)}/abort`}
+          onClose={() => {
+            setConfirming(false);
+          }}
+        >
+          <p>
+            {t.ops.abortBody(
+              a.targetTitle ? `${target}「${a.targetTitle}」` : target,
+            )}
+          </p>
+          <p>
+            {a.worktree ? t.ops.abortKeep(a.worktree) : t.ops.abortKeepUnknown}
+          </p>
+        </ConfirmDialog>
+      )}
     </article>
   );
 }

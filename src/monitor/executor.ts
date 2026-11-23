@@ -63,6 +63,10 @@ export const DEFAULT_LIMIT_WAIT_MS = 15 * 60 * 1000;
 /** 回復の直後は混み合うので少し余裕を持たせる */
 const LIMIT_MARGIN_MS = 60 * 1000;
 
+/** 人が中断した実行の、結果の要約 */
+const ABORTED_SUMMARY =
+  "人が管理画面から中断しました。作業フォルダに途中の変更が残っているかもしれません";
+
 interface Running {
   runId: number;
   role: WorkerRole;
@@ -71,6 +75,10 @@ interface Running {
   /** 作業フォルダ。用意できるまでは undefined */
   cwd: string | undefined;
   done: Promise<void>;
+  /** この実行だけを止める合図 */
+  abort: AbortController;
+  /** 人が中断したか */
+  aborted: boolean;
 }
 
 export class Executor {
@@ -274,6 +282,8 @@ export class Executor {
       key,
       cwd: undefined,
       done: Promise.resolve(),
+      abort: new AbortController(),
+      aborted: false,
     };
     this.running.set(runId, entry);
     entry.done = this.work(entry, instruction).finally(() => {
@@ -346,8 +356,14 @@ export class Executor {
         schema: workerOutputSchema,
         guard: { cwd: prepared.cwd, defaultBranch, access },
         model: loaded.config.agents[role]?.model,
-        signal: this.abort.signal,
+        signal: AbortSignal.any([this.abort.signal, entry.abort.signal]),
       });
+
+      // 人が中断した。途中の変更は作業フォルダに残し、次にどうするかは司令塔に任せる
+      if (entry.aborted && outcome.kind !== "ok") {
+        finish("interrupted", ABORTED_SUMMARY);
+        return;
+      }
 
       if (outcome.kind === "limit") {
         this.setLimit(outcome.resetsAt);
@@ -372,7 +388,8 @@ export class Executor {
         output.pr,
       );
     } catch (e) {
-      finish("error", e instanceof Error ? e.message : String(e));
+      if (entry.aborted) finish("interrupted", ABORTED_SUMMARY);
+      else finish("error", e instanceof Error ? e.message : String(e));
     }
   }
 
@@ -523,6 +540,21 @@ export class Executor {
     while (this.running.size > 0) {
       await Promise.allSettled([...this.running.values()].map((r) => r.done));
     }
+  }
+
+  /**
+   * 動いているエージェントを 1 つだけ中断する。動いていなければ false。
+   * 作業フォルダの変更は残り、中断したことは出来事として司令塔に伝わる。
+   */
+  abortRun(runId: number): boolean {
+    const entry = this.running.get(runId);
+    if (!entry || entry.aborted) return false;
+    entry.aborted = true;
+    entry.abort.abort();
+    this.deps.log(
+      `${ROLE_LABELS[entry.role]}を中断します（${targetLabel(entry.target)}、実行 ${String(runId)}）`,
+    );
+    return true;
   }
 
   /** 新しい起動を止め、動いているエージェントを中断する */

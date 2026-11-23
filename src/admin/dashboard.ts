@@ -51,6 +51,8 @@ export interface AdminSources {
   executor: () => ExecutorSnapshot;
   /** Discord のスレッドの URL。まだ分からなければ undefined */
   threadUrl: (threadId: string) => string | undefined;
+  /** 止める・起動し直す操作を受けて、エージェントの終了を待っているか */
+  pending: () => "stop" | "restart" | null;
   /** 要件の投稿の URL */
   requirementUrl: (messageId: string) => string | undefined;
   clock: Clock;
@@ -109,6 +111,7 @@ export function buildApp(s: AdminSources): AppInfo {
     limitUntil: e.limitUntil,
     lastCheckAt: m.lastCheckAt,
     nextCheckAt: m.stopped ? null : m.nextCheckAt,
+    pending: s.pending(),
     needsAction: {
       questions: s.store.questions().filter((q) => !q.answered).length,
       pullRequests: awaitingMerge(m).length,
