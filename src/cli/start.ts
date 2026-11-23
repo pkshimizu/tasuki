@@ -2,6 +2,7 @@
  * tasuki start: 本物の部品を組み立てて、監視スレッドを常駐させる。
  */
 import { createRunAgent } from "../agents/agent.js";
+import { setupShell } from "../agents/shell.js";
 import { Collector } from "../monitor/collector.js";
 import { ConfigError, discordToken, loadConfig } from "../config/config.js";
 import { DiscordChat } from "../integrations/discord.js";
@@ -75,7 +76,9 @@ export async function start(
   };
   const store = new SqliteStore(stateFile(repo));
   const chat = new DiscordChat(token.token, config.discord);
-  const runAgent = createRunAgent();
+  const shell = await setupShell();
+  if (shell.warning) log(shell.warning);
+  const runAgent = createRunAgent(undefined, shell);
   const collector = new Collector({ chat, github, store, config, log });
   const monitorRef: { current?: Monitor } = {};
   const executor = new Executor({

@@ -34,6 +34,7 @@ GitHub ──────────┼─▶ 監視スレッド ─▶ 司令�
 
 - Node.js 22.13 以上（23 未満）
 - git と [GitHub CLI](https://cli.github.com/)。`gh auth login` で、対象リポジトリに書き込めるアカウントにログインしておく
+- Windows では Git Bash が必要（Git for Windows に含まれる）。Tasuki は git の場所から `bash.exe` を探してエージェントに使わせる。見つからないときは Windows PowerShell で動かすが、日本語のファイルが文字化けすることがあるので、環境変数 `CLAUDE_CODE_GIT_BASH_PATH` に `bash.exe` の場所を入れる
 - Claude Code にログインしておく（エージェントはこの PC の Claude Code のログインで動く）
 - 対象リポジトリを clone しておく（`origin` が対象リポジトリを指していること）
 

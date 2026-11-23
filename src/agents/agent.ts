@@ -57,8 +57,25 @@ export function resetDate(resetsAt: number | undefined): Date | undefined {
   return new Date(resetsAt < 1e12 ? resetsAt * 1000 : resetsAt);
 }
 
-export function buildOptions<S extends z.ZodType>(run: AgentRun<S>): Options {
+/** すべてのエージェントに共通の、実行のしかた */
+export interface RunnerOptions {
+  /** エージェントの環境変数に足すもの */
+  env?: Record<string, string>;
+  /** エージェントに渡さない道具 */
+  disallowedTools?: readonly string[];
+}
+
+const WRITE_TOOLS = ["Write", "Edit", "MultiEdit", "NotebookEdit"];
+
+export function buildOptions<S extends z.ZodType>(
+  run: AgentRun<S>,
+  runner: RunnerOptions = {},
+): Options {
   const guard = run.guard;
+  const disallowedTools = [
+    ...(guard.access !== "write" ? WRITE_TOOLS : []),
+    ...(runner.disallowedTools ?? []),
+  ];
   const abortController = new AbortController();
   if (run.signal) {
     if (run.signal.aborted) abortController.abort();
@@ -82,9 +99,11 @@ export function buildOptions<S extends z.ZodType>(run: AgentRun<S>): Options {
     persistSession: false,
     permissionMode: "default",
     ...(run.model !== undefined && { model: run.model }),
-    ...(guard.access !== "write" && {
-      disallowedTools: ["Write", "Edit", "MultiEdit", "NotebookEdit"],
-    }),
+    ...(disallowedTools.length > 0 && { disallowedTools }),
+    ...(runner.env !== undefined &&
+      Object.keys(runner.env).length > 0 && {
+        env: { ...process.env, ...runner.env },
+      }),
     // 許可を求められた操作は、危険なものだけを拒否して、ほかは許可する
     canUseTool: (toolName, input) => {
       const reason = denyReason(toolName, input, guard);
@@ -124,14 +143,17 @@ export function buildOptions<S extends z.ZodType>(run: AgentRun<S>): Options {
   };
 }
 
-export function createRunAgent(query: QueryFn = sdkQuery): RunAgent {
+export function createRunAgent(
+  query: QueryFn = sdkQuery,
+  runner: RunnerOptions = {},
+): RunAgent {
   return async (run) => {
     let limit: { resetsAt: Date | undefined } | undefined;
     let result: Extract<SDKMessage, { type: "result" }> | undefined;
     try {
       for await (const message of query({
         prompt: run.prompt,
-        options: buildOptions(run),
+        options: buildOptions(run, runner),
       })) {
         if (message.type === "rate_limit_event") {
           const info = message.rate_limit_info;
