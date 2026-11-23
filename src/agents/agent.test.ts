@@ -9,6 +9,7 @@ import {
   resetDate,
   toJsonSchema,
 } from "./agent.js";
+import { emptyKnowledge } from "../knowledge/knowledge.js";
 import { rolePrompt, workerOutputSchema } from "./roles.js";
 import { testConfig } from "../testing/fixtures.js";
 
@@ -240,21 +241,33 @@ describe("resetDate", () => {
 
 describe("rolePrompt", () => {
   const config = testConfig();
-  it("役の仕事・置き場・追加の指示・言語を入れる", () => {
-    const p = rolePrompt("spec-master", config, "用語集に従う");
+  const none = emptyKnowledge();
+  it("役の仕事・置き場・プロダクトの情報・言語を入れる", () => {
+    const knowledge = emptyKnowledge();
+    knowledge.spec_rules.push({
+      path: "docs/rules/spec.md",
+      content: "用語集に従う",
+    });
+    knowledge.implementation_rules.push({
+      path: "docs/rules/implementation.md",
+      content: "テストを先に書く",
+    });
+    const p = rolePrompt("spec-master", config, knowledge);
     expect(p).toContain("仕様マスター");
     expect(p).toContain("docs/specs/");
     expect(p).toContain("用語集に従う");
+    // ほかの役の種類は入れない
+    expect(p).not.toContain("テストを先に書く");
     expect(p).toContain("日本語");
   });
   it("文字化けしない読み書きのしかたを伝える", () => {
-    const p = rolePrompt("programmer", config, "");
+    const p = rolePrompt("programmer", config, none);
     expect(p).toContain("ファイルを読むときは Read");
     expect(p).toContain("--body-file");
   });
   it("書けない役には、読むだけだと伝える", () => {
-    expect(rolePrompt("reviewer", config, "")).toContain("この役は読むだけ");
-    expect(rolePrompt("programmer", config, "")).not.toContain(
+    expect(rolePrompt("reviewer", config, none)).toContain("この役は読むだけ");
+    expect(rolePrompt("programmer", config, none)).not.toContain(
       "この役は読むだけ",
     );
   });

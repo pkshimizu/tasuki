@@ -12,6 +12,7 @@ import {
   dispatch,
   type Situation,
 } from "../dispatcher/dispatcher.js";
+import type { KnowledgeProvider } from "../knowledge/knowledge.js";
 import type { Chat } from "../integrations/discord.js";
 import type { Executor } from "./executor.js";
 import {
@@ -29,6 +30,7 @@ export interface MonitorDeps {
   collector: Collector;
   executor: Executor;
   runAgent: RunAgent;
+  knowledge: KnowledgeProvider;
   log: (text: string) => void;
   sleep?: (ms: number, signal: AbortSignal) => Promise<void>;
 }
@@ -167,6 +169,7 @@ export class Monitor {
       defaultBranch,
       events,
       situation: this.situation(collected.github),
+      knowledge: await this.deps.knowledge.load(),
     });
 
     if (outcome.kind === "limit") {

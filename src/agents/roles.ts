@@ -3,6 +3,7 @@
  */
 import { z } from "zod";
 import { type Config, ROLE_LABELS } from "../config/config.js";
+import { type Knowledge, knowledgePrompt } from "../knowledge/knowledge.js";
 import type { GuardContext } from "./guard.js";
 import type { WorkerRole } from "../domain/types.js";
 
@@ -141,13 +142,12 @@ PR を確かめ、指摘があれば PR にコメントします。
 export function rolePrompt(
   role: WorkerRole,
   config: Config,
-  extraInstructions: string,
+  knowledge: Knowledge,
 ): string {
   return [
     common(role, config),
     RULES[role](config),
-    extraInstructions &&
-      `## このリポジトリでの追加の指示\n\n${extraInstructions}`,
+    knowledgePrompt(role, knowledge),
     languageRule(config.language),
   ]
     .filter(Boolean)

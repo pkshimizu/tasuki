@@ -1,12 +1,12 @@
 /**
- * 対象リポジトリの .tasuki/config.yaml と、役ごとの追加の指示（.tasuki/<役>/*.md）を読む。
+ * 対象リポジトリの .tasuki/config.yaml を読む。
  */
-import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { parse as parseYaml } from "yaml";
 import { z } from "zod";
 
-/** 役の名前。.tasuki/<役>/ のフォルダ名と agents.<役> の項目名に使う */
+/** 役の名前。agents.<役> の項目名に使う */
 export const ROLES = [
   "dispatcher",
   "spec-master",
@@ -43,6 +43,10 @@ const repoPath = z
     message: "リポジトリからの相対パスを / 区切りで書きます",
   })
   .transform((p) => p.replace(/\/+$/, ""));
+/** 1 つのパスか、パスの一覧 */
+const pathList = z
+  .union([repoPath, z.array(repoPath).min(1)])
+  .transform((p) => (typeof p === "string" ? [p] : p));
 const agentSchema = z.strictObject({ model: z.string().min(1).optional() });
 
 export const configSchema = z.strictObject({
@@ -78,6 +82,29 @@ export const configSchema = z.strictObject({
       design_system: repoPath.default("docs/design-system"),
     })
     .prefault({}),
+  /** プロダクトの情報の置き場。種類ごとに、ファイル・フォルダ・その一覧を書ける */
+  knowledge: z
+    .strictObject({
+      context: pathList.default(["docs/CONTEXT.md"]),
+      architecture: pathList.default([
+        "docs/ARCHITECTURE.md",
+        "docs/architecture",
+      ]),
+      spec_rules: pathList.default(["docs/rules/spec.md"]),
+      implementation_rules: pathList.default([
+        "docs/rules/implementation.md",
+        "docs/rules/implementation",
+      ]),
+      review_perspectives: pathList.default([
+        "docs/review-perspectives.md",
+        "docs/review-perspectives",
+      ]),
+      commit_rules: pathList.default(["docs/rules/commit.md"]),
+      task_rules: pathList.default(["docs/rules/task.md"]),
+      pr_rules: pathList.default(["docs/rules/pr.md"]),
+      merge_rules: pathList.default(["docs/rules/merge.md"]),
+    })
+    .prefault({}),
   workspace: z
     .strictObject({
       /** 作業フォルダを用意したあとに実行するコマンド（例: npm ci） */
@@ -103,8 +130,6 @@ export interface LoadedConfig {
   /** 対象リポジトリのフォルダ */
   dir: string;
   config: Config;
-  /** 役ごとの追加の指示（.tasuki/<役>/*.md をファイル名の順につなげたもの） */
-  instructions: Record<Role, string>;
 }
 
 export class ConfigError extends Error {
@@ -143,28 +168,13 @@ export function parseConfig(text: string): Config {
   return result.data;
 }
 
-/** 役への追加の指示を読む。フォルダが無ければ空 */
-export function loadInstructions(dir: string, role: Role): string {
-  const folder = join(dir, CONFIG_DIR, role);
-  if (!existsSync(folder)) return "";
-  return readdirSync(folder)
-    .filter((f) => f.endsWith(".md"))
-    .sort()
-    .map((f) => readFileSync(join(folder, f), "utf8").trim())
-    .filter(Boolean)
-    .join("\n\n");
-}
-
 export function loadConfig(dir: string): LoadedConfig {
   const file = join(dir, CONFIG_DIR, CONFIG_FILE);
   if (!existsSync(file)) {
     throw new ConfigError([`${file} がありません`]);
   }
   const config = parseConfig(readFileSync(file, "utf8"));
-  const instructions = Object.fromEntries(
-    ROLES.map((role) => [role, loadInstructions(dir, role)]),
-  ) as Record<Role, string>;
-  return { dir, config, instructions };
+  return { dir, config };
 }
 
 /** Discord のトークン。無ければ理由を返す */

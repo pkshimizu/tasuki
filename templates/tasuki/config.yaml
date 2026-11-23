@@ -32,6 +32,25 @@ paths:
   design: docs/design # デザイン（HTML モック）の置き場
   design_system: docs/design-system # デザインシステムの置き場
 
+# プロダクトの情報の置き場（書いてあるのは既定値）。
+# 種類ごとに、ファイル・フォルダ・その一覧を書ける。フォルダは中の .md を名前の順に読む。無い文書は読み飛ばす。
+# knowledge:
+#   context: docs/CONTEXT.md # コンテキスト（すべてのエージェント）
+#   architecture: # アーキテクチャ（すべてのエージェント）
+#     - docs/ARCHITECTURE.md
+#     - docs/architecture
+#   spec_rules: docs/rules/spec.md # 仕様作成ルール（仕様マスター）
+#   implementation_rules: # 実装ルール（プログラマー）
+#     - docs/rules/implementation.md
+#     - docs/rules/implementation
+#   review_perspectives: # レビュー観点（レビュアー）
+#     - docs/review-perspectives.md
+#     - docs/review-perspectives
+#   commit_rules: docs/rules/commit.md # コミットルール（コミットする役）
+#   task_rules: docs/rules/task.md # タスク作成ルール（プランナー）
+#   pr_rules: docs/rules/pr.md # プルリクルール（PR を作る役）
+#   merge_rules: docs/rules/merge.md # マージルール（司令塔）
+
 # 作業フォルダ（git worktree）を用意したあとに Tasuki が実行する準備コマンド
 # workspace:
 #   setup:

@@ -10,6 +10,7 @@ import { commandExec, run } from "../integrations/exec.js";
 import { Executor } from "../monitor/executor.js";
 import { GhGitHub } from "../integrations/github.js";
 import type { Output } from "./output.js";
+import { GitKnowledge } from "../knowledge/knowledge.js";
 import { Monitor } from "../monitor/monitor.js";
 import { SqliteStore, stateFile } from "../store/store.js";
 import { GitWorkspace, worktreeRoot } from "../agents/workspace.js";
@@ -79,6 +80,7 @@ export async function start(
   const shell = await setupShell();
   if (shell.warning) log(shell.warning);
   const runAgent = createRunAgent(undefined, shell);
+  const knowledge = new GitKnowledge(dir, defaultBranch, config.knowledge);
   const collector = new Collector({ chat, github, store, config, log });
   const monitorRef: { current?: Monitor } = {};
   const executor = new Executor({
@@ -88,6 +90,7 @@ export async function start(
     chat,
     github,
     runAgent,
+    knowledge,
     workspace: new GitWorkspace(
       dir,
       worktreeRoot(repo),
@@ -108,6 +111,7 @@ export async function start(
     collector,
     executor,
     runAgent,
+    knowledge,
     log,
   });
   monitorRef.current = monitor;

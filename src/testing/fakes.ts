@@ -5,6 +5,11 @@ import type { z } from "zod";
 import { Collector } from "../monitor/collector.js";
 import type { LoadedConfig } from "../config/config.js";
 import { Executor } from "../monitor/executor.js";
+import {
+  emptyKnowledge,
+  type Knowledge,
+  type KnowledgeProvider,
+} from "../knowledge/knowledge.js";
 import { Monitor } from "../monitor/monitor.js";
 import { SqliteStore } from "../store/store.js";
 import { testConfig } from "./fixtures.js";
@@ -283,6 +288,17 @@ export class FakeGitHub implements GitHub {
   }
 }
 
+/** 決めた文書を返す偽のプロダクトの情報 */
+export class FakeKnowledge implements KnowledgeProvider {
+  knowledge: Knowledge = emptyKnowledge();
+  loads = 0;
+
+  load(): Promise<Knowledge> {
+    this.loads++;
+    return Promise.resolve(this.knowledge);
+  }
+}
+
 /** 作業フォルダを作らず、対象ごとの名前だけを返す偽の Workspace */
 export class FakeWorkspace implements Workspace {
   prepared: { key: string; access: string; prBranch: string | undefined }[] =
@@ -356,15 +372,8 @@ export function harness(extraYaml = "") {
   const loaded: LoadedConfig = {
     dir: "/repo",
     config: testConfig(extraYaml),
-    instructions: {
-      dispatcher: "",
-      "spec-master": "",
-      planner: "",
-      designer: "",
-      programmer: "",
-      reviewer: "",
-    },
   };
+  const knowledge = new FakeKnowledge();
   const collector = new Collector({
     chat,
     github,
@@ -381,6 +390,7 @@ export function harness(extraYaml = "") {
     github,
     runAgent: agents.runAgent,
     workspace: new FakeWorkspace(),
+    knowledge,
     log,
     onFinish: () => ref.monitor?.wakeUp(),
   });
@@ -391,11 +401,12 @@ export function harness(extraYaml = "") {
     collector,
     executor,
     runAgent: agents.runAgent,
+    knowledge,
     log,
     sleep: () => new Promise((r) => setTimeout(r, 0)),
   });
   ref.monitor = monitor;
-  return { chat, github, store, agents, executor, monitor, logs };
+  return { chat, github, store, agents, executor, monitor, logs, knowledge };
 }
 
 /** 司令塔への依頼文から、新しい出来事の欄だけを取り出す */
