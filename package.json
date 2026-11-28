@@ -1,6 +1,6 @@
 {
   "name": "tasuki-agent",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "要件から仕様・タスク分解・実装・レビューまでを、役割ごとのエージェントで進めるソフトウェア開発 AI",
   "license": "MIT",
   "repository": {
